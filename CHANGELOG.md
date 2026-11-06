@@ -5,6 +5,40 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.1.1] — 2026-11-06 — « Décisions de conception »
+
+### Description générale
+Les questions ouvertes du concept sont tranchées. Aucune modification du code.
+
+### Nouvelles fonctionnalités
+- Aucune.
+
+### Modifications
+- Perte **totale** du butin et de l'équipement emporté à la mort, retour à l'équipement de
+  base ; l'emplacement d'Ancre est supprimé (D-007, remplace D-006).
+- PvP obligatoire dans les Éclats à haut risque (D-008).
+- Mobile prioritaire (D-009).
+- Première époque : forteresse médiévale (D-010).
+- Contexte de production consigné : développeur solo débutant à temps plein (D-011).
+- `Config.GAME_VERSION` passe à `0.1.1`.
+
+### Corrections de bugs
+- Aucune.
+
+### Problèmes connus
+- À confirmer : le Codex, la maîtrise et la réputation restent-ils permanents malgré la perte totale ?
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `CHANGELOG.md`, `README.md`, `docs/DECISIONS.md`, `docs/GDD/00-concept.md`,
+  `src/shared/Config.luau`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Phase 2 : rédaction du Game Design Document complet.
+
+---
+
 ## [v0.1.0] — 2026-11-06 — « Initialisation »
 
 ### Description générale

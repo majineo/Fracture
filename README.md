@@ -4,7 +4,7 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.1.0 « Initialisation »** · Phase : 1 → 2 (concept validé, GDD à rédiger)
+**Version actuelle : v0.1.1 « Décisions de conception »** · Phase : 1 → 2 (concept validé, GDD à rédiger)
 
 ## État du projet
 

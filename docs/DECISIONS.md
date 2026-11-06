@@ -41,7 +41,46 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Raisons** : historique Git complet, revue de code, CI, pas de code perdu dans un fichier de place.
 
 ## D-006 — Progression : permanente contre risquée
-- **Date** : 2026-11-06 · **Version** : v0.1.0 · **Statut** : 💭 Proposée, à confirmer
+- **Date** : 2026-11-06 · **Version** : v0.1.0 · **Statut** : ⛔ Remplacée par D-007
 - **Proposition** : capacités du Codex, maîtrise d'armes, spécialisations et réputation sont
   permanentes ; seuls le butin transporté et l'équipement emporté se perdent à la mort.
   Emplacement d'Ancre protégé, équipement de base toujours gratuit, écarts de stats plafonnés (~+20 %).
+
+---
+
+## D-007 — Perte totale à la mort
+- **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Validée (remplace D-006)
+- **Choix** : un joueur qui meurt dans un Éclat perd **tout** son butin et tout l'équipement
+  emporté. Il repart avec l'**équipement de base** gratuit. Pas d'emplacement d'Ancre.
+- **Toujours permanent (à confirmer)** : Codex, maîtrise d'armes, spécialisations, réputation.
+- **Risque assumé** : frustration plus forte pour un public jeune. Mesures prévues : équipement
+  de base réellement viable, Éclats calmes pour reconstruire un stock, mesure du taux d'abandon
+  après une mort lors des tests.
+
+## D-008 — PvP dans les Éclats à haut risque
+- **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Validée
+- **Choix** : PvP obligatoire dans les Éclats à haut risque ; Éclats calmes sans PvP conservés
+  pour les joueurs solo et occasionnels.
+
+## D-009 — Mobile prioritaire
+- **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Validée
+- **Conséquences** : contrôles tactiles pensés dès le premier système (pas ajoutés après coup),
+  assistance à la visée sur mobile, interface lisible sur petit écran, budgets de performance
+  calibrés pour des téléphones d'entrée de gamme.
+
+## D-010 — Première époque : forteresse médiévale
+- **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Validée
+- **Choix** : la vertical slice se déroule dans un Éclat de forteresse médiévale.
+- **Intérêt** : formes simples à modéliser (pierre, bois), bon premier projet Blender ;
+  contraste fort avec les armes à feu des Fractureurs.
+
+## D-011 — Contexte de production : développeur solo débutant
+- **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Constat
+- **Contexte** : un seul développeur, à temps plein, sans expérience de Luau ni de Blender.
+- **Conséquences** :
+  - Claude écrit et explique le code ; chaque système est accompagné d'une explication et
+    de tests à faire dans Studio, pour que l'apprentissage se fasse en avançant.
+  - Apprentissage de Blender progressif, du plus simple au plus complexe : reliques → armes
+    → kit de tuiles → créatures riggées → Gardien.
+  - La vertical slice est la priorité absolue ; aucun contenu supplémentaire avant qu'elle
+    soit amusante.

@@ -1,7 +1,7 @@
 # FRACTURE — Document de concept
 
-> Statut : 💭/📋 Concept validé (phase 1). Le GDD complet sera rédigé en phase 2.
-> Dernière mise à jour : v0.1.1 — 2026-11-06
+> Statut : 📋 Concept validé (phase 1). Le détail est dans les sections 01 à 11 du GDD
+> ([sommaire](README.md)). Dernière mise à jour : v0.1.2 — 2026-11-06
 
 ## 1. Pitch
 
@@ -79,7 +79,7 @@ créatures + 1 Gardien · 3 armes · 3 reliques · extraction · inventaire pers
 ## 9. Questions ouvertes
 
 - ✅ Équipe : solo, à temps plein, débutant en Luau et Blender (D-011).
-- ✅ Perte : totale (D-007). 💭 À confirmer : Codex, maîtrise et réputation restent permanents.
+- ✅ Perte : totale (D-007) ; Codex, maîtrise, rang et réputation restent permanents (D-012).
 - ✅ PvP obligatoire dans les Éclats à haut risque (D-008).
 - ✅ Mobile prioritaire (D-009).
 - ✅ Première époque : forteresse médiévale (D-010).

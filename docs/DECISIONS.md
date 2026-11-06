@@ -52,7 +52,7 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Date** : 2026-11-06 · **Version** : v0.1.1 · **Statut** : ✅ Validée (remplace D-006)
 - **Choix** : un joueur qui meurt dans un Éclat perd **tout** son butin et tout l'équipement
   emporté. Il repart avec l'**équipement de base** gratuit. Pas d'emplacement d'Ancre.
-- **Toujours permanent (à confirmer)** : Codex, maîtrise d'armes, spécialisations, réputation.
+- **Toujours permanent** : Codex, maîtrise d'armes, spécialisations, réputation (confirmé en D-012).
 - **Risque assumé** : frustration plus forte pour un public jeune. Mesures prévues : équipement
   de base réellement viable, Éclats calmes pour reconstruire un stock, mesure du taux d'abandon
   après une mort lors des tests.
@@ -84,3 +84,21 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
     → kit de tuiles → créatures riggées → Gardien.
   - La vertical slice est la priorité absolue ; aucun contenu supplémentaire avant qu'elle
     soit amusante.
+
+## D-012 — Progression permanente confirmée
+- **Date** : 2026-11-06 · **Version** : v0.1.2 · **Statut** : ✅ Validée
+- **Choix** : le Codex, la maîtrise d'armes, le rang, les spécialisations et la réputation ne
+  sont jamais perdus à la mort. Seuls le butin et l'équipement emporté le sont (D-007).
+
+## D-013 — Méthode de travail
+- **Date** : 2026-11-06 · **Version** : v0.1.2 · **Statut** : ✅ Validée
+- **Choix** : Claude prend les décisions techniques et de détail de façon autonome et les
+  documente ; explications courtes. Les décisions de direction (concept, règles majeures,
+  actions irréversibles ou publiques) restent soumises à validation.
+
+## D-014 — Game Design Document v1
+- **Date** : 2026-11-06 · **Version** : v0.1.2 · **Statut** : 📋 En attente de validation
+- **Choix** : GDD rédigé dans `docs/GDD/` (11 sections). Décisions de détail notables :
+  Éclat de 5 × 5 tuiles de 64 studs, parties de 16 min, extraction en 8 s, 12 emplacements de
+  butin, reliques à 3 charges (« utiliser ou ramener »), 2 capacités équipées, pas d'usure des
+  objets, pas d'échange entre joueurs dans la vertical slice, monétisation uniquement cosmétique.

@@ -5,6 +5,42 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.1.2] — 2026-11-06 — « Game Design Document »
+
+### Description générale
+Phase 2 : rédaction du Game Design Document complet de la vertical slice. Aucun code de jeu.
+
+### Nouvelles fonctionnalités
+- GDD en 11 sections dans `docs/GDD/` : univers, gameplay, combat, progression, équipement et
+  économie, environnements, ennemis, multijoueur, interface, direction artistique, périmètre
+  de la vertical slice.
+
+### Modifications
+- Progression permanente confirmée (D-012) ; méthode de travail autonome (D-013) ;
+  décisions de détail du GDD consignées (D-014).
+- Liste des assets alignée sur le GDD (16 assets, tous à créer).
+- Feuille de route et README mis à jour ; `Config.GAME_VERSION` passe à `0.1.2`.
+
+### Corrections de bugs
+- Aucune.
+
+### Problèmes connus
+- Toutes les valeurs chiffrées du GDD sont théoriques et devront être équilibrées en test.
+- Le GDD attend une relecture et une validation.
+
+### Fichiers
+- **Ajoutés** : `docs/GDD/README.md`, `docs/GDD/01-univers.md` à `docs/GDD/11-vertical-slice.md`
+- **Modifiés** : `CHANGELOG.md`, `README.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`,
+  `docs/ASSETS.md`, `docs/GDD/00-concept.md`, `src/shared/Config.luau`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Phase 3 : architecture technique détaillée et fondations (v0.2.0) : multi-places, réseau
+  sécurisé, données joueur avec verrou de session.
+- Premier asset Blender : la relique « Pas de Faille ».
+
+---
+
 ## [v0.1.1] — 2026-11-06 — « Décisions de conception »
 
 ### Description générale

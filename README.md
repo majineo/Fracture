@@ -4,20 +4,20 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.1.1 « Décisions de conception »** · Phase : 1 → 2 (concept validé, GDD à rédiger)
+**Version actuelle : v0.1.2 « Game Design Document »** · Phase : 2 → 3 (GDD rédigé, architecture à concevoir)
 
 ## État du projet
 
 | Statut | Contenu |
 |---|---|
-| ✅ Implémenté | Structure du projet, chaîne d'outils, documentation initiale |
+| ✅ Implémenté | Structure du projet, chaîne d'outils, documentation, GDD |
 | 🔧 En cours | — |
-| 📋 Prévu | Game Design Document complet (phase 2), architecture technique (phase 3) |
-| 💭 À l'étude | Voir [docs/GDD/00-concept.md](docs/GDD/00-concept.md), section « Questions ouvertes » |
+| 📋 Prévu | Architecture technique et fondations (phase 3, v0.2.0) |
+| 💭 À l'étude | Éléments marqués 💭 dans le GDD (spécialisations, factions, événements temporels…) |
 
 ## Documentation
 
-- [Concept du jeu](docs/GDD/00-concept.md)
+- [Game Design Document](docs/GDD/README.md)
 - [Journal des décisions](docs/DECISIONS.md)
 - [Feuille de route](docs/ROADMAP.md)
 - [Architecture technique](docs/ARCHITECTURE.md)

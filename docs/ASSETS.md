@@ -16,11 +16,23 @@
 
 ## Liste des assets
 
-| Asset | Catégorie | Statut | Notes |
-|---|---|---|---|
-| Reliques (3 pour le prototype) | Objets | 💭 | Bon premier modèle pour valider le pipeline |
-| Kit de tuiles de la première époque | Décors | 💭 | Époque à choisir |
-| Échoués (2 types) | Créatures | 💭 | Rig et animations nécessaires |
-| Gardien d'Éclat | Boss | 💭 | Le plus coûteux du prototype |
-| Armes (3) | Équipement | 💭 | |
-| Grappin | Équipement | 💭 | |
+Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-artistique.md), §5.
+
+| # | Asset | Catégorie | Statut | Notes |
+|---|---|---|---|---|
+| 1 | Relique « Pas de Faille » | Objet | 📋 À créer | Premier modèle : valide le pipeline Blender → Studio |
+| 2 | Relique « Stase » | Objet | 📋 À créer | |
+| 3 | Relique « Onde de choc » | Objet | 📋 À créer | |
+| 4 | Lame courte | Arme | 📋 À créer | Équipement de base |
+| 5 | Pistolet de Fractureur | Arme | 📋 À créer | Équipement de base, style bricolage d'époques |
+| 6 | Fusil à répétition | Arme | 📋 À créer | |
+| 7 | Arbalète lourde | Arme | 📋 À créer | Époque médiévale |
+| 8 | Épée longue | Arme | 📋 À créer | Époque médiévale |
+| 9 | Grappin | Outil | 📋 À créer | Animation de lancer |
+| 10 | Harnais et ancre de Fractureur | Accessoire avatar | 📋 À créer | Compatible avatars R15 |
+| 11 | Kit modulaire médiéval (murs, sols, escaliers, arches, toits) | Décor | 📋 À créer | Grille 8 studs, atlas partagé |
+| 12 | 8 tuiles médiévales | Décor | 📋 À assembler | Assemblées dans Studio à partir du kit |
+| 13 | Homme d'armes figé | Créature | 📋 À créer | Rig humanoïde partagé |
+| 14 | Arbalétrier figé | Créature | 📋 À créer | Même rig que #13 |
+| 15 | Le Roi Sans Heure | Gardien | 📋 À créer | En dernier ; rig dédié, ~10 animations |
+| 16 | Refuge (tour d'horlogerie, engrenages) | Décor | 📋 À créer | Compact |

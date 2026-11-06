@@ -4,7 +4,7 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.4.2 « Armes en main »** · Phase 3 (architecture et prototypage)
+**Version actuelle : v0.4.3 « Arsenal »** · Phase 3 (architecture et prototypage)
 
 ## État du projet
 
@@ -25,10 +25,11 @@ Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
 | Grappin | G (vise le curseur) | Bouton Grappin (centre de l'écran) | R3 |
 | Pistolet / lame (même touche = ranger) | 1 / 2 | Bouton Arme | Croix ◀ / ▶ |
 | Tirer / frapper (lame : maintenir = coup chargé) | Clic gauche | Bouton Tirer | RT |
-| Viser | Clic droit (maintenir) | Bouton Viser | LT |
+| Viser (arme à feu) / Parer (mêlée) | Clic droit | Bouton Viser / Parer | LT |
 | Recharger | R | Bouton Recharger | X |
 
 Champ de tir : à l'ouest du point d'apparition (3 mannequins, dont un mobile).
+Armurerie : au sud du point d'apparition (5 armes, maintenir la touche d'interaction pour équiper).
 
 ## Documentation
 

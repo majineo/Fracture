@@ -1,6 +1,7 @@
 --!strict
--- Armes côté serveur : équipement, tirs, coups de mêlée, rechargement. Le serveur fait foi :
--- il vérifie chaque requête et calcule lui-même les touches avec compensation de latence.
+-- Armes côté serveur : charge (loadout), équipement, tirs, coups de mêlée, parade,
+-- rechargement. Le serveur fait foi : il vérifie chaque requête et calcule lui-même les
+-- touches avec compensation de latence.
 -- Studio : ServerScriptService > Server > Systems > WeaponService
 --
 -- Tir (hitscan) — vérifications dans l'ordre :
@@ -9,8 +10,9 @@
 --   3. cadence, munitions, rechargement        6. cibles « remontées dans le temps »
 -- Le client ne choisit JAMAIS ce qu'il touche ni les dégâts.
 --
--- Équipement : v0.4.0 = équipement de base pour tous (pistolet, lame courte). Le système
--- d'inventaire et de charge le remplacera.
+-- Charge : emplacement 1 = arme à feu, 2 = mêlée. Par défaut l'équipement de base
+-- (pistolet, lame courte) ; l'armurerie du Refuge permet d'en changer (WeaponService.setWeapon).
+-- Le futur système d'inventaire passera par la même fonction.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +21,7 @@ local Shared = ReplicatedStorage.Shared
 local CombatConfig = require(Shared.Combat.CombatConfig)
 local Damage = require(Shared.Combat.Damage)
 local HitMath = require(Shared.Combat.HitMath)
+local Parry = require(Shared.Combat.Parry)
 local WeaponDefs = require(Shared.Combat.WeaponDefs)
 local WeaponState = require(Shared.Combat.WeaponState)
 local Guard = require(Shared.Util.Guard)
@@ -28,23 +31,25 @@ local HealthService = require(script.Parent.HealthService)
 local WeaponModels = require(script.Parent.Parent.Lib.WeaponModels)
 
 local BASE_LOADOUT = table.freeze({ "weapon.fracture_pistol", "weapon.short_blade" })
+local SLOT_KIND: { [number]: WeaponDefs.Slot } = { "Firearm", "Melee" }
 local FIRE_TOLERANCE = 0.05 -- gigue réseau acceptée sur la cadence
 local INTERPOLATION_DELAY = 0.05 -- retard d'affichage des autres joueurs chez le tireur
 local HEAVY_COOLDOWN_FACTOR = 2.2 -- l'attaque chargée occupe plus de temps qu'un coup simple
+local PIERCE_FALLOFF = 0.7 -- dégâts conservés par cible traversée
 
 type Loadout = {
-	weapons: { string },
+	weapons: { string }, -- [1] arme à feu, [2] mêlée
 	equipped: number, -- 0 = mains nues
 	states: { [string]: WeaponState.State },
+	parry: Parry.State,
 }
 
 local WeaponService = {}
 
 local loadouts: { [Player]: Loadout } = {}
 
-local function rootOf(player: Player): BasePart?
-	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart")
+local function rootOf(model: Model?): BasePart?
+	local root = model and model:FindFirstChild("HumanoidRootPart")
 	if root and root:IsA("BasePart") then
 		return root
 	end
@@ -59,19 +64,42 @@ local function canAct(player: Player): boolean
 	return character:GetAttribute("Downed") ~= true and character:GetAttribute("Dead") ~= true
 end
 
+local function stateFor(loadout: Loadout, id: string): WeaponState.State
+	local state = loadout.states[id]
+	if state == nil then
+		state = WeaponState.new(WeaponDefs[id])
+		loadout.states[id] = state
+	end
+	return state
+end
+
 local function equippedDef(player: Player): (WeaponDefs.WeaponDef?, WeaponState.State?)
 	local loadout = loadouts[player]
 	if loadout == nil or loadout.equipped == 0 then
 		return nil, nil
 	end
 	local id = loadout.weapons[loadout.equipped]
-	return WeaponDefs[id], loadout.states[id]
+	if id == nil then
+		return nil, nil
+	end
+	return WeaponDefs[id], stateFor(loadout, id)
 end
 
 -- Envoie l'état réel au joueur : (idArme, munitions, secondes de rechargement restantes).
 local function sendState(player: Player, def: WeaponDefs.WeaponDef, state: WeaponState.State)
 	local remaining = if state.reloadEndsAt then math.max(0, state.reloadEndsAt - os.clock()) else 0
 	Net.fire("WeaponState", player, def.id, state.ammo, remaining)
+end
+
+-- La charge est publiée en attributs du joueur (répliqués, lecture seule pour le client) :
+-- Loadout1 = arme à feu, Loadout2 = mêlée.
+local function sendLoadout(player: Player)
+	local loadout = loadouts[player]
+	if loadout then
+		for slot = 1, #SLOT_KIND do
+			player:SetAttribute(`Loadout{slot}`, loadout.weapons[slot] or "")
+		end
+	end
 end
 
 -- Heure « vue par le tireur » : heure annoncée, bornée, moins sa latence d'affichage.
@@ -99,22 +127,22 @@ end
 
 type Hit = { target: CombatTargets.Target, distance: number, headshot: boolean }
 
--- Première cible touchée par le rayon (origine, direction unitaire) avant `maxDistance`.
+-- Toutes les cibles touchées par le rayon avant `maxDistance`, de la plus proche à la plus
+-- lointaine.
 local function traceTargets(
 	shooter: Player,
 	origin: Vector3,
 	direction: Vector3,
 	maxDistance: number,
 	t: number
-): Hit?
-	local best: Hit? = nil
+): { Hit }
+	local hits: { Hit } = {}
 	local tolerance = CombatConfig.HITBOX_TOLERANCE
 	for model, target in CombatTargets.all() do
 		if target.player == shooter or not HealthService.canDamage(shooter, model) then
 			continue
 		end
 		local cf = CombatTargets.rewind(target, t)
-		-- Tri rapide : cible trop loin du rayon.
 		if (cf.Position - origin).Magnitude > maxDistance + 8 then
 			continue
 		end
@@ -138,18 +166,43 @@ local function traceTargets(
 		local half = box.bodyHalfSize + Vector3.one * tolerance
 		local body =
 			HitMath.rayBox(bo.X, bo.Y, bo.Z, d.X, d.Y, d.Z, half.X, half.Y, half.Z, maxDistance)
-		local distance: number? = nil
-		local headshot = false
 		if head and (body == nil or head <= body + 0.3) then
-			distance, headshot = head, true
+			table.insert(hits, { target = target, distance = head, headshot = true })
 		elseif body then
-			distance = body
-		end
-		if distance and (best == nil or distance < best.distance) then
-			best = { target = target, distance = distance, headshot = headshot }
+			table.insert(hits, { target = target, distance = body, headshot = false })
 		end
 	end
-	return best
+	table.sort(hits, function(a, b)
+		return a.distance < b.distance
+	end)
+	return hits
+end
+
+local function notifyHit(
+	attacker: Player?,
+	victimTarget: CombatTargets.Target,
+	result: any,
+	headshot: boolean,
+	origin: Vector3
+)
+	if attacker then
+		Net.fire("CombatEvent", attacker, {
+			type = "Hit",
+			amount = result.applied,
+			headshot = headshot,
+			killed = result.killed,
+			downed = result.downed,
+			position = victimTarget.root.Position,
+		})
+	end
+	local victim = victimTarget.player
+	if victim then
+		Net.fire(
+			"CombatEvent",
+			victim,
+			{ type = "Damaged", amount = result.applied, from = origin }
+		)
+	end
 end
 
 local function applyHit(
@@ -167,25 +220,160 @@ local function applyHit(
 		headshot = hit.headshot,
 		origin = origin,
 	})
-	if result == nil then
-		return
+	if result then
+		notifyHit(shooter, hit.target, result, hit.headshot, origin)
 	end
-	Net.fire("CombatEvent", shooter, {
-		type = "Hit",
-		amount = result.applied,
-		headshot = hit.headshot,
-		killed = result.killed,
-		downed = result.downed,
-		position = hit.target.root.Position,
-	})
-	local victim = hit.target.player
-	if victim then
+end
+
+local function broadcastFx(except: Player?, info: { [string]: any })
+	for _, other in Players:GetPlayers() do
+		if other ~= except then
+			Net.fire("ShotFx", other, info)
+		end
+	end
+end
+
+-- Parade ---------------------------------------------------------------------------------
+
+-- Le défenseur pare-t-il un coup venu de `attackerPosition` ? Si oui : effets et notifications.
+local function tryParry(defender: CombatTargets.Target, attackerPosition: Vector3): boolean
+	local player = defender.player
+	local loadout = player and loadouts[player]
+	if player == nil or loadout == nil then
+		return false
+	end
+	local root = defender.root
+	local toAttacker = attackerPosition - root.Position
+	local flat = Vector3.new(toAttacker.X, 0, toAttacker.Z)
+	local look = root.CFrame.LookVector
+	local angle = if flat.Magnitude > 0.1
+		then HitMath.angleBetween(look.X, 0, look.Z, flat.Unit.X, 0, flat.Unit.Z)
+		else 0
+	if not Parry.blocks(loadout.parry, os.clock(), angle, Parry.NETWORK_TOLERANCE) then
+		return false
+	end
+	Net.fire("CombatEvent", player, { type = "ParrySuccess", from = attackerPosition })
+	broadcastFx(player, { shooter = player, kind = "ParrySuccess" })
+	return true
+end
+
+local function stunAttacker(attackerPlayer: Player?, attackerModel: Model)
+	local now = os.clock()
+	if attackerPlayer then
+		local loadout = loadouts[attackerPlayer]
+		if loadout then
+			Parry.stun(loadout.parry, now)
+		end
 		Net.fire(
 			"CombatEvent",
-			victim,
-			{ type = "Damaged", amount = result.applied, from = origin }
+			attackerPlayer,
+			{ type = "Stunned", duration = Parry.STUN_DURATION }
 		)
 	end
+	-- Les ennemis lisent cet attribut pour suspendre leurs attaques.
+	attackerModel:SetAttribute("StunnedUntil", workspace:GetServerTimeNow() + Parry.STUN_DURATION)
+end
+
+-- Frappe de mêlée générique (joueurs et, plus tard, Échoués). Choisit la cible la plus proche
+-- dans le cône, vérifie la ligne de vue et la parade, applique les dégâts.
+-- Renvoie "Hit", "Parried" ou nil (rien touché).
+function WeaponService.meleeStrike(
+	attackerModel: Model,
+	attackerPlayer: Player?,
+	def: WeaponDefs.WeaponDef,
+	direction: Vector3,
+	rewindTime: number,
+	extra: number?
+): string?
+	local root = rootOf(attackerModel)
+	if root == nil then
+		return nil
+	end
+	local flat = Vector3.new(direction.X, 0, direction.Z)
+	if flat.Magnitude < 0.1 then
+		flat = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+	end
+	flat = flat.Unit
+	local halfArc = (def.arcDegrees or 60) / 2
+	local losParams = excludeAllTargets(attackerModel)
+
+	local best: Hit? = nil
+	for model, target in CombatTargets.all() do
+		if model == attackerModel or not HealthService.canDamage(attackerPlayer, model) then
+			continue
+		end
+		local position = CombatTargets.rewind(target, rewindTime).Position
+		local offset = position - root.Position
+		local horizontal = Vector3.new(offset.X, 0, offset.Z)
+		if horizontal.Magnitude > def.range + 1 or math.abs(offset.Y) > 5 then
+			continue
+		end
+		local angle = if horizontal.Magnitude > 0.5
+			then HitMath.angleBetween(flat.X, 0, flat.Z, horizontal.Unit.X, 0, horizontal.Unit.Z)
+			else 0
+		if angle > halfArc then
+			continue
+		end
+		if workspace:Raycast(root.Position, offset, losParams) then
+			continue -- mur entre les deux
+		end
+		if best == nil or horizontal.Magnitude < best.distance then
+			best = { target = target, distance = horizontal.Magnitude, headshot = false }
+		end
+	end
+	if best == nil then
+		return nil
+	end
+	if tryParry(best.target, root.Position) then
+		stunAttacker(attackerPlayer, attackerModel)
+		return "Parried"
+	end
+	local amount =
+		Damage.compute(def, best.distance, false, CombatConfig.HEADSHOT_MULTIPLIER, extra)
+	local result = HealthService.applyDamage(best.target.model, amount, {
+		attacker = attackerPlayer,
+		weaponId = def.id,
+		headshot = false,
+		origin = root.Position,
+	})
+	if result then
+		notifyHit(attackerPlayer, best.target, result, false, root.Position)
+		return "Hit"
+	end
+	return nil
+end
+
+-- Charge ---------------------------------------------------------------------------------
+
+-- Place une arme dans un emplacement (1 = arme à feu, 2 = mêlée). Seul point d'entrée pour
+-- changer d'arme (armurerie aujourd'hui, inventaire demain). Renvoie false si refusé.
+function WeaponService.setWeapon(player: Player, slot: number, id: string): boolean
+	local loadout = loadouts[player]
+	local def = WeaponDefs[id]
+	if loadout == nil or def == nil or SLOT_KIND[slot] ~= def.slot then
+		return false
+	end
+	local previous = loadout.weapons[slot]
+	if previous and loadout.states[previous] then
+		WeaponState.cancelReload(loadout.states[previous])
+	end
+	loadout.weapons[slot] = id
+	loadout.states[id] = WeaponState.new(def)
+	if loadout.equipped == slot then
+		local character = player.Character
+		if character then
+			character:SetAttribute("EquippedWeapon", id)
+			WeaponModels.equip(character, id)
+		end
+		sendState(player, def, loadout.states[id])
+	end
+	sendLoadout(player)
+	return true
+end
+
+function WeaponService.getLoadout(player: Player): { string }?
+	local loadout = loadouts[player]
+	return if loadout then table.clone(loadout.weapons) else nil
 end
 
 -- Gestionnaires -------------------------------------------------------------------------
@@ -208,7 +396,7 @@ local function onEquip(player: Player, slot: unknown)
 	end
 	local def = id and WeaponDefs[id]
 	if def then
-		sendState(player, def, loadout.states[id])
+		sendState(player, def, stateFor(loadout, def.id))
 	end
 end
 
@@ -231,7 +419,7 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 	if def == nil or state == nil or def.kind ~= "Hitscan" or not canAct(player) then
 		return
 	end
-	local root = rootOf(player)
+	local root = rootOf(player.Character)
 	if root == nil or (o - root.Position).Magnitude > CombatConfig.MAX_MUZZLE_OFFSET then
 		return
 	end
@@ -245,20 +433,28 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 	-- Obstacle du décor : le tir s'arrête au premier mur.
 	local world = workspace:Raycast(o, dir * def.range, excludeAllTargets(player.Character))
 	local maxDistance = if world then world.Distance else def.range
-	local hit = traceTargets(player, o, dir, maxDistance, viewTime(player, clientTime :: number))
-	local endPoint = if hit then o + dir * hit.distance else o + dir * maxDistance
-	if hit then
-		applyHit(player, def, hit, o)
-	end
-	for _, other in Players:GetPlayers() do
-		if other ~= player then
-			Net.fire(
-				"ShotFx",
-				other,
-				{ shooter = player, kind = "Shot", origin = o, finish = endPoint }
-			)
+	local hits = traceTargets(player, o, dir, maxDistance, viewTime(player, clientTime :: number))
+	local maxTargets = 1 + (def.pierce or 0)
+	local endDistance = maxDistance
+	for index, hit in hits do
+		if index > maxTargets then
+			break
 		end
+		applyHit(player, def, hit, o, PIERCE_FALLOFF ^ (index - 1))
+		endDistance = hit.distance
 	end
+	if #hits > 0 and #hits <= maxTargets and (def.pierce or 0) > 0 then
+		endDistance = maxDistance -- un carreau qui traverse continue jusqu'au mur
+	elseif #hits > 0 then
+		endDistance = hits[math.min(#hits, maxTargets)].distance
+	end
+	broadcastFx(player, {
+		shooter = player,
+		kind = "Shot",
+		weapon = def.id,
+		origin = o,
+		finish = o + dir * endDistance,
+	})
 end
 
 local function onReload(player: Player)
@@ -276,16 +472,22 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 	then
 		return
 	end
+	local loadout = loadouts[player]
 	local def, state = equippedDef(player)
-	if def == nil or state == nil or def.kind ~= "Melee" or not canAct(player) then
-		return
-	end
-	local root = rootOf(player)
-	if root == nil then
+	if
+		loadout == nil
+		or def == nil
+		or state == nil
+		or def.kind ~= "Melee"
+		or not canAct(player)
+	then
 		return
 	end
 	local now = os.clock()
-	if not WeaponState.canFire(state, def, now, FIRE_TOLERANCE) then
+	if
+		Parry.isStunned(loadout.parry, now)
+		or not WeaponState.canFire(state, def, now, FIRE_TOLERANCE)
+	then
 		return
 	end
 	WeaponState.fire(state, def, now)
@@ -293,51 +495,29 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 		-- L'attaque chargée occupe plus longtemps l'arme : jamais plus forte que le spam.
 		state.lastShot = now + (HEAVY_COOLDOWN_FACTOR - 1) / def.fireRate
 	end
+	local character = player.Character :: Model
+	WeaponService.meleeStrike(
+		character,
+		player,
+		def,
+		direction :: Vector3,
+		viewTime(player, clientTime :: number),
+		if heavy then def.heavyMultiplier else nil
+	)
+	broadcastFx(
+		player,
+		{ shooter = player, kind = if heavy then "HeavySwing" else "Swing", weapon = def.id }
+	)
+end
 
-	local flat = Vector3.new((direction :: Vector3).X, 0, (direction :: Vector3).Z)
-	if flat.Magnitude < 0.1 then
-		flat = Vector3.new(root.CFrame.LookVector.X, 0, root.CFrame.LookVector.Z)
+local function onParry(player: Player)
+	local loadout = loadouts[player]
+	local def = equippedDef(player)
+	if loadout == nil or def == nil or def.kind ~= "Melee" or not canAct(player) then
+		return
 	end
-	flat = flat.Unit
-	local halfArc = (def.arcDegrees or 60) / 2
-	local t = viewTime(player, clientTime :: number)
-	local losParams = excludeAllTargets(player.Character)
-
-	local best: Hit? = nil
-	for model, target in CombatTargets.all() do
-		if target.player == player or not HealthService.canDamage(player, model) then
-			continue
-		end
-		local position = CombatTargets.rewind(target, t).Position
-		local offset = position - root.Position
-		local horizontal = Vector3.new(offset.X, 0, offset.Z)
-		if horizontal.Magnitude > def.range + 1 or math.abs(offset.Y) > 5 then
-			continue
-		end
-		local angle = if horizontal.Magnitude > 0.5
-			then HitMath.angleBetween(flat.X, 0, flat.Z, horizontal.Unit.X, 0, horizontal.Unit.Z)
-			else 0
-		if angle > halfArc then
-			continue
-		end
-		if workspace:Raycast(root.Position, offset, losParams) then
-			continue -- mur entre les deux
-		end
-		if best == nil or horizontal.Magnitude < best.distance then
-			best = { target = target, distance = horizontal.Magnitude, headshot = false }
-		end
-	end
-	if best then
-		applyHit(player, def, best, root.Position, if heavy then def.heavyMultiplier else nil)
-	end
-	for _, other in Players:GetPlayers() do
-		if other ~= player then
-			Net.fire(
-				"ShotFx",
-				other,
-				{ shooter = player, kind = if heavy then "HeavySwing" else "Swing" }
-			)
-		end
+	if Parry.start(loadout.parry, os.clock(), def.parryWindow or 0.2) then
+		broadcastFx(player, { shooter = player, kind = "Parry", weapon = def.id })
 	end
 end
 
@@ -346,14 +526,15 @@ function WeaponService.init()
 	Net.on("FireWeapon", onFire)
 	Net.on("ReloadWeapon", onReload)
 	Net.on("MeleeSwing", onMelee)
+	Net.on("Parry", onParry)
 
 	local function onCharacter(player: Player, character: Model)
-		local states = {}
-		for _, id in BASE_LOADOUT do
-			states[id] = WeaponState.new(WeaponDefs[id])
-		end
-		loadouts[player] = { weapons = table.clone(BASE_LOADOUT), equipped = 0, states = states }
+		local previous = loadouts[player]
+		-- La charge choisie est conservée d'une vie à l'autre (pas encore sauvegardée).
+		local weapons = if previous then previous.weapons else table.clone(BASE_LOADOUT)
+		loadouts[player] = { weapons = weapons, equipped = 0, states = {}, parry = Parry.new() }
 		character:SetAttribute("EquippedWeapon", "")
+		sendLoadout(player)
 	end
 	local function watch(player: Player)
 		player.CharacterAdded:Connect(function(character)

@@ -14,6 +14,9 @@ local SOUNDS = table.freeze({
 	HeavySwing = { id = "rbxasset://sounds/swordlunge.wav", volume = 0.55 },
 	Hit = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.35 },
 	Kill = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.6 },
+	-- v0.4.3
+	CrossbowShot = { id = "rbxasset://sounds/swordlunge.wav", volume = 0.6 }, -- détente + corde (provisoire)
+	Parry = { id = "rbxassetid://9116460378", volume = 0.55 }, -- « Manacles Metal Clangs » (ProSoundEffects)
 })
 
 local CombatSounds = {}
@@ -60,7 +63,7 @@ function CombatSounds.play2D(name: string, pitch: number?)
 end
 
 -- Son 3D placé à une position du monde (tirs des autres joueurs).
-function CombatSounds.playAt(name: string, position: Vector3, pitch: number?)
+function CombatSounds.playAt(name: string, position: Vector3, pitch: number?): ()
 	local base = template(name)
 	if base == nil then
 		return

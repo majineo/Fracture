@@ -11,6 +11,11 @@ local ServerStorage = game:GetService("ServerStorage")
 
 local METAL = Color3.fromRGB(45, 48, 56)
 local BRISURE_CYAN = Color3.fromRGB(80, 230, 255)
+local WOOD = Color3.fromRGB(92, 52, 30)
+local BRASS = Color3.fromRGB(176, 128, 58)
+local LEATHER = Color3.fromRGB(70, 40, 24)
+
+local build: (id: string) -> Model?
 
 -- Orientation de l'arme par rapport à la main (réglée par mesure en jeu, v0.4.1).
 local GRIP_ROTATION = CFrame.Angles(math.rad(-90), 0, 0)
@@ -75,13 +80,79 @@ local function placeholder(id: string): Model?
 		edge.Parent = model
 		weld(grip, edge, CFrame.new(0, 0.15, -1.3))
 		model.PrimaryPart = grip
+	elseif id == "weapon.repeating_rifle" then
+		local grip = part("Grip", Vector3.new(0.2, 0.3, 0.36), WOOD, Enum.Material.Wood)
+		grip.Parent = model
+		local stock = part("Stock", Vector3.new(0.22, 0.32, 1.2), WOOD, Enum.Material.Wood)
+		stock.Parent = model
+		weld(grip, stock, CFrame.new(0, -0.1, 0.95))
+		local receiver = part("Receiver", Vector3.new(0.24, 0.3, 0.75), BRASS, Enum.Material.Metal)
+		receiver.Parent = model
+		weld(grip, receiver, CFrame.new(0, 0.13, -0.35))
+		local barrel = part("Barrel", Vector3.new(0.12, 0.12, 2.2), METAL, Enum.Material.Metal)
+		barrel.Parent = model
+		weld(grip, barrel, CFrame.new(0, 0.21, -1.85))
+		local tube = part("Core", Vector3.new(0.08, 0.08, 1.7), BRISURE_CYAN, Enum.Material.Neon)
+		tube.Parent = model
+		weld(grip, tube, CFrame.new(0, -0.07, -1.6))
+		local muzzle = Instance.new("Attachment")
+		muzzle.Name = "Muzzle"
+		muzzle.Position = Vector3.new(0, 0.21, -2.95)
+		muzzle.Parent = grip
+		model.PrimaryPart = grip
+	elseif id == "weapon.heavy_crossbow" then
+		local grip = part("Grip", Vector3.new(0.17, 0.4, 0.24), WOOD, Enum.Material.Wood)
+		grip.Parent = model
+		local tiller = part("Tiller", Vector3.new(0.18, 0.2, 2.2), WOOD, Enum.Material.Wood)
+		tiller.Parent = model
+		weld(grip, tiller, CFrame.new(0, 0.27, -0.55))
+		local prod = part(
+			"Prod",
+			Vector3.new(2.4, 0.1, 0.1),
+			Color3.fromRGB(190, 198, 206),
+			Enum.Material.Metal
+		)
+		prod.Parent = model
+		weld(grip, prod, CFrame.new(0, 0.32, -1.5))
+		local bolt = part("Core", Vector3.new(0.06, 0.06, 1.3), BRISURE_CYAN, Enum.Material.Neon)
+		bolt.Parent = model
+		weld(grip, bolt, CFrame.new(0, 0.43, -1.0))
+		local muzzle = Instance.new("Attachment")
+		muzzle.Name = "Muzzle"
+		muzzle.Position = Vector3.new(0, 0.43, -1.75)
+		muzzle.Parent = grip
+		model.PrimaryPart = grip
+	elseif id == "weapon.longsword" then
+		local grip = part("Grip", Vector3.new(0.16, 0.16, 0.85), LEATHER, Enum.Material.Fabric)
+		grip.Parent = model
+		local guard = part("Guard", Vector3.new(1.1, 0.14, 0.1), BRASS, Enum.Material.Metal)
+		guard.Parent = model
+		weld(grip, guard, CFrame.new(0, 0, -0.47))
+		local blade = part(
+			"Blade",
+			Vector3.new(0.07, 0.34, 3.3),
+			Color3.fromRGB(190, 198, 206),
+			Enum.Material.Metal
+		)
+		blade.Parent = model
+		weld(grip, blade, CFrame.new(0, 0, -2.2))
+		local edge = part("Edge", Vector3.new(0.075, 0.05, 2.6), BRISURE_CYAN, Enum.Material.Neon)
+		edge.Parent = model
+		weld(grip, edge, CFrame.new(0, 0, -2.0))
+		model.PrimaryPart = grip
 	else
 		return nil
 	end
 	return model
 end
 
-local function build(id: string): Model?
+-- Construit le modèle d'une arme (modèle importé s'il existe, forme provisoire sinon).
+-- Utilisé aussi par l'armurerie pour les présentoirs.
+function WeaponModels.build(id: string): Model?
+	return build(id)
+end
+
+function build(id: string): Model?
 	local folder = ServerStorage:FindFirstChild("WeaponModels")
 	local custom = folder and folder:FindFirstChild(id)
 	if custom and custom:IsA("Model") then

@@ -32,6 +32,7 @@ export type RemoteName =
 	| "WeaponState"
 	| "CombatEvent"
 	| "ShotFx"
+	| "Parry"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -57,6 +58,7 @@ local Definitions: { [string]: RemoteDef } = {
 	FireWeapon = { direction = "ToServer", rate = 15, burst = 15 }, -- (origine, direction, heure)
 	ReloadWeapon = { direction = "ToServer", rate = 2, burst = 3 },
 	MeleeSwing = { direction = "ToServer", rate = 5, burst = 5 }, -- (chargée, direction, heure)
+	Parry = { direction = "ToServer", rate = 3, burst = 3 }, -- lever sa lame (aucun argument)
 	-- Le serveur envoie au joueur l'état réel de son arme : (idArme, munitions, rechargeFin?)
 	WeaponState = { direction = "ToClient" },
 	-- Au tireur : touche confirmée ; à la victime : dégâts reçus. (table d'informations)

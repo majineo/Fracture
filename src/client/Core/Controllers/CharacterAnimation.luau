@@ -16,6 +16,10 @@ local JointRig = require(Client.Animation.JointRig)
 local MovementEffects = require(Client.Animation.MovementEffects)
 local PoseAnimator = require(Client.Animation.PoseAnimator)
 local Poses = require(Client.Animation.Poses)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local WeaponDefs = require(
+	ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Combat"):WaitForChild("WeaponDefs")
+) :: any
 local CombatController = require(script.Parent.CombatController)
 local GrappleVisuals = require(script.Parent.GrappleVisuals)
 local MovementController = require(script.Parent.MovementController)
@@ -66,6 +70,7 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	animator.addLayer("AimArm", { RightShoulder = CFrame.identity }, false, 22)
 	animator.addLayer("BladeGuard", Poses.BladeGuard, false, 12)
 	animator.addLayer("Swing", { RightShoulder = CFrame.identity }, false, 40)
+	animator.addLayer("Parry", Poses.Parry, false, 30)
 	animator.addLayer("Downed", Poses.Downed, false, 8)
 	return animator
 end
@@ -272,10 +277,12 @@ local function updateEntry(entry: Tracked, dt: number)
 		then CombatController.getEquipped()
 		else entry.character:GetAttribute("EquippedWeapon") :: string?
 	local usable = not downed and (mode == "Normal" or mode == "Slide")
-	local holdingPistol = usable and weapon == "weapon.fracture_pistol"
-	local holdingBlade = usable and weapon == "weapon.short_blade"
+	local def = if usable and weapon and weapon ~= "" then WeaponDefs[weapon] else nil
+	local hold = def and def.hold
+	local holdingGun = hold == "Pistol" or hold == "LongGun"
+	local holdingBlade = hold == "Blade" or hold == "Greatsword"
 
-	if holdingPistol then
+	if holdingGun then
 		-- Bras droit vers le point visé (soi) ou droit devant (les autres joueurs).
 		local target = if isLocal
 			then CombatController.getAimPoint()
@@ -284,18 +291,33 @@ local function updateEntry(entry: Tracked, dt: number)
 		animator.setPose("AimArm", { RightShoulder = arm or A(90, 0, 0) })
 		animator.setWeight("AimArm", 1)
 		local aiming = isLocal and CombatController.isAiming()
-		animator.setWeight("AimSupport", if aiming or not isLocal then 1 else 0.35)
+		if hold == "LongGun" then
+			-- Une arme longue se tient toujours à deux mains.
+			animator.setPose("AimSupport", Poses.AimLongGun)
+			animator.setWeight("AimSupport", 1)
+		else
+			animator.setPose("AimSupport", Poses.AimSupport)
+			animator.setWeight("AimSupport", if aiming or not isLocal then 1 else 0.35)
+		end
 	else
 		animator.setWeight("AimArm", 0)
 		animator.setWeight("AimSupport", 0)
 	end
+
+	-- Parade : lame levée en travers pendant la fenêtre de parade.
+	local parryAt = if holdingBlade
+		then CombatController.getParry(if isLocal then nil else entry.player)
+		else -math.huge
+	local parryWindow = (def and def.parryWindow) or 0.2
+	animator.setWeight("Parry", if os.clock() - parryAt <= parryWindow + 0.1 then 1 else 0)
 
 	local swing = if holdingBlade
 		then CombatController.getSwing(if isLocal then nil else entry.player)
 		else nil
 	local swingActive = false
 	if swing then
-		local duration = if swing.heavy then SWING_DURATION.heavy else SWING_DURATION.light
+		local light = (def and def.swingTime) or SWING_DURATION.light
+		local duration = if swing.heavy then light * 1.6 else light
 		local t = (os.clock() - swing.at) / duration
 		if t >= 0 and t <= 1.15 then
 			swingActive = true
@@ -312,6 +334,10 @@ local function updateEntry(entry: Tracked, dt: number)
 	if not swingActive then
 		animator.setWeight("Swing", 0)
 	end
+	animator.setPose(
+		"BladeGuard",
+		if hold == "Greatsword" then Poses.GreatswordGuard else Poses.BladeGuard
+	)
 	animator.setWeight("BladeGuard", if holdingBlade then 1 else 0)
 	animator.setWeight("Downed", if downed then 1 else 0)
 

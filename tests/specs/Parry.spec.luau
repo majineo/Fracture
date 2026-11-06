@@ -1,0 +1,36 @@
+local Parry = require("../../src/shared/Combat/Parry")
+
+return function(T)
+	T.suite("Parry")
+
+	T.test("la parade bloque un coup de face pendant sa fenêtre", function()
+		local s = Parry.new()
+		T.truthy(Parry.start(s, 10, 0.3))
+		T.truthy(Parry.blocks(s, 10.2, 20), "pendant, de face")
+		T.falsy(Parry.blocks(s, 10.2, 120), "pendant, de dos")
+		T.falsy(Parry.blocks(s, 10.5, 0), "après la fenêtre")
+		T.truthy(Parry.blocks(s, 10.35, 0, 0.08), "tolérance réseau")
+	end)
+
+	T.test("pas de parade en boucle : temps de recharge", function()
+		local s = Parry.new()
+		T.truthy(Parry.start(s, 0, 0.3))
+		T.falsy(Parry.start(s, 0.5, 0.3), "trop tôt")
+		T.truthy(Parry.start(s, 1.06, 0.3), "après fenêtre + recharge")
+	end)
+
+	T.test("étourdi : ni parade ni coup, puis ça passe", function()
+		local s = Parry.new()
+		Parry.stun(s, 5)
+		T.truthy(Parry.isStunned(s, 5.5))
+		T.falsy(Parry.start(s, 5.5, 0.3), "parade impossible")
+		T.falsy(Parry.isStunned(s, 5.95), "fin de l'étourdissement")
+	end)
+
+	T.test("être étourdi annule une parade en cours", function()
+		local s = Parry.new()
+		Parry.start(s, 0, 0.3)
+		Parry.stun(s, 0.1)
+		T.falsy(Parry.isActive(s, 0.15))
+	end)
+end

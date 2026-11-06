@@ -27,9 +27,10 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 5 | Pistolet de Fractureur | Arme | ✅ Intégré (v0.4.2) | `assets/blender/weapons/Pistolet_Fractureur.fbx` — 1 928 triangles, 4 pièces (métal sombre, laiton, cuir, noyau temporel cyan en cage). `ServerStorage > WeaponModels > weapon.fracture_pistol`, pièce « Grip », attachement « Muzzle » |
 | 21 | Mannequin d'entraînement | Décor | 📋 À créer (avatar gris provisoire) | Champ de tir du Refuge |
 | 22 | Sons de combat (tir, rechargement, coups, touche) | Audio | 📦 Provisoires | `src/client/Core/Combat/CombatSounds.luau` ; à valider à l'oreille |
-| 6 | Fusil à répétition | Arme | 📋 À créer | |
-| 7 | Arbalète lourde | Arme | 📋 À créer | Époque médiévale |
-| 8 | Épée longue | Arme | 📋 À créer | Époque médiévale |
+| 6 | Fusil à répétition | Arme | 📦 Modélisé (v0.4.3), à importer | `Fusil_Repetition.fbx` — 2 036 triangles, 4 pièces (bois, laiton, métal, tube cyan) ; jauge cyan côté visible |
+| 7 | Arbalète lourde | Arme | 📦 Modélisée (v0.4.3), à importer | `Arbalete_Lourde.fbx` — 1 232 triangles, 6 pièces (bois, acier, cuir, laiton, métal, carreau cyan) ; manivelle côté visible |
+| 8 | Épée longue | Arme | 📦 Modélisée (v0.4.3), à importer | `Epee_Longue.fbx` — 1 208 triangles, 4 pièces (acier, cuir, laiton, gorge cyan) |
+| 23 | Présentoir d'armurerie | Décor | 📋 À créer (bloc provisoire) | Refuge, 5 exemplaires |
 | 9 | Grappin | Outil | 📋 À créer | Animation de lancer |
 | 10 | Harnais et ancre de Fractureur | Accessoire avatar | 📋 À créer | Compatible avatars R15 |
 | 11 | Kit modulaire médiéval (murs, sols, escaliers, arches, toits) | Décor | 📋 À créer | Grille 8 studs, atlas partagé |

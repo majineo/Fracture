@@ -256,18 +256,17 @@ local function handleGrapple(
 end
 
 local function bindInputs()
-	-- Le troisième argument `true` crée automatiquement un bouton tactile sur mobile.
 	ContextActionService:BindAction(
 		ACTION_SPRINT,
 		handleSprint,
-		true,
+		false,
 		Enum.KeyCode.LeftShift,
 		Enum.KeyCode.ButtonL3
 	)
 	ContextActionService:BindAction(
 		ACTION_SLIDE,
 		handleSlide,
-		true,
+		false,
 		Enum.KeyCode.C,
 		Enum.KeyCode.LeftControl,
 		Enum.KeyCode.ButtonB
@@ -275,13 +274,11 @@ local function bindInputs()
 	ContextActionService:BindAction(
 		ACTION_GRAPPLE,
 		handleGrapple,
-		true,
+		false,
 		Enum.KeyCode.G,
 		Enum.KeyCode.ButtonR3
 	)
-	ContextActionService:SetTitle(ACTION_SPRINT, "Sprint")
-	ContextActionService:SetTitle(ACTION_SLIDE, "Glisser")
-	ContextActionService:SetTitle(ACTION_GRAPPLE, "Grappin")
+	-- Écrans tactiles : boutons dédiés dans Controllers/MobileControls (pas de boutons Roblox).
 	UserInputService.JumpRequest:Connect(onJumpRequest)
 end
 
@@ -402,6 +399,26 @@ local function onHeartbeat(dt: number)
 end
 
 -- API publique (lecture seule, pour l'interface, la caméra et les animations) ----------
+
+-- Commandes tactiles (appelées par MobileControls) --------------------------------------
+
+function MovementController.touchSprint()
+	sprintToggled = not sprintToggled
+end
+
+function MovementController.touchSlide()
+	if not trySlide() then
+		slideBufferedUntil = os.clock() + MovementConfig.INPUT_BUFFER
+	end
+end
+
+function MovementController.touchGrapple()
+	tryGrapple(true) -- vise le centre de l'écran
+end
+
+function MovementController.isSprintToggled(): boolean
+	return sprintToggled
+end
 
 function MovementController.getStamina(): number
 	return stamina.value

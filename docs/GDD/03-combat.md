@@ -67,7 +67,12 @@ distance). La réanimation par un coéquipier arrive avec les escouades.
 
 ✅ v0.4.0 : pistolet de Fractureur (24 dégâts, 5 tirs/s, 12 balles, 1,4 s de rechargement,
 pleins dégâts jusqu'à 35 studs puis 55 % à 90 studs) et lame courte (30, attaque chargée
-×1,8 après 0,6 s, cône de 75° sur 6,5 studs). 📋 Les trois autres en v0.4.1.
+×1,8 après 0,6 s, cône de 75° sur 6,5 studs).
+
+✅ v0.4.3 : fusil à répétition (48 dégâts, 1,5 tir/s, 6 balles, 2,4 s, très précis en visée,
+dégâts pleins jusqu'à 80 studs), arbalète lourde (75 dégâts, 1 carreau, 1,9 s, traverse une
+cible) et épée longue (42 dégâts, ×2 chargée après 0,8 s, cône de 100° sur 8,5 studs).
+Choix des armes à l'armurerie du Refuge (provisoire).
 
 | Arme | Type | Source | Rôle |
 |---|---|---|---|
@@ -80,8 +85,10 @@ pleins dégâts jusqu'à 35 studs puis 55 % à 90 studs) et lame courte (30, att
 ## 5. Mêlée
 
 - Attaque légère (enchaînement de 3) et **attaque chargée** (maintien).
-- **Parade** : fenêtre de 0,25 s qui renvoie le coup et étourdit brièvement l'attaquant.
-  C'est la mécanique de skill principale au corps à corps.
+- **Parade** (✅ v0.4.3) : clic droit / LT / bouton « Parer » avec une arme de mêlée. Fenêtre
+  de 0,22 s (lame) ou 0,3 s (épée longue), recharge 0,75 s ; un coup de face pendant la
+  fenêtre est annulé et l'attaquant est étourdi 0,9 s. C'est la mécanique de skill principale
+  au corps à corps.
 - La mêlée bat la distance à moins de 6 studs ; la distance gagne au-delà.
 
 ## 6. Capacités

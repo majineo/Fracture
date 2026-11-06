@@ -67,11 +67,10 @@ function HealthService.canDamage(attacker: Player?, model: Model): boolean
 	if target == nil or not isAlive(model) then
 		return false
 	end
-	if target.kind == "Player" then
-		if not PVP_ENABLED then
-			return false
-		end
-		if attacker ~= nil and target.player == attacker then
+	-- Règles PvP (joueur contre joueur) : seulement dans les Éclats, jamais soi-même.
+	-- Les ennemis (attaquant nil) peuvent toujours blesser les joueurs.
+	if target.kind == "Player" and attacker ~= nil then
+		if not PVP_ENABLED or target.player == attacker then
 			return false
 		end
 	end

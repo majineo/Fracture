@@ -5,6 +5,70 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.3] — 2026-11-06 — « Arsenal »
+
+### Description générale
+Trois nouvelles armes (modélisées dans Blender), la parade, une armurerie au Refuge pour
+choisir ses armes, et une interface tactile dédiée.
+
+### Nouvelles fonctionnalités
+- **Fusil à répétition** : 48 dégâts, 6 balles, très précis en visée, dégâts pleins jusqu'à
+  80 studs (70 % au-delà de 220).
+- **Arbalète lourde** : 75 dégâts, un carreau, **traverse une première cible** (70 % des
+  dégâts sur la suivante).
+- **Épée longue** : 42 dégâts, coup chargé ×2, large cône (100°) et longue portée (8,5 studs),
+  tenue à deux mains.
+- **Parade** : clic droit / LT / bouton « Parer » avec une arme de mêlée ; un coup de face
+  pendant la fenêtre est annulé et l'attaquant est **étourdi** 0,9 s. « PARADE ! » et
+  « ÉTOURDI » à l'écran, étincelles cyan, son métallique, visible par tous.
+- **Armurerie** du Refuge : 5 présentoirs (armes exposées en rotation), « Équiper » en
+  maintenant la touche d'interaction.
+- **Interface tactile** dédiée autour du pouce droit (Tirer/Frapper, Viser/Parer, Recharger,
+  Arme, Sprint, Glisser, Grappin) ; munitions déplacées au-dessus des boutons sur mobile.
+- Modèles Blender des trois armes (FBX + source) ; formes provisoires en attendant l'import.
+- Fonction de frappe de mêlée générique côté serveur, prête pour les Échoués (v0.4.4).
+- Animations : arme longue tenue à deux mains, épée longue à deux mains (pose trouvée par
+  recherche automatique : main gauche à 0,3 stud de la poignée), pose de parade.
+- 4 nouveaux tests (Parry) : 68 au total. Outils Studio : `setWeapon`, `dummyAttack`.
+
+### Modifications
+- La charge (armes choisies) est publiée en attributs du joueur (`Loadout1`, `Loadout2`).
+- Les ennemis peuvent blesser les joueurs même au Refuge (D-034) ; le PvP reste interdit au Refuge.
+- Chaque arme a son propre son (hauteur différente pour le fusil).
+
+### Corrections de bugs
+- Les présentoirs voisins se déclenchaient à la place du bon (portée d'interaction réduite).
+
+### Vérifications (Studio)
+- Fusil : 48 / 48 sur le mannequin. Arbalète : 112,5 (tête) sur le premier mannequin puis le
+  carreau continue et achève le second. Épée longue : 38 (santé restante du mannequin).
+- Mannequin qui frappe sans parade : 30 dégâts (15 absorbés par l'armure) ; avec parade :
+  coup annulé, mannequin étourdi ; parade trop tôt : coup reçu.
+
+### Problèmes connus
+- Les trois nouveaux modèles Blender restent à importer dans Studio (formes provisoires en jeu).
+- Interface tactile vérifiée à l'écran sur PC, pas sur un vrai téléphone.
+- Parade et PvP non testés entre deux vrais joueurs.
+- Sons provisoires (arbalète et parade notamment).
+
+### Fichiers
+- **Ajoutés** : `src/shared/Combat/Parry.luau`, `src/server/Refuge/Systems/Armory.luau`,
+  `src/client/Core/Controllers/MobileControls.luau`, `tests/specs/Parry.spec.luau`,
+  `assets/blender/weapons/{Fusil_Repetition,Arbalete_Lourde,Epee_Longue}.fbx`
+- **Modifiés** : `src/shared/Combat/WeaponDefs.luau`, `src/shared/Net/Definitions.luau`,
+  `src/server/Core/Systems/{WeaponService,HealthService,DevTools}.luau`,
+  `src/server/Core/Lib/WeaponModels.luau`, `src/client/Core/Controllers/{CombatController,CombatHUD,CharacterAnimation,MovementController}.luau`,
+  `src/client/Core/Animation/Poses.luau`, `src/client/Core/Combat/{CombatSounds,WeaponFx}.luau`,
+  `assets/blender/weapons/armes_de_base.blend`, `src/shared/Config.luau`, `tests/run.luau`,
+  `CLAUDE.md`, `CHANGELOG.md`, `README.md`, `docs/{ASSETS,DECISIONS,ROADMAP}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Import des trois modèles (puis réglage par Claude).
+- v0.4.4 « Échoués » : homme d'armes et arbalétrier figés (modélisés dans Blender), IA serveur.
+
+---
+
 ## [v0.4.2] — 2026-11-06 — « Armes en main »
 
 ### Description générale

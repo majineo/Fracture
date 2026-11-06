@@ -9,6 +9,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(Shared:WaitForChild("Combat"):WaitForChild("CombatConfig")) :: any
@@ -222,6 +223,33 @@ function CombatHUD.start()
 		Visible = false,
 	})
 
+	-- Étourdi (coup paré par l'adversaire) / parade réussie.
+	local stunLabel = label("Stunned", gui, {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.58),
+		Size = UDim2.fromScale(0.3, 0.045),
+		TextScaled = true,
+		TextColor3 = ORANGE,
+		Font = Enum.Font.GothamBlack,
+		Text = "ÉTOURDI",
+		Visible = false,
+	})
+	local parryFlash = label("Parried", gui, {
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.42),
+		Size = UDim2.fromScale(0.3, 0.05),
+		TextScaled = true,
+		TextColor3 = CYAN,
+		Font = Enum.Font.GothamBlack,
+		Text = "PARADE !",
+		TextTransparency = 1,
+		TextStrokeTransparency = 1,
+	})
+	local parryFade = 0
+	CombatController.Parried:Connect(function()
+		parryFade = 1
+	end)
+
 	-- Réactions --------------------------------------------------------------------------
 	local hitFade = 0
 	CombatController.HitConfirmed:Connect(function(info: any)
@@ -292,6 +320,12 @@ function CombatHUD.start()
 			chargeFill.BackgroundColor3 = if charge and charge >= 1 then ORANGE else CYAN
 		end
 
+		-- Étourdi / parade
+		stunLabel.Visible = CombatController.getStun() > 0
+		parryFade = math.max(0, parryFade - dt * 1.6)
+		parryFlash.TextTransparency = 1 - parryFade
+		parryFlash.TextStrokeTransparency = 1 - parryFade * 0.6
+
 		-- Marqueur de touche
 		hitFade = math.max(0, hitFade - dt * 4)
 		for _, line in hitLines do
@@ -300,7 +334,12 @@ function CombatHUD.start()
 		local size = hitmarker.Size.X.Offset + (34 - hitmarker.Size.X.Offset) * math.min(1, dt * 18)
 		hitmarker.Size = UDim2.fromOffset(size, size)
 
-		-- Munitions
+		-- Munitions (sur écran tactile : au-dessus des boutons, hors du bouton de saut Roblox)
+		local touchLayout = UserInputService.TouchEnabled
+			or player:GetAttribute("QA_ForceMobile") == true
+		ammoPanel.Position = if touchLayout
+			then UDim2.fromScale(0.97, 0.42)
+			else UDim2.fromScale(0.97, 0.95)
 		ammoPanel.Visible = def ~= nil
 		if def then
 			weaponName.Text = def.name

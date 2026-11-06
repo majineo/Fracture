@@ -131,6 +131,35 @@ function WeaponFx.damageNumber(
 	Debris:AddItem(a, 0.75)
 end
 
+-- Parade réussie : gerbe d'étincelles cyan et lueur brève à la position donnée.
+function WeaponFx.parrySparks(position: Vector3)
+	local a = Instance.new("Attachment")
+	a.WorldPosition = position
+	a.Parent = workspace.Terrain
+	local light = Instance.new("PointLight")
+	light.Color = BRISURE_CYAN
+	light.Range = 12
+	light.Brightness = 5
+	light.Parent = a
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Enabled = false
+	sparks.Color = ColorSequence.new(BRISURE_CYAN, Color3.new(1, 1, 1))
+	sparks.LightEmission = 1
+	sparks.Lifetime = NumberRange.new(0.15, 0.35)
+	sparks.Speed = NumberRange.new(12, 26)
+	sparks.SpreadAngle = Vector2.new(180, 180)
+	sparks.Acceleration = Vector3.new(0, -40, 0)
+	sparks.Drag = 2
+	sparks.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.25),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	sparks.Parent = a
+	sparks:Emit(28)
+	TweenService:Create(light, TweenInfo.new(0.25), { Brightness = 0 }):Play()
+	Debris:AddItem(a, 0.5)
+end
+
 -- Traînée de lame (coup de mêlée) le long d'un arc devant le personnage.
 function WeaponFx.swingArc(root: BasePart, heavy: boolean)
 	local a0 = Instance.new("Attachment")

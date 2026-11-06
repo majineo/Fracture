@@ -209,3 +209,31 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Choix** : dès qu'un objet 3D est nécessaire (arme, décor, objet, créature), il est
   modélisé dans Blender sans attendre la demande ; les formes faites en code ne sont que
   provisoires. Une pièce par matériau, 1 unité = 1 stud, sources dans `assets/blender/`.
+
+## D-030 — Arbalète : tir instantané perforant (pas encore de projectile)
+- **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée (💭 projectile réel à étudier)
+- **Choix** : l'arbalète tire comme les armes à feu (jugée instantanément par le serveur), mais
+  son carreau traverse une première cible (70 % des dégâts sur la suivante).
+- **Raison** : un vrai projectile (temps de vol, chute) demande une simulation serveur avec
+  compensation de latence dédiée. À reconsidérer si l'arbalète manque de caractère en test.
+
+## D-031 — Parade : jugée par le serveur, valable contre la mêlée
+- **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée
+- **Choix** : clic droit / LT / bouton « Parer » avec une arme de mêlée. Fenêtre 0,22 s (lame
+  courte) ou 0,3 s (épée longue), recharge 0,75 s, coup venant de face (75°). Coup paré =
+  aucun dégât et attaquant étourdi 0,9 s. Les tirs ne se parent pas.
+
+## D-032 — Armurerie provisoire au Refuge
+- **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée (provisoire)
+- **Choix** : présentoirs pour choisir son arme à feu et son arme de mêlée, en attendant
+  l'inventaire et la fabrication (v0.6). Charge conservée d'une vie à l'autre, pas sauvegardée.
+
+## D-033 — Boutons tactiles faits maison
+- **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée
+- **Choix** : les boutons automatiques de Roblox (empilés, non configurables) sont remplacés
+  par une interface tactile disposée autour du pouce droit, qui s'adapte à l'arme en main.
+
+## D-034 — Les ennemis peuvent toujours blesser les joueurs
+- **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée
+- **Choix** : la règle « pas de PvP au Refuge » ne concerne que les attaques entre joueurs ;
+  une attaque sans joueur attaquant (ennemi, mannequin de test) blesse partout.

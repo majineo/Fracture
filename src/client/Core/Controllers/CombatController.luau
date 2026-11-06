@@ -33,7 +33,8 @@ local CameraFeel = require(script.Parent.CameraFeel)
 local MovementController = require(script.Parent.MovementController)
 local ShoulderCamera = require(script.Parent.ShoulderCamera)
 
-local LOADOUT = { "weapon.fracture_pistol", "weapon.short_blade" } -- miroir du serveur (v0.4.0)
+local DEFAULT_LOADOUT = { "weapon.fracture_pistol", "weapon.short_blade" }
+local SLOT_COUNT = 2
 local AIM_RANGE = 400
 local MOVE_SPREAD = 1.2 -- degrés ajoutés en courant
 local AIR_SPREAD = 2 -- degrés ajoutés en l'air
@@ -60,6 +61,8 @@ CombatController.Equipped = Signal.new()
 CombatController.HitConfirmed = Signal.new()
 -- (montant, position d'origine)
 CombatController.Damaged = Signal.new()
+-- () : on vient de parer un coup
+CombatController.Parried = Signal.new()
 -- ()
 CombatController.Fired = Signal.new()
 
@@ -71,10 +74,32 @@ local meleeChargeStart: number? = nil
 local bloom = 0
 local lastSwing: { at: number, heavy: boolean }? = nil
 local remoteSwings: { [Player]: { at: number, heavy: boolean } } = {}
+local remoteParries: { [Player]: number } = {}
+local lastParry = -math.huge
+local parryCooldownUntil = 0
+local stunnedUntil = 0
 local aimPoint: Vector3? = nil
 
-for _, id in LOADOUT do
-	states[id] = WeaponState.new(WeaponDefs[id])
+-- Arme d'un emplacement (1 = arme à feu, 2 = mêlée), d'après la charge publiée par le serveur.
+local function weaponAt(slot: number): string?
+	if slot < 1 or slot > SLOT_COUNT then
+		return nil
+	end
+	local id = Players.LocalPlayer:GetAttribute(`Loadout{slot}`)
+	if typeof(id) == "string" and WeaponDefs[id] then
+		return id
+	end
+	return DEFAULT_LOADOUT[slot]
+end
+
+-- État local (prédiction) d'une arme, créé à la demande.
+local function stateOf(id: string): any
+	local state = states[id]
+	if state == nil then
+		state = WeaponState.new(WeaponDefs[id])
+		states[id] = state
+	end
+	return state
 end
 
 local function character(): Model?
@@ -82,7 +107,7 @@ local function character(): Model?
 end
 
 local function currentDef(): any
-	local id = LOADOUT[equippedSlot]
+	local id = weaponAt(equippedSlot)
 	return if id then WeaponDefs[id] else nil
 end
 
@@ -184,14 +209,14 @@ local function equip(slot: number)
 	if slot == equippedSlot then
 		slot = 0 -- même touche = ranger l'arme
 	end
-	local previous = LOADOUT[equippedSlot]
+	local previous = weaponAt(equippedSlot)
 	if previous then
-		WeaponState.cancelReload(states[previous])
+		WeaponState.cancelReload(stateOf(previous))
 	end
 	equippedSlot = slot
 	meleeChargeStart = nil
 	Net.fire("EquipWeapon", slot)
-	CombatController.Equipped:Fire(LOADOUT[slot])
+	CombatController.Equipped:Fire(weaponAt(slot))
 end
 
 local function reload()
@@ -199,14 +224,14 @@ local function reload()
 	if def == nil or def.magazine <= 0 or not canUseWeapon() then
 		return
 	end
-	if WeaponState.reload(states[def.id], def, os.clock()) then
+	if WeaponState.reload(stateOf(def.id), def, os.clock()) then
 		Net.fire("ReloadWeapon")
 		CombatSounds.play2D("Reload")
 	end
 end
 
 local function fireHitscan(def: any)
-	local state = states[def.id]
+	local state = stateOf(def.id)
 	local now = os.clock()
 	if WeaponState.isReloading(state, now, def) then
 		return
@@ -245,7 +270,7 @@ local function fireHitscan(def: any)
 			WeaponFx.impact(hit.Position, hit.Normal, hit.Instance.Color)
 		end
 	end
-	CombatSounds.play2D("PistolShot", 0.95 + math.random() * 0.1)
+	CombatSounds.play2D(def.sound, (def.soundPitch or 1) * (0.95 + math.random() * 0.1))
 	CameraFeel.kick(def.recoil)
 	CombatController.Fired:Fire()
 
@@ -256,10 +281,24 @@ local function fireHitscan(def: any)
 	end
 end
 
-local function swing(def: any, heavy: boolean)
-	local state = states[def.id]
+-- Parade : lever la lame pendant la fenêtre de l'arme (le serveur juge si un coup est paré).
+local function parry(def: any)
 	local now = os.clock()
-	if not WeaponState.canFire(state, def, now) then
+	if now < stunnedUntil or now < parryCooldownUntil then
+		return
+	end
+	local window = def.parryWindow or 0.2
+	lastParry = now
+	parryCooldownUntil = now + window + 0.75 -- même recharge que le serveur (Combat/Parry)
+	meleeChargeStart = nil
+	CombatSounds.play2D("Swing", 1.4)
+	Net.fire("Parry")
+end
+
+local function swing(def: any, heavy: boolean)
+	local state = stateOf(def.id)
+	local now = os.clock()
+	if now < stunnedUntil or not WeaponState.canFire(state, def, now) then
 		return
 	end
 	WeaponState.fire(state, def, now)
@@ -274,7 +313,10 @@ local function swing(def: any, heavy: boolean)
 	if root and root:IsA("BasePart") then
 		WeaponFx.swingArc(root, heavy)
 	end
-	CombatSounds.play2D(if heavy then "HeavySwing" else "Swing", 0.95 + math.random() * 0.1)
+	CombatSounds.play2D(
+		if heavy then "HeavySwing" else def.sound,
+		(def.soundPitch or 1) * (0.95 + math.random() * 0.1)
+	)
 	CameraFeel.kick(if heavy then 1.2 else 0.5)
 	Net.fire("MeleeSwing", heavy, direction, workspace:GetServerTimeNow())
 end
@@ -311,8 +353,16 @@ local function handleAim(
 	state: Enum.UserInputState,
 	input: InputObject
 ): Enum.ContextActionResult
-	if currentDef() == nil then
+	local def = currentDef()
+	if def == nil then
 		return Enum.ContextActionResult.Pass
+	end
+	-- Arme de mêlée : le bouton de visée sert à parer.
+	if def.kind == "Melee" then
+		if state == Enum.UserInputState.Begin and canUseWeapon() then
+			parry(def)
+		end
+		return Enum.ContextActionResult.Sink
 	end
 	if input.UserInputType == Enum.UserInputType.Touch then
 		if state == Enum.UserInputState.Begin then
@@ -344,7 +394,7 @@ local function handleCycle(_: string, state: Enum.UserInputState): Enum.ContextA
 	if state == Enum.UserInputState.Begin and not isDowned() then
 		-- Mains nues → arme 1 → arme 2 → … → mains nues.
 		local nextSlot = equippedSlot + 1
-		if nextSlot > #LOADOUT then
+		if nextSlot > SLOT_COUNT then
 			equip(equippedSlot) -- même emplacement = ranger
 		else
 			equip(nextSlot)
@@ -357,21 +407,21 @@ local function bindInputs()
 	ContextActionService:BindAction(
 		ACTIONS.fire,
 		handleFire,
-		true,
+		false,
 		Enum.UserInputType.MouseButton1,
 		Enum.KeyCode.ButtonR2
 	)
 	ContextActionService:BindAction(
 		ACTIONS.aim,
 		handleAim,
-		true,
+		false,
 		Enum.UserInputType.MouseButton2,
 		Enum.KeyCode.ButtonL2
 	)
 	ContextActionService:BindAction(
 		ACTIONS.reload,
 		handleReload,
-		true,
+		false,
 		Enum.KeyCode.R,
 		Enum.KeyCode.ButtonX
 	)
@@ -389,18 +439,13 @@ local function bindInputs()
 		Enum.KeyCode.Two,
 		Enum.KeyCode.DPadRight
 	)
-	-- Mobile : un bouton qui fait défiler pistolet → lame → mains nues.
-	ContextActionService:BindAction(ACTIONS.cycle, handleCycle, true)
-	ContextActionService:SetTitle(ACTIONS.fire, "Tirer")
-	ContextActionService:SetTitle(ACTIONS.aim, "Viser")
-	ContextActionService:SetTitle(ACTIONS.reload, "Recharger")
-	ContextActionService:SetTitle(ACTIONS.cycle, "Arme")
+	-- Écrans tactiles : boutons dédiés dans Controllers/MobileControls.
 end
 
 -- Réseau -------------------------------------------------------------------------------
 
 local function onWeaponState(id: any, ammo: any, reloadRemaining: any)
-	local state = typeof(id) == "string" and states[id]
+	local state = typeof(id) == "string" and WeaponDefs[id] and stateOf(id)
 	local def = typeof(id) == "string" and WeaponDefs[id]
 	if not state or not def or typeof(ammo) ~= "number" then
 		return
@@ -433,6 +478,23 @@ local function onCombatEvent(info: any)
 	elseif info.type == "Damaged" then
 		CombatController.Damaged:Fire(info.amount, info.from)
 		CameraFeel.kick(-1.5)
+	elseif info.type == "ParrySuccess" then
+		-- Coup paré : étincelles, son métallique, petite secousse.
+		CombatController.Parried:Fire()
+		CombatSounds.play2D("Parry")
+		CameraFeel.kick(0.8)
+		local c = character()
+		local hand = c and c:FindFirstChild("RightHand")
+		if hand and hand:IsA("BasePart") then
+			WeaponFx.parrySparks(hand.Position)
+		end
+	elseif info.type == "Stunned" then
+		-- Notre coup a été paré : on est étourdi.
+		stunnedUntil = os.clock()
+			+ (if typeof(info.duration) == "number" then info.duration else 0.9)
+		meleeChargeStart = nil
+		CombatSounds.play2D("Parry", 0.8)
+		CameraFeel.kick(-2.5)
 	end
 end
 
@@ -447,7 +509,21 @@ local function onShotFx(info: any)
 	then
 		WeaponFx.tracer(info.origin, info.finish)
 		WeaponFx.muzzleFlash(info.origin, (info.finish - info.origin).Unit)
-		CombatSounds.playAt("PistolShot", info.origin)
+		local def = typeof(info.weapon) == "string" and WeaponDefs[info.weapon]
+		CombatSounds.playAt(
+			if def then def.sound else "PistolShot",
+			info.origin,
+			if def then def.soundPitch else nil
+		)
+	elseif info.kind == "Parry" then
+		remoteParries[info.shooter] = os.clock()
+	elseif info.kind == "ParrySuccess" then
+		local c = info.shooter.Character
+		local hand = c and c:FindFirstChild("RightHand")
+		if hand and hand:IsA("BasePart") then
+			WeaponFx.parrySparks(hand.Position)
+			CombatSounds.playAt("Parry", hand.Position)
+		end
 	elseif info.kind == "Swing" or info.kind == "HeavySwing" then
 		local heavy = info.kind == "HeavySwing"
 		remoteSwings[info.shooter] = { at = os.clock(), heavy = heavy }
@@ -503,7 +579,7 @@ end
 -- API publique (lecture seule) ----------------------------------------------------------
 
 function CombatController.getEquipped(): string?
-	return LOADOUT[equippedSlot]
+	return weaponAt(equippedSlot)
 end
 
 function CombatController.getAmmo(): (number, number, boolean)
@@ -511,7 +587,7 @@ function CombatController.getAmmo(): (number, number, boolean)
 	if def == nil or def.magazine <= 0 then
 		return 0, 0, false
 	end
-	local state = states[def.id]
+	local state = stateOf(def.id)
 	return state.ammo, def.magazine, WeaponState.isReloading(state, os.clock(), def)
 end
 
@@ -521,7 +597,7 @@ function CombatController.getReloadProgress(): number?
 	if def == nil or def.magazine <= 0 then
 		return nil
 	end
-	local state = states[def.id]
+	local state = stateOf(def.id)
 	if state.reloadEndsAt == nil then
 		return nil
 	end
@@ -548,6 +624,48 @@ function CombatController.getSwing(other: Player?): { at: number, heavy: boolean
 	return remoteSwings[other]
 end
 
+-- Commandes tactiles (appelées par MobileControls) --------------------------------------
+
+local TOUCH_INPUT = { UserInputType = Enum.UserInputType.Touch } :: any
+
+-- Bouton « Tirer » : began = doigt posé (true) ou levé (false).
+function CombatController.touchFire(began: boolean)
+	handleFire("", if began then Enum.UserInputState.Begin else Enum.UserInputState.End)
+end
+
+-- Bouton « Viser » (bascule) ou « Parer » avec une arme de mêlée.
+function CombatController.touchAim()
+	handleAim("", Enum.UserInputState.Begin, TOUCH_INPUT)
+end
+
+function CombatController.touchReload()
+	reload()
+end
+
+-- Bouton « Arme » : mains nues → arme 1 → arme 2 → mains nues.
+function CombatController.touchCycle()
+	handleCycle("", Enum.UserInputState.Begin)
+end
+
+-- L'arme en main est-elle de mêlée ? (le bouton Viser devient « Parer »)
+function CombatController.isMeleeEquipped(): boolean
+	local def = currentDef()
+	return def ~= nil and def.kind == "Melee"
+end
+
+-- Moment de la dernière parade (soi : `other` nil ; autre joueur : son objet Player).
+function CombatController.getParry(other: Player?): number
+	if other == nil or other == player then
+		return lastParry
+	end
+	return remoteParries[other] or -math.huge
+end
+
+-- Secondes d'étourdissement restantes (0 = libre).
+function CombatController.getStun(): number
+	return math.max(0, stunnedUntil - os.clock())
+end
+
 -- Charge de l'attaque lourde en cours (0 à 1), ou nil.
 function CombatController.getMeleeCharge(): number?
 	local def = currentDef()
@@ -566,9 +684,7 @@ function CombatController.start()
 	player.CharacterAdded:Connect(function()
 		equippedSlot = 0
 		aimToggled = false
-		for _, id in LOADOUT do
-			states[id] = WeaponState.new(WeaponDefs[id])
-		end
+		table.clear(states)
 		CombatController.Equipped:Fire(nil)
 	end)
 	Players.PlayerRemoving:Connect(function(other)
@@ -592,6 +708,11 @@ function CombatController.start()
 				reload()
 			elseif command == "aim" then
 				aimHeld = argument == true
+			elseif command == "parry" then
+				local def = currentDef()
+				if def and def.kind == "Melee" then
+					parry(def)
+				end
 			elseif command == "fireAt" and typeof(argument) == "Vector3" then
 				qaAimOverride = argument
 				local def = currentDef()
@@ -602,7 +723,7 @@ function CombatController.start()
 			end
 			local ammo, mag = CombatController.getAmmo()
 			return {
-				equipped = LOADOUT[equippedSlot],
+				equipped = weaponAt(equippedSlot),
 				ammo = ammo,
 				magazine = mag,
 				shoulderCamera = ShoulderCamera.isActive(),

@@ -15,6 +15,7 @@ local specs = {
 	require("./specs/MovementValidator.spec"),
 	require("./specs/Spring.spec"),
 	require("./specs/Combat.spec"),
+	require("./specs/Parry.spec"),
 }
 
 for _, spec in specs do

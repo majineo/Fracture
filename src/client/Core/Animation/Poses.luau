@@ -127,6 +127,35 @@ Poses.AimSupport = table.freeze({
 	RightElbow = A(5, 0, 0),
 } :: Pose)
 
+-- Arme longue (fusil, arbalète) : main gauche loin devant, sous le canon.
+Poses.AimLongGun = table.freeze({
+	LeftShoulder = A(92, 0, 48),
+	LeftElbow = A(6, 0, 0),
+	RightElbow = A(10, 0, 0),
+} :: Pose)
+
+-- Épée longue tenue à deux mains, pointe vers l'avant et un peu vers le haut.
+-- Valeurs trouvées par recherche automatique sur un personnage figé (v0.4.3) : lame droit
+-- devant et un peu relevée, main gauche à 0,14 stud de la poignée derrière la main droite.
+Poses.GreatswordGuard = table.freeze({
+	RightShoulder = A(50, 0, -40), -- main droite ramenée vers le centre du corps
+	RightElbow = A(40, 0, 0),
+	RightWrist = A(20, 10, 40), -- redresse la lame vers l'avant
+	LeftShoulder = A(52, 0, 80),
+	LeftElbow = A(0, 0, 0),
+	Waist = A(0, 18, 0),
+} :: Pose)
+
+-- Parade : lame levée en travers devant soi.
+Poses.Parry = table.freeze({
+	RightShoulder = A(115, 0, -28),
+	RightElbow = A(70, 0, 0),
+	RightWrist = A(0, 0, 35),
+	LeftShoulder = A(60, 0, 30),
+	LeftElbow = A(50, 0, 0),
+	Waist = A(-6, 14, 0),
+} :: Pose)
+
 -- Lame en main, en garde.
 Poses.BladeGuard = table.freeze({
 	-- Bras à 50° + coude 35° ≈ avant-bras horizontal : la lame pointe vers l'avant.

@@ -28,6 +28,8 @@ Claude est l'associé technique et créatif. Tout échange avec l'utilisateur se
   devient le côté GAUCHE de l'arme tenue en main droite → placer les détails à montrer à la
   caméra d'épaule (droite) du côté -X dans Blender. L'utilisateur doit faire l'import
   (Fichier → Importer) : le reste se fait via Studio MCP. Procédure : `docs/ASSETS.md`.
+- Régler une pose difficile (deux mains sur une arme…) par **recherche automatique** sur un
+  clone figé du personnage (sans Animator) plutôt qu'à l'œil : voir GreatswordGuard, v0.4.3.
 - Vérifier l'orientation en main en mesurant `LookVector` (= -Z, l'avant) et `UpVector` de la
   poignée dans le repère du corps — attention à ne pas inverser le signe.
 

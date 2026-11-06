@@ -1,0 +1,28 @@
+# Fichiers de place Roblox (le code source vit dans src/, synchronisé par Rojo)
+*.rbxl
+*.rbxlx
+*.rbxl.lock
+*.rbxlx.lock
+
+# Wally
+Packages/
+ServerPackages/
+DevPackages/
+wally.lock
+
+# Toolchain
+sourcemap.json
+roblox.yml
+
+# Blender : sauvegardes automatiques (les .blend sources sont versionnés)
+*.blend1
+*.blend2
+
+# Exports temporaires
+assets/**/export_tmp/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

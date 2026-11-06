@@ -1,0 +1,17 @@
+# Fins de ligne normalisées pour le code et la documentation
+*.luau text eol=lf
+*.lua  text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.toml text eol=lf
+*.yml  text eol=lf
+
+# Fichiers binaires (modèles et textures)
+*.blend binary
+*.fbx   binary
+*.obj   binary
+*.png   binary
+*.jpg   binary
+*.tga   binary
+*.ogg   binary
+*.mp3   binary

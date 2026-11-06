@@ -194,3 +194,18 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Choix** : les armes tenues sont des formes simples créées par le code. Un modèle placé
   dans `ServerStorage > WeaponModels` avec le nom de l'arme (et une pièce « Grip ») les
   remplace automatiquement, sans changer le code.
+
+## D-028 — Caméra de combat faite maison (PC)
+- **Date** : 2026-11-06 · **Version** : v0.4.1 · **Statut** : ✅ Implémentée (remplace le verrou forcé de v0.4.0)
+- **Constat** : forcer la souris au centre à chaque image empêchait la rotation au clic droit,
+  même arme rangée ; et le module caméra Roblox (`PlayerModule`) n'est plus accessible aux
+  scripts, donc pas de verrouillage officiel possible.
+- **Choix** : arme en main sur PC, caméra d'épaule maison (souris verrouillée, mouvements de
+  souris = rotation, évitement des murs). Arme rangée : caméra Roblox intacte. Mobile et
+  manette : caméra Roblox.
+
+## D-029 — Tout objet 3D est modélisé dans Blender
+- **Date** : 2026-11-06 · **Version** : v0.4.1 · **Statut** : ✅ Règle de travail (inscrite dans `CLAUDE.md`)
+- **Choix** : dès qu'un objet 3D est nécessaire (arme, décor, objet, créature), il est
+  modélisé dans Blender sans attendre la demande ; les formes faites en code ne sont que
+  provisoires. Une pièce par matériau, 1 unité = 1 stud, sources dans `assets/blender/`.

@@ -1,0 +1,47 @@
+# Règles de travail — projet FRACTURE
+
+Jeu Roblox d'extraction PvPvE (univers des Éclats temporels). Développeur solo débutant ;
+Claude est l'associé technique et créatif. Tout échange avec l'utilisateur se fait **en français**.
+
+## Méthode
+- Prendre les décisions techniques et de détail de façon autonome, explications courtes ;
+  faire « le meilleur possible ». Les décisions de direction (concept, règles majeures,
+  actions irréversibles ou publiques, dépenses) restent soumises à validation (D-013).
+- Ne jamais valider une idée par complaisance : signaler ce qui est mauvais ou risqué.
+- Distinguer toujours : ✅ implémenté · 🔧 en cours · 📋 prévu · 💭 à l'étude.
+- Ne jamais prétendre avoir testé, sauvegardé ou envoyé quelque chose sans l'avoir fait.
+- Tester chaque système dans Studio (outils MCP Roblox Studio) avant de le déclarer terminé ;
+  le ressenti au clavier / tactile reste à valider par l'utilisateur.
+
+## 3D : Blender systématiquement
+- **Dès qu'un objet 3D est nécessaire (arme, décor, objet, créature…), le modéliser dans
+  Blender** (serveur MCP Blender connecté), sans attendre qu'on le demande. Les formes
+  provisoires faites en code ne servent qu'en attendant le modèle.
+- Normes : 1 unité Blender = 1 stud ; style semi-stylisé lisible ; peu de polygones (arme
+  < 3 000 triangles) ; une pièce séparée par matériau (métal, cuir, cuivre, néon cyan…) pour
+  pouvoir régler couleur et matériau dans Studio ; origine à la poignée pour les objets tenus.
+- Sources `.blend` et exports `.fbx` dans `assets/blender/` ; suivre l'état dans `docs/ASSETS.md`.
+- Intégration des armes : `ServerStorage > WeaponModels > <id de l'arme>` avec une pièce
+  « Grip » et, pour les armes à feu, un attachement « Muzzle » (voir `src/server/Core/Lib/WeaponModels.luau`).
+
+## Versions et Git
+- Chaque version : entrée complète dans `CHANGELOG.md` (10 rubriques), `Config.GAME_VERSION`,
+  commit, tag annoté `vX.Y.Z`, push, release GitHub (préversion tant que < 1.0).
+- Ne jamais réécrire l'historique publié ni forcer un push sur `main`.
+- Décisions importantes dans `docs/DECISIONS.md` (on ajoute, on n'efface pas).
+
+## Code
+- Luau `--!strict`, un seul Script serveur et un seul LocalScript, tout le reste en
+  ModuleScripts (voir `docs/ARCHITECTURE.md`). Remotes déclarés dans
+  `src/shared/Net/Definitions.luau` ; tout argument client validé côté serveur.
+- Logique critique en modules purs testés par Lune (`lune run tests/run`).
+- Avant chaque commit : `stylua src tests`, `selene src`, `lune run tests/run`, `rojo build`.
+- Dans PowerShell, écrire les fichiers en UTF-8 **sans BOM** (le BOM casse StyLua/Selene).
+- Rojo : positions des pièces toujours via `CFrame` explicite, jamais `Position`.
+
+## Environnement
+- Rojo : `rojo serve places/refuge.project.json` depuis le dossier du projet.
+- Outils (Rokit) : `%USERPROFILE%\.rokit\bin` ; Git / gh : recharger le PATH machine dans les
+  commandes PowerShell si besoin.
+- Le module caméra Roblox (`PlayerModule`) n'est pas accessible aux scripts dans cette version :
+  la caméra de combat est faite maison (`Controllers/ShoulderCamera`).

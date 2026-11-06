@@ -18,7 +18,6 @@ local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = Shared:WaitForChild("Combat")
@@ -32,6 +31,7 @@ local CombatSounds = require(Client.Combat.CombatSounds)
 local WeaponFx = require(Client.Combat.WeaponFx)
 local CameraFeel = require(script.Parent.CameraFeel)
 local MovementController = require(script.Parent.MovementController)
+local ShoulderCamera = require(script.Parent.ShoulderCamera)
 
 local LOADOUT = { "weapon.fracture_pistol", "weapon.short_blade" } -- miroir du serveur (v0.4.0)
 local AIM_RANGE = 400
@@ -471,13 +471,8 @@ local function onRender(dt: number)
 	bloom = math.max(0, bloom - SPREAD_RECOVERY * dt * 0.5)
 	aimPoint = if armed then computeAimPoint() else nil
 
-	-- Souris verrouillée au centre en combat (PC).
-	if UserInputService.MouseEnabled and not UserInputService.TouchEnabled then
-		UserInputService.MouseBehavior = if armed
-			then Enum.MouseBehavior.LockCenter
-			else Enum.MouseBehavior.Default
-		UserInputService.MouseIconEnabled = not armed
-	end
+	-- PC : caméra d'épaule à nous quand l'arme est en main (voir ShoulderCamera).
+	ShoulderCamera.set(armed, isAiming())
 
 	-- Le personnage suit la caméra quand l'arme est en main (mode Normal uniquement).
 	if humanoid and root and root:IsA("BasePart") and MovementController.getMode() == "Normal" then
@@ -606,7 +601,12 @@ function CombatController.start()
 				qaAimOverride = nil
 			end
 			local ammo, mag = CombatController.getAmmo()
-			return { equipped = LOADOUT[equippedSlot], ammo = ammo, magazine = mag }
+			return {
+				equipped = LOADOUT[equippedSlot],
+				ammo = ammo,
+				magazine = mag,
+				shoulderCamera = ShoulderCamera.isActive(),
+			}
 		end
 		hook.Parent = player:WaitForChild("PlayerScripts")
 	end

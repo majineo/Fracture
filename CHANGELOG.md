@@ -5,6 +5,51 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.1] — 2026-11-06 — « Armes de base »
+
+### Description générale
+Correction de la caméra (clic droit) et premiers vrais modèles 3D : le pistolet de Fractureur
+et la lame courte, modélisés dans Blender.
+
+### Nouvelles fonctionnalités
+- **Caméra de combat maison (PC)** : arme en main, souris verrouillée au centre, ses
+  mouvements tournent la vue ; la caméra se rapproche en visée et ne traverse pas les murs.
+- **Pistolet de Fractureur (Blender)** : cadre sombre, pièces en laiton, poignée en cuir,
+  noyau temporel cyan dans une cage — 1 928 triangles, 4 pièces par matériau.
+- **Lame courte (Blender)** : manche en cuir à bagues de laiton, garde et pommeau en laiton,
+  lame d'acier à gorge cyan — 1 064 triangles.
+- Les modèles importés dans `ServerStorage > WeaponModels` remplacent automatiquement les
+  formes provisoires (toutes les pièces sont soudées à la poignée).
+- `CLAUDE.md` : règles de travail du projet, dont « tout objet 3D est modélisé dans Blender ».
+
+### Modifications
+- Plus aucune modification forcée de la souris hors combat.
+
+### Corrections de bugs
+- **La caméra ne tournait plus au clic droit** : le combat forçait le comportement de la
+  souris à chaque image, même arme rangée. Corrigé (D-028).
+
+### Problèmes connus
+- Les modèles Blender doivent être **importés dans Studio** (Importer 3D) : l'outil Studio
+  disponible ne permet pas d'importer un FBX automatiquement. Les formes provisoires restent
+  utilisées d'ici là.
+- Rotation de la caméra à la souris non testable de mon côté (simulation de souris
+  indisponible) : à vérifier à la main.
+
+### Fichiers
+- **Ajoutés** : `CLAUDE.md`, `src/client/Core/Controllers/ShoulderCamera.luau`,
+  `assets/blender/weapons/{armes_de_base.blend,Pistolet_Fractureur.fbx,Lame_Courte.fbx}`
+- **Modifiés** : `src/client/Core/Controllers/CombatController.luau`,
+  `src/server/Core/Lib/WeaponModels.luau`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/{ASSETS,DECISIONS,ROADMAP}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Import des deux modèles dans Studio, puis réglage des matériaux et de la tenue en main.
+- v0.4.2 « Arsenal » : fusil, arbalète, épée longue (modélisés dans Blender), parade, interface mobile.
+
+---
+
 ## [v0.4.0] — 2026-11-06 — « Combat »
 
 ### Description générale

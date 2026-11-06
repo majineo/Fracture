@@ -86,6 +86,23 @@ local function build(id: string): Model?
 		local grip = clone:FindFirstChild("Grip", true)
 		if grip and grip:IsA("BasePart") then
 			clone.PrimaryPart = grip
+			-- Toutes les pièces du modèle (importé depuis Blender) suivent la poignée.
+			for _, d in clone:GetDescendants() do
+				if d:IsA("BasePart") then
+					d.Anchored = false
+					d.CanCollide = false
+					d.CanQuery = false
+					d.CanTouch = false
+					d.Massless = true
+					d.CastShadow = false
+					if d ~= grip then
+						local w = Instance.new("WeldConstraint")
+						w.Part0 = grip
+						w.Part1 = d
+						w.Parent = d
+					end
+				end
+			end
 			return clone
 		end
 	end

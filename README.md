@@ -4,7 +4,7 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.3.1 « Ressenti »** · Phase 3 (architecture et prototypage)
+**Version actuelle : v0.3.2 « Poussière »** · Phase 3 (architecture et prototypage)
 
 ## État du projet
 

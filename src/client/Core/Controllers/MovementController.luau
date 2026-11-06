@@ -415,8 +415,22 @@ end
 local function createStudioTestHook()
 	local hook = Instance.new("BindableFunction")
 	hook.Name = "FractureMovementQA"
+	local forcedMove: Vector3? = nil
+	-- Joystick simulé : appliqué juste APRÈS le module de contrôle Roblox (priorité Input + 1),
+	-- sinon celui-ci remet la direction à zéro à chaque image.
+	RunService:BindToRenderStep("FractureQAMove", Enum.RenderPriority.Input.Value + 1, function()
+		local context = ctx
+		if forcedMove and context then
+			context.humanoid:Move(forcedMove, false)
+		end
+	end)
 	hook.OnInvoke = function(command: string, argument: any): any
-		if command == "sprint" then
+		if command == "move" then
+			forcedMove = if typeof(argument) == "Vector3" then argument else nil
+			if forcedMove == nil and ctx then
+				ctx.humanoid:Move(Vector3.zero, false)
+			end
+		elseif command == "sprint" then
 			sprintHeld = argument == true
 		elseif command == "slide" then
 			return trySlide()

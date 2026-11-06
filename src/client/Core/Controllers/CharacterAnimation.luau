@@ -194,7 +194,7 @@ local function updateEntry(entry: Tracked, dt: number)
 	if grounded and not entry.wasGrounded and entry.peakFall >= LAND_MIN_SPEED then
 		local strength = math.clamp(entry.peakFall / 60, 0, 1)
 		animator.snapWeight("Land", 0.3 + 0.55 * strength)
-		entry.effects.landingImpact(strength)
+		entry.effects.landingImpact(strength, ground and ground.Instance.Color)
 	end
 	if grounded then
 		entry.peakFall = 0
@@ -236,7 +236,7 @@ local function updateEntry(entry: Tracked, dt: number)
 		animator.setWeight("Grapple", 0)
 	end
 
-	entry.effects.setSliding(mode == "Slide" and grounded)
+	entry.effects.setSliding(mode == "Slide" and grounded, ground and ground.Instance.Color)
 	animator.step(dt)
 end
 
@@ -256,7 +256,12 @@ function CharacterAnimation.start()
 	Players.PlayerAdded:Connect(watch)
 
 	-- Stepped : après la mise à jour de l'Animator, avant la physique et le rendu.
+	local isStudio = RunService:IsStudio()
 	RunService.Stepped:Connect(function(_, dt: number)
+		-- Studio : l'attribut QA_NoProceduralAnim sur le joueur coupe ce système (diagnostic).
+		if isStudio and localPlayer:GetAttribute("QA_NoProceduralAnim") then
+			return
+		end
 		for character, entry in tracked do
 			if character.Parent == nil then
 				untrack(character)

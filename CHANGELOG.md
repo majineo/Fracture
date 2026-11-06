@@ -5,6 +5,45 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.3.2] — 2026-11-06 — « Poussière »
+
+### Description générale
+Corrections suite à ton test : scintillement du sol et effets de glissade trop discrets.
+
+### Nouvelles fonctionnalités
+- **Effets de glissade renforcés**, teintés selon la couleur du sol : nuage de poussière plus
+  dense (bouffée au démarrage), petits débris projetés vers l'arrière qui retombent, traînée
+  de frottement au sol. Anneau de poussière plus marqué à la réception.
+- Outils de test Studio : joystick simulé (`FractureMovementQA:Invoke("move", direction)`) et
+  coupure des animations (`QA_NoProceduralAnim`) pour les diagnostics.
+
+### Modifications
+- Aucune modification du gameplay.
+
+### Corrections de bugs
+- **Scintillement des textures du sol** : la place de test (Place1) contenait son propre
+  Baseplate dont la surface était exactement à la même hauteur que le sol du projet
+  (z-fighting). Baseplate et point d'apparition en double retirés de Place1. Les places
+  construites par Rojo n'étaient pas concernées.
+
+### Vérifications
+- Vitesse réelle mesurée en sprint : 22,0 studs/s (attendu 22), 1 image lente sur 90, avec ou
+  sans animations : les animations n'ajoutent aucun ralentissement.
+
+### Problèmes connus
+- Sons toujours à valider à l'oreille.
+
+### Fichiers
+- **Modifiés** : `src/client/Core/Animation/MovementEffects.luau`,
+  `src/client/Core/Controllers/{CharacterAnimation,MovementController}.luau`,
+  `src/shared/Config.luau`, `CHANGELOG.md`, `README.md`
+- **Ajoutés / supprimés** : —
+
+### Prochaines étapes
+- v0.4.0 « Combat ».
+
+---
+
 ## [v0.3.1] — 2026-11-06 — « Ressenti »
 
 ### Description générale

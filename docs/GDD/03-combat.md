@@ -37,8 +37,18 @@ au-dessus du Humanoid. La position est simulée côté client et vérifiée côt
 (vitesse maximale, montée maximale, téléportation) ; un grappin n'est autorisé qu'après
 validation serveur (portée, recharge, ligne de vue).
 
-Animations : 📋 aucune animation dédiée pour l'instant (glissade, escalade, grappin) ; la
-caméra s'abaisse pendant la glissade.
+**Ressenti (v0.3.1)** : accélération progressive (9 → 14 studs/s au démarrage), glissade qui
+ralentit en douceur et rend la vitesse sans à-coup, escalade sur une courbe lissée, grappin en
+trois temps (vol du crochet, traction qui accélère, ralentissement à l'arrivée), escalade
+automatique si le grappin arrive face à un rebord (permet d'atteindre des rebords trop hauts
+pour une escalade directe). Commandes retenues 0,18 s si pressées trop tôt, saut possible
+0,12 s après avoir quitté un rebord.
+
+**Animations (v0.3.1)** : ✅ animations procédurales (générées par le code, visibles par tous
+les joueurs) pour la glissade, l'escalade (attraper puis se hisser), le grappin (bras pointé
+vers la cible), le saut, la chute, la réception et l'inclinaison du sprint.
+Caméra : champ de vision élargi en sprint / glissade / grappin, inclinaison en glissade, choc
+à la réception. Effets : poussière de glissade et de réception, sons.
 
 ## 3. Santé et dégâts
 

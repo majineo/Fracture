@@ -18,6 +18,7 @@ local SAFETY_LIFETIME = MovementConfig.GRAPPLE_MAX_TIME + 1
 local GrappleVisuals = {}
 
 local ropes: { [Player]: Rope.Rope } = {}
+local targets: { [Player]: Vector3 } = {}
 
 local function clear(player: Player)
 	local rope = ropes[player]
@@ -25,6 +26,12 @@ local function clear(player: Player)
 		rope.destroy()
 		ropes[player] = nil
 	end
+	targets[player] = nil
+end
+
+-- Cible actuelle du grappin d'un autre joueur (pour orienter son bras), ou nil.
+function GrappleVisuals.getTarget(player: Player): Vector3?
+	return targets[player]
 end
 
 local function onGrappleState(player: any, target: any)
@@ -47,6 +54,7 @@ local function onGrappleState(player: any, target: any)
 	end
 	local rope = Rope.attach(attachment, target)
 	ropes[player] = rope
+	targets[player] = target
 	-- Sécurité : la corde disparaît même si le message de fin se perd.
 	task.delay(SAFETY_LIFETIME, function()
 		if ropes[player] == rope then

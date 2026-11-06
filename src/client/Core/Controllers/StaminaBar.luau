@@ -31,6 +31,7 @@ function StaminaBar.start()
 	frame.BackgroundTransparency = 0.35
 	frame.BorderSizePixel = 0
 	frame.GroupTransparency = 1
+	frame.Visible = false
 	frame.Parent = gui
 
 	local sizeLimit = Instance.new("UISizeConstraint")
@@ -60,8 +61,10 @@ function StaminaBar.start()
 			else COLOR_NORMAL
 		local targetTransparency = if value >= 0.999 then 1 else 0
 		local current = frame.GroupTransparency
-		frame.GroupTransparency = current
-			+ (targetTransparency - current) * math.min(1, dt * FADE_SPEED)
+		local transparency = current + (targetTransparency - current) * math.min(1, dt * FADE_SPEED)
+		frame.GroupTransparency = transparency
+		-- Masquage explicite : certains rendus (captures, appareils) ignorent GroupTransparency.
+		frame.Visible = transparency < 0.98
 	end)
 end
 

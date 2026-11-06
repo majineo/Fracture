@@ -147,3 +147,22 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Choix** : les décors de test (greybox) vivent dans `maps/` et sont synchronisés par Rojo.
   Les positions sont toujours données par la propriété `CFrame` (format explicite) :
   `Position` n'est pas appliquée de façon fiable par Rojo (bug constaté en test).
+
+## D-022 — Animations procédurales plutôt qu'importées (pour l'instant)
+- **Date** : 2026-11-06 · **Version** : v0.3.1 · **Statut** : ✅ Implémentée
+- **Choix** : les animations de mouvement sont générées par le code (poses mélangées par
+  ressorts par-dessus les animations Roblox), sur les deux systèmes d'articulations Roblox
+  (Motor6D et AnimationConstraint). Le mode de chaque joueur est répliqué par le serveur
+  (attribut `MoveMode`) pour que tous voient les mêmes animations.
+- **Raisons** : fonctionnent immédiatement (pas d'import ni de publication d'animation), se
+  règlent dans un seul fichier (`Animation/Poses.luau`), s'adaptent à la situation (bras
+  pointé vers la cible du grappin, poids de la réception selon la hauteur de chute).
+- **Plus tard** : des animations faites main (Blender ou Moon Animator) pourront remplacer
+  certaines poses sans changer le reste.
+
+## D-023 — Ressenti : tout passe par des ressorts
+- **Date** : 2026-11-06 · **Version** : v0.3.1 · **Statut** : ✅ Implémentée
+- **Choix** : vitesse, champ de vision, inclinaison de caméra et poids des animations suivent
+  des ressorts amortis (`Shared/Util/Spring`), jamais des changements instantanés.
+- **Mesure** : plus gros à-coup de vitesse entre deux images ≤ 1 stud/s hors impulsions
+  volontaires (départ de glissade).

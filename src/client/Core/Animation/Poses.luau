@@ -1,0 +1,127 @@
+--!strict
+-- Poses des animations procédurales. Une pose = rotation (et parfois décalage) par articulation.
+-- Studio : StarterPlayer > StarterPlayerScripts > Client > Animation > Poses
+--
+-- Les angles sont en degrés (voir le repère dans JointRig). Pour retoucher une pose :
+-- modifier les valeurs ici, relancer le test. Les articulations absentes d'une pose gardent
+-- l'animation Roblox de base.
+
+export type Pose = { [string]: CFrame }
+
+local function A(x: number, y: number, z: number): CFrame
+	return CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
+end
+
+local Poses = {}
+
+-- Glissade, pieds devant : buste penché en arrière, jambe avant tendue, jambe arrière repliée,
+-- main droite qui frôle le sol, bras gauche en avant pour l'équilibre.
+Poses.Slide = table.freeze({
+	-- Décalage vertical réglé pour que le point le plus bas touche le sol (mesuré : y ≈ 0).
+	Root = CFrame.new(0, -0.38, 0.4) * A(34, 0, 0),
+	Waist = A(10, 0, 0),
+	Neck = A(-32, 0, 0),
+	RightHip = A(48, 0, 4),
+	RightKnee = A(-6, 0, 0),
+	LeftHip = A(10, 0, -6),
+	LeftKnee = A(-100, 0, 0),
+	RightShoulder = A(-35, 0, 30),
+	RightElbow = A(10, 0, 0),
+	LeftShoulder = A(20, 0, -25),
+	LeftElbow = A(40, 0, 0),
+} :: Pose)
+
+-- Escalade, phase 1 : on attrape le rebord, bras levés, jambes qui poussent.
+Poses.MantleReach = table.freeze({
+	Waist = A(-8, 0, 0),
+	Neck = A(10, 0, 0),
+	RightShoulder = A(165, 0, 8),
+	RightElbow = A(15, 0, 0),
+	LeftShoulder = A(165, 0, -8),
+	LeftElbow = A(15, 0, 0),
+	RightHip = A(35, 0, 0),
+	RightKnee = A(-60, 0, 0),
+	LeftHip = A(-10, 0, 0),
+	LeftKnee = A(-25, 0, 0),
+} :: Pose)
+
+-- Escalade, phase 2 : on se hisse, bras qui poussent vers le bas, jambes ramenées.
+Poses.MantleVault = table.freeze({
+	Root = CFrame.new(0, -0.3, 0) * A(-12, 0, 0),
+	Waist = A(-22, 0, 0),
+	Neck = A(15, 0, 0),
+	RightShoulder = A(-15, 0, 12),
+	RightElbow = A(25, 0, 0),
+	LeftShoulder = A(-15, 0, -12),
+	LeftElbow = A(25, 0, 0),
+	RightHip = A(85, 0, 0),
+	RightKnee = A(-110, 0, 0),
+	LeftHip = A(60, 0, 0),
+	LeftKnee = A(-90, 0, 0),
+} :: Pose)
+
+-- Grappin : corps tiré, jambes qui traînent, bras gauche en arrière.
+-- Le bras droit est orienté dynamiquement vers la cible (voir CharacterAnimation).
+Poses.Grapple = table.freeze({
+	Root = A(-8, 0, 0),
+	Waist = A(-10, 0, 0),
+	Neck = A(8, 0, 0),
+	RightElbow = A(5, 0, 0),
+	LeftShoulder = A(-35, 0, -22),
+	LeftElbow = A(30, 0, 0),
+	RightHip = A(-18, 0, 0),
+	RightKnee = A(-45, 0, 0),
+	LeftHip = A(12, 0, 0),
+	LeftKnee = A(-70, 0, 0),
+} :: Pose)
+
+-- Saut, phase montante : jambe avant repliée, bras qui accompagnent vers le haut.
+Poses.JumpRise = table.freeze({
+	Waist = A(-6, 0, 0),
+	RightShoulder = A(45, 0, 22),
+	RightElbow = A(30, 0, 0),
+	LeftShoulder = A(30, 0, -22),
+	LeftElbow = A(30, 0, 0),
+	RightHip = A(55, 0, 0),
+	RightKnee = A(-75, 0, 0),
+	LeftHip = A(-12, 0, 0),
+	LeftKnee = A(-35, 0, 0),
+} :: Pose)
+
+-- Chute : bras écartés pour l'équilibre, jambes légèrement fléchies.
+Poses.Fall = table.freeze({
+	Waist = A(6, 0, 0),
+	Neck = A(-8, 0, 0),
+	RightShoulder = A(25, 0, 70),
+	RightElbow = A(20, 0, 0),
+	LeftShoulder = A(25, 0, -70),
+	LeftElbow = A(20, 0, 0),
+	RightHip = A(22, 0, 0),
+	RightKnee = A(-35, 0, 0),
+	LeftHip = A(8, 0, 0),
+	LeftKnee = A(-20, 0, 0),
+} :: Pose)
+
+-- Réception : accroupi un court instant (poids réglé par la force de l'impact).
+Poses.Land = table.freeze({
+	Root = CFrame.new(0, -0.45, 0), -- pieds au sol (mesuré)
+	Waist = A(-20, 0, 0),
+	Neck = A(12, 0, 0),
+	RightShoulder = A(25, 0, 15),
+	LeftShoulder = A(25, 0, -15),
+	RightHip = A(55, 0, 0),
+	RightKnee = A(-80, 0, 0),
+	LeftHip = A(55, 0, 0),
+	LeftKnee = A(-80, 0, 0),
+	RightAnkle = A(25, 0, 0),
+	LeftAnkle = A(25, 0, 0),
+} :: Pose)
+
+-- Sprint (additif, s'ajoute à l'animation de course) : buste penché vers l'avant.
+Poses.SprintLean = table.freeze({
+	Root = A(-7, 0, 0),
+	Waist = A(-9, 0, 0),
+	Neck = A(10, 0, 0),
+} :: Pose)
+
+return table.freeze(Poses)

@@ -1,19 +1,19 @@
 --!strict
--- Glissade : impulsion horizontale qui ralentit progressivement (plus lentement en descente).
+-- Glissade : impulsion horizontale qui ralentit en douceur (plus lentement en descente).
 -- Studio : StarterPlayer > StarterPlayerScripts > Client > Movement > Slide
 --
 -- Une contrainte LinearVelocity en mode « plan » pilote la vitesse horizontale seulement :
 -- la gravité continue d'agir, donc la glissade suit les pentes et peut tomber d'un rebord.
+-- L'abaissement de la caméra et la pose sont gérés par CameraFeel et CharacterAnimation.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local TweenService = game:GetService("TweenService")
 
 local MovementConfig = require(ReplicatedStorage.Shared.Movement.MovementConfig)
 local Context = require(script.Parent.Context)
 
-local CAMERA_TWEEN = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 local BLOCKED_AFTER = 0.15 -- secondes avant de vérifier si on a heurté un obstacle
 local BLOCKED_RATIO = 0.35 -- vitesse réelle < 35 % de la vitesse visée = bloqué
+-- Doit dominer le freinage du Humanoid au sol (mesuré : ×600 insuffisant, ×3000 suffisant).
 local FORCE_PER_MASS = 3000
 
 local Slide = {}
@@ -31,22 +31,14 @@ function Slide.start(ctx: Context.Context, direction: Vector3): Context.Action
 	velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Plane
 	velocity.PrimaryTangentAxis = Vector3.xAxis
 	velocity.SecondaryTangentAxis = Vector3.zAxis
-	-- Doit dominer le freinage du Humanoid au sol (mesuré : ×600 insuffisant, ×3000 suffisant).
 	velocity.MaxForce = root.AssemblyMass * FORCE_PER_MASS
 	velocity.PlaneVelocity = Vector2.new(dir.X, dir.Z) * cfg.SLIDE_SPEED
 	velocity.Parent = root
 
-	TweenService
-		:Create(
-			humanoid,
-			CAMERA_TWEEN,
-			{ CameraOffset = Vector3.new(0, -cfg.SLIDE_CAMERA_DROP, 0) }
-		)
-		:Play()
-
 	local progress = 0 -- de 0 à SLIDE_DURATION (ralenti en descente)
 	local elapsed = 0
 	local stopped = false
+	local currentSpeed = cfg.SLIDE_SPEED
 
 	local function stop()
 		if stopped then
@@ -54,7 +46,6 @@ function Slide.start(ctx: Context.Context, direction: Vector3): Context.Action
 		end
 		stopped = true
 		velocity:Destroy()
-		TweenService:Create(humanoid, CAMERA_TWEEN, { CameraOffset = Vector3.zero }):Play()
 	end
 
 	local function isDownhill(): boolean
@@ -74,8 +65,10 @@ function Slide.start(ctx: Context.Context, direction: Vector3): Context.Action
 		elapsed += dt
 		progress += dt * (if isDownhill() then cfg.SLIDE_DOWNHILL_TIME_SCALE else 1)
 		local alpha = math.clamp(progress / cfg.SLIDE_DURATION, 0, 1)
-		local speed = cfg.SLIDE_SPEED + (cfg.SLIDE_END_SPEED - cfg.SLIDE_SPEED) * alpha
-		velocity.PlaneVelocity = Vector2.new(dir.X, dir.Z) * speed
+		-- Ralentissement « ease-out » : vite au début, puis on glisse doucement vers la fin.
+		local eased = 1 - (1 - alpha) * (1 - alpha)
+		currentSpeed = cfg.SLIDE_SPEED + (cfg.SLIDE_END_SPEED - cfg.SLIDE_SPEED) * eased
+		velocity.PlaneVelocity = Vector2.new(dir.X, dir.Z) * currentSpeed
 
 		if alpha >= 1 then
 			stop()
@@ -83,7 +76,7 @@ function Slide.start(ctx: Context.Context, direction: Vector3): Context.Action
 		end
 		if
 			elapsed > BLOCKED_AFTER
-			and Context.horizontalVelocity(ctx).Magnitude < speed * BLOCKED_RATIO
+			and Context.horizontalVelocity(ctx).Magnitude < currentSpeed * BLOCKED_RATIO
 		then
 			stop() -- mur ou obstacle
 			return false
@@ -91,7 +84,11 @@ function Slide.start(ctx: Context.Context, direction: Vector3): Context.Action
 		return true
 	end
 
-	return { update = update, stop = stop }
+	local function getProgress(): number
+		return math.clamp(progress / cfg.SLIDE_DURATION, 0, 1)
+	end
+
+	return { update = update, stop = stop, progress = getProgress }
 end
 
 return table.freeze(Slide)

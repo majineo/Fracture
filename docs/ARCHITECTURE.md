@@ -1,6 +1,6 @@
 # Architecture technique
 
-> Dernière mise à jour : v0.3.0 — 2026-11-06
+> Dernière mise à jour : v0.3.1 — 2026-11-06
 
 ## 1. Vue d'ensemble
 
@@ -74,6 +74,7 @@ renvoie une table avec `init` et/ou `start`. Rien d'autre à modifier.
 | `GrappleEnd` | Client → serveur | Fin du grappin |
 | `GrappleState` | Serveur → clients | Corde d'un joueur (cible ou nil) pour l'affichage |
 | `DevCommand` | Client → serveur | Commandes de test, écoutées uniquement dans Studio |
+| `MovementMode` | Client → serveur | Mode de déplacement (visuel), recopié dans l'attribut `MoveMode` |
 
 ## 5. Données joueur
 
@@ -117,7 +118,22 @@ Client (Controllers/MovementController)          Serveur
   s'en sert pour fixer ses limites).
 - Tout système serveur qui déplace un joueur doit appeler `MovementGuard.grace` (téléportation)
   ou `MovementGuard.allow` (vitesse exceptionnelle), sinon le joueur sera ramené en arrière.
-- Outils de test Studio : `Remotes.DevCommand:FireServer("teleport", position)`.
+- Outils de test Studio : `Remotes.DevCommand:FireServer("teleport", position)` côté serveur ;
+  côté client, `PlayerScripts.FractureMovementQA:Invoke("sprint" | "slide" | "jump" | "grapple", …)`
+  simule les commandes du joueur (créé uniquement dans Studio).
+
+### Animations et ressenti (v0.3.1)
+
+```text
+MovementController ──mode──▶ Remotes.MovementMode ──▶ serveur : attribut MoveMode du personnage
+        │                                                         │
+        ▼                                                         ▼
+Controllers/CharacterAnimation (tous les personnages, RunService.Stepped)
+   Animation/PoseAnimator : couches de poses (Animation/Poses) mélangées par ressorts
+   Animation/JointRig     : articulations Motor6D ou AnimationConstraint
+   Animation/MovementEffects + SoundConfig : poussière, sons 3D
+Controllers/CameraFeel : FOV, inclinaison, choc de réception (après la caméra Roblox)
+```
 
 ## 7. Tests
 

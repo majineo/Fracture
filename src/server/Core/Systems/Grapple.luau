@@ -84,7 +84,9 @@ local function onGrappleStart(player: Player, target: unknown)
 	local token = tokenCounter
 	activeToken[player] = token
 
-	local duration = MovementConfig.GRAPPLE_MAX_TIME + 0.5
+	-- Vol du crochet + traction + marge de latence.
+	local hookFlight = offset.Magnitude / MovementConfig.GRAPPLE_HOOK_SPEED
+	local duration = hookFlight + MovementConfig.GRAPPLE_MAX_TIME + 0.5
 	MovementGuard.allow(
 		player,
 		duration,

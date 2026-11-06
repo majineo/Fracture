@@ -5,6 +5,68 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.3.1] — 2026-11-06 — « Ressenti »
+
+### Description générale
+Refonte du ressenti du déplacement après ton test (« lent et de mauvaise qualité ») : les
+mécaniques étaient justes en chiffres mais sans animations, avec des changements de vitesse
+instantanés et aucun retour de caméra ni son. Tout est repris.
+
+### Nouvelles fonctionnalités
+- **Animations** générées par le code, visibles par tous les joueurs : glissade (assis, pieds
+  devant), escalade (attraper puis se hisser), grappin (bras pointé vers la cible, corps tiré),
+  saut, chute (bras écartés), réception (accroupi selon la hauteur), inclinaison du sprint.
+  Compatibles avec les deux systèmes d'articulations Roblox (Motor6D, AnimationConstraint).
+- **Caméra** : champ de vision qui s'élargit en sprint (+7), glissade (+11) et grappin (+15),
+  inclinaison en glissade, petit choc à la réception.
+- **Effets** : poussière en glissade et à la réception ; sons de glissade, de grappin (tir et
+  accroche) et de réception, en 3D.
+- **Grappin en trois temps** : le crochet vole vers la cible (corde molle qui se tend), la
+  traction part de ta vitesse actuelle et accélère, puis ralentit à l'arrivée.
+- **Escalade automatique en fin de grappin** si on arrive face à un rebord : permet d'atteindre
+  des rebords trop hauts pour une escalade directe.
+- **Tolérance des commandes** : glissade et escalade pressées 0,18 s trop tôt sont retenues ;
+  saut possible 0,12 s après avoir quitté un rebord.
+- Ressort amorti réutilisable (`Shared/Util/Spring`) avec 5 tests : 50 tests au total.
+- Point de test Studio côté client (`FractureMovementQA`) pour piloter le vrai contrôleur.
+
+### Modifications
+- Vitesse progressive : démarrage à 9 studs/s puis accélération, passage marche ↔ sprint en
+  douceur, sortie de glissade sans à-coup (mesuré : ≤ 1 stud/s de variation par image).
+- Glissade : ralentissement « ease-out » au lieu de linéaire.
+- Escalade : trajectoire courbe lissée, durée selon la hauteur (0,3 à 0,47 s), sortie avec un
+  léger élan vers l'avant, plus de changement d'état brutal à la fin.
+- Grappin : s'arrête à 3,5 studs de la cible (au lieu de 6), le corps se tourne vers la cible.
+- La garde serveur tient compte du temps de vol du crochet.
+
+### Corrections de bugs
+- La jauge d'endurance pouvait rester affichée alors qu'elle était pleine.
+
+### Problèmes connus
+- **Sons choisis sans écoute** (bibliothèque gratuite Roblox) : à valider à l'oreille, et à
+  remplacer si besoin dans `src/client/Core/Animation/SoundConfig.luau`.
+- Les animations ont été vérifiées par mesure des angles et par captures de poses fixes ; le
+  rendu en mouvement reste à juger par toi.
+- La hitbox ne se baisse toujours pas pendant la glissade.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Util/Spring.luau`, `src/client/Core/Animation/{JointRig,Poses,PoseAnimator,MovementEffects,SoundConfig}.luau`,
+  `src/client/Core/Controllers/{CharacterAnimation,CameraFeel}.luau`,
+  `src/server/Core/Systems/MovementState.luau`, `tests/specs/Spring.spec.luau`
+- **Modifiés** : `src/client/Core/Controllers/{MovementController,GrappleVisuals,StaminaBar}.luau`,
+  `src/client/Core/Movement/{Context,Slide,Mantle,Grapple,Rope}.luau`,
+  `src/server/Core/Systems/Grapple.luau`, `src/shared/Movement/MovementConfig.luau`,
+  `src/shared/Net/Definitions.luau`, `src/shared/Config.luau`, `tests/run.luau`, `README.md`,
+  `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ASSETS.md`,
+  `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Ton test à la main ; retouches de poses, de vitesses et de sons selon ton retour.
+- v0.4.0 « Combat ».
+
+---
+
 ## [v0.3.0] — 2026-11-06 — « Mouvement »
 
 ### Description générale

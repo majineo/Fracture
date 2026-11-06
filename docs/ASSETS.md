@@ -36,6 +36,7 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 14 | Arbalétrier figé | Créature | 📋 À créer | Même rig que #13 |
 | 15 | Le Roi Sans Heure | Gardien | 📋 À créer | En dernier ; rig dédié, ~10 animations |
 | 16 | Refuge (tour d'horlogerie, engrenages) | Décor | 📋 À créer | Compact |
-| 17 | Animation de glissade | Animation (R15) | 📋 À créer | ~0,8 s, en boucle courte ; Blender ou Moon Animator |
-| 18 | Animation d'escalade de rebord | Animation (R15) | 📋 À créer | 0,35 s |
-| 19 | Pose de traction au grappin | Animation (R15) | 📋 À créer | Bras tendu vers la cible |
+| 17 | Animation de glissade | Animation (R15) | ✅ Procédurale (v0.3.1) | Remplaçable plus tard par une animation faite main |
+| 18 | Animation d'escalade de rebord | Animation (R15) | ✅ Procédurale (v0.3.1) | Deux poses : attraper, se hisser |
+| 19 | Pose de traction au grappin | Animation (R15) | ✅ Procédurale (v0.3.1) | Bras orienté dynamiquement vers la cible |
+| 20 | Sons de déplacement (glissade, grappin, réception) | Audio | 📦 Provisoires | Sons gratuits du Creator Store choisis sans écoute : à valider (`Animation/SoundConfig.luau`) |

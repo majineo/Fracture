@@ -7,6 +7,12 @@ return table.freeze({
 	-- Marche et sprint (studs/s)
 	WALK_SPEED = 14,
 	SPRINT_SPEED = 22,
+	START_SPEED = 9, -- vitesse au premier pas (on accélère ensuite jusqu'à la marche)
+	ACCELERATION_STIFFNESS = 9, -- raideur du ressort de vitesse (plus haut = plus nerveux)
+
+	-- Tolérance des commandes
+	INPUT_BUFFER = 0.18, -- une commande pressée un peu trop tôt est retenue ce temps-là
+	COYOTE_TIME = 0.12, -- on peut encore sauter ce temps-là après avoir quitté un rebord
 
 	-- Endurance (0 à 1)
 	SPRINT_DURATION = 6, -- secondes de sprint avec une jauge pleine
@@ -35,6 +41,11 @@ return table.freeze({
 	GRAPPLE_SPEED = 70,
 	GRAPPLE_COOLDOWN = 8,
 	GRAPPLE_MAX_TIME = 1.6,
-	GRAPPLE_STOP_DISTANCE = 6,
+	GRAPPLE_STOP_DISTANCE = 3.5,
+	GRAPPLE_MANTLE_REACH = 5, -- en fin de grappin, on cherche un rebord jusqu'à cette distance
 	GRAPPLE_RELEASE_BOOST = 18, -- petite impulsion vers le haut en lâchant (saut)
+	GRAPPLE_HOOK_SPEED = 320, -- vitesse du crochet avant qu'il s'accroche
+	GRAPPLE_ACCELERATION = 5, -- raideur de la mise en traction
+	GRAPPLE_SLOWDOWN_DISTANCE = 12, -- on ralentit en approchant de la cible
+	GRAPPLE_ARRIVAL_SPEED = 28,
 })

@@ -4,6 +4,7 @@
 --
 -- Détection : un rayon vers l'avant trouve le mur, un rayon vers le bas (depuis au-dessus du
 -- mur) trouve le dessus du rebord, puis on vérifie qu'il y a la place de s'y tenir debout.
+-- Mouvement : courbe lissée (accélère puis ralentit), durée selon la hauteur.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
@@ -13,13 +14,22 @@ local Context = require(script.Parent.Context)
 local WALKABLE_NORMAL_Y = 0.7 -- dessus du rebord assez plat pour s'y tenir
 local LEDGE_INSET = 1.2 -- on se pose à cette distance derrière le bord
 local BODY_SIZE = Vector3.new(2, 4.5, 2) -- volume à libérer pour se tenir debout
-local RISE_SHARE = 0.6 -- part du temps passée à monter (le reste : avancer)
+local RISE_SHARE = 0.55 -- part du trajet passée à monter (le reste : avancer)
+local BASE_DURATION = 0.22
+local DURATION_PER_STUD = 0.035
+local EXIT_SPEED = 10 -- vitesse vers l'avant conservée en arrivant sur le rebord
 
 local Mantle = {}
 
+local function smoothstep(t: number): number
+	return t * t * (3 - 2 * t)
+end
+
 -- Cherche un rebord escaladable devant le joueur. Renvoie la position finale de la racine.
-function Mantle.find(ctx: Context.Context): CFrame?
+-- `reach` : distance de recherche du mur (plus grande en sortie de grappin).
+function Mantle.find(ctx: Context.Context, reach: number?): CFrame?
 	local cfg = MovementConfig
+	local wallReach = reach or cfg.MANTLE_REACH
 	local root = ctx.root
 	local look = root.CFrame.LookVector
 	local forward = Vector3.new(look.X, 0, look.Z)
@@ -32,10 +42,10 @@ function Mantle.find(ctx: Context.Context): CFrame?
 	local rootToFeet = root.Position.Y - feetY
 
 	-- 1. Un mur devant, à hauteur de poitrine ou de genoux.
-	local wall = workspace:Raycast(root.Position, forward * cfg.MANTLE_REACH, ctx.rayParams)
+	local wall = workspace:Raycast(root.Position, forward * wallReach, ctx.rayParams)
 		or workspace:Raycast(
 			Vector3.new(root.Position.X, feetY + 1, root.Position.Z),
-			forward * cfg.MANTLE_REACH,
+			forward * wallReach,
 			ctx.rayParams
 		)
 	if wall == nil or math.abs(wall.Normal.Y) > 0.3 then
@@ -57,7 +67,7 @@ function Mantle.find(ctx: Context.Context): CFrame?
 		return nil
 	end
 	local height = ledge.Position.Y - feetY
-	if height < cfg.MANTLE_MIN_HEIGHT or height > cfg.MANTLE_MAX_HEIGHT then
+	if height < cfg.MANTLE_MIN_HEIGHT or height > cfg.MANTLE_MAX_HEIGHT + 0.05 then
 		return nil
 	end
 
@@ -75,13 +85,13 @@ function Mantle.find(ctx: Context.Context): CFrame?
 end
 
 function Mantle.start(ctx: Context.Context, target: CFrame): Context.Action
-	local cfg = MovementConfig
 	local root, humanoid = ctx.root, ctx.humanoid
-	local startCFrame = root.CFrame
+	local from = root.Position
 	local rotation = target.Rotation
-	local from = startCFrame.Position
-	local top = Vector3.new(from.X, target.Position.Y, from.Z)
 	local to = target.Position
+	local rise = math.max(0, to.Y - from.Y)
+	local duration = BASE_DURATION + DURATION_PER_STUD * rise
+	local forward = rotation.LookVector
 
 	humanoid.AutoRotate = false
 	humanoid:ChangeState(Enum.HumanoidStateType.Physics)
@@ -96,7 +106,9 @@ function Mantle.start(ctx: Context.Context, target: CFrame): Context.Action
 		stopped = true
 		humanoid.AutoRotate = true
 		if humanoid.Health > 0 then
-			humanoid:ChangeState(Enum.HumanoidStateType.Running)
+			-- On repart en chute libre : le Humanoid atterrit tout seul, sans à-coup.
+			humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+			root.AssemblyLinearVelocity = forward * EXIT_SPEED
 		end
 	end
 
@@ -105,23 +117,30 @@ function Mantle.start(ctx: Context.Context, target: CFrame): Context.Action
 			return false
 		end
 		elapsed += dt
-		local alpha = math.clamp(elapsed / cfg.MANTLE_DURATION, 0, 1)
-		local position
-		if alpha < RISE_SHARE then
-			position = from:Lerp(top, alpha / RISE_SHARE)
-		else
-			position = top:Lerp(to, (alpha - RISE_SHARE) / (1 - RISE_SHARE))
-		end
-		root.CFrame = CFrame.new(position) * rotation
+		local t = math.clamp(elapsed / duration, 0, 1)
+		-- Montée et avancée se chevauchent pour une trajectoire courbe.
+		local up = smoothstep(math.clamp(t / RISE_SHARE, 0, 1))
+		local ahead = smoothstep(math.clamp((t - RISE_SHARE * 0.6) / (1 - RISE_SHARE * 0.6), 0, 1))
+		local position = Vector3.new(
+			from.X + (to.X - from.X) * ahead,
+			from.Y + (to.Y - from.Y) * up,
+			from.Z + (to.Z - from.Z) * ahead
+		)
+		local turn = root.CFrame.Rotation:Lerp(rotation, math.min(1, dt * 18))
+		root.CFrame = CFrame.new(position) * turn
 		root.AssemblyLinearVelocity = Vector3.zero
-		if alpha >= 1 then
+		if t >= 1 then
 			stop()
 			return false
 		end
 		return true
 	end
 
-	return { update = update, stop = stop }
+	local function getProgress(): number
+		return math.clamp(elapsed / duration, 0, 1)
+	end
+
+	return { update = update, stop = stop, progress = getProgress }
 end
 
 return table.freeze(Mantle)

@@ -16,6 +16,8 @@ export type Action = {
 	update: (dt: number) -> boolean,
 	-- Interrompt le mouvement et nettoie tout ce qu'il a créé.
 	stop: (boost: boolean?) -> (),
+	-- Avancement de 0 à 1 (pour les animations).
+	progress: () -> number,
 }
 
 local Context = {}

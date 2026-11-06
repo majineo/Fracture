@@ -24,6 +24,7 @@ export type RemoteName =
 	| "GrappleEnd"
 	| "GrappleState"
 	| "DevCommand"
+	| "MovementMode"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -37,6 +38,11 @@ local Definitions: { [string]: RemoteDef } = {
 	GrappleEnd = { direction = "ToServer", rate = 2, burst = 3 },
 	-- Le serveur informe tous les clients d'un grappin (joueur, cible ou nil) pour la corde.
 	GrappleState = { direction = "ToClient" },
+
+	-- Mode de déplacement du joueur ("Normal", "Slide", "Mantle", "Grapple") : purement visuel,
+	-- recopié par le serveur dans l'attribut "MoveMode" du personnage pour que tous les clients
+	-- jouent la bonne animation. Ne donne aucun droit (la garde de mouvement reste seule juge).
+	MovementMode = { direction = "ToServer", rate = 10, burst = 20 },
 
 	-- Commandes de test. Écoutées UNIQUEMENT dans Studio (voir Server > Systems > DevTools) :
 	-- en jeu publié, ce remote existe mais personne ne l'écoute.

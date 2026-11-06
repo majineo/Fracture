@@ -13,6 +13,7 @@ local specs = {
 	require("./specs/SessionLock.spec"),
 	require("./specs/Stamina.spec"),
 	require("./specs/MovementValidator.spec"),
+	require("./specs/Spring.spec"),
 }
 
 for _, spec in specs do

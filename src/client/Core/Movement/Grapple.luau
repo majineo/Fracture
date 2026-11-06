@@ -1,19 +1,23 @@
 --!strict
--- Grappin : on vise une surface à 60 studs maximum, la corde nous tire vers elle.
+-- Grappin : le crochet vole vers une surface (60 studs max), s'accroche, puis la corde tire.
 -- Studio : StarterPlayer > StarterPlayerScripts > Client > Movement > Grapple
 --
--- Le mouvement est simulé localement (réactivité immédiate). Le serveur reçoit la cible,
--- la vérifie (portée, recharge, ligne de vue) et autorise alors la vitesse correspondante ;
--- un grappin refusé est rattrapé par la garde de mouvement du serveur.
+-- Phases : vol du crochet (corde molle) → traction qui accélère → ralentissement à l'arrivée.
+-- Le mouvement est simulé localement (réactivité). Le serveur reçoit la cible dès le tir, la
+-- vérifie (portée, recharge, ligne de vue) et autorise alors la vitesse correspondante ; un
+-- grappin refusé est rattrapé par la garde de mouvement du serveur.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UserInputService = game:GetService("UserInputService")
 
 local MovementConfig = require(ReplicatedStorage.Shared.Movement.MovementConfig)
+local Spring = require(ReplicatedStorage.Shared.Util.Spring)
 local Context = require(script.Parent.Context)
 local Rope = require(script.Parent.Rope)
 
 local LINE_OF_SIGHT_TOLERANCE = 2
+local FORCE_PER_MASS = 3000 -- doit dominer le Humanoid et la gravité (mesuré en v0.3.0)
+local INITIAL_SLACK = 4
 
 local Grapple = {}
 
@@ -58,22 +62,17 @@ end
 
 function Grapple.start(ctx: Context.Context, target: Vector3): Context.Action
 	local cfg = MovementConfig
-	local root = ctx.root
+	local root, humanoid = ctx.root, ctx.humanoid
 
-	local velocity = Instance.new("LinearVelocity")
-	velocity.Name = "GrappleVelocity"
-	velocity.Attachment0 = ctx.attachment
-	velocity.RelativeTo = Enum.ActuatorRelativeTo.World
-	velocity.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
-	-- Doit dominer le Humanoid et la gravité (même mesure que la glissade).
-	velocity.MaxForce = root.AssemblyMass * 3000
-	velocity.VectorVelocity = (target - root.Position).Unit * cfg.GRAPPLE_SPEED
-	velocity.Parent = root
+	local distance = (target - root.Position).Magnitude
+	local flightTime = distance / cfg.GRAPPLE_HOOK_SPEED
+	local rope = Rope.attach(ctx.attachment, root.Position)
+	rope.setSlack(INITIAL_SLACK)
 
-	local rope = Rope.attach(ctx.attachment, target)
-	ctx.humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
-
+	local velocity: LinearVelocity? = nil
+	local speed = Spring.new(0, cfg.GRAPPLE_ACCELERATION)
 	local elapsed = 0
+	local pullTime = 0
 	local stopped = false
 
 	local function stop(boost: boolean?)
@@ -81,8 +80,11 @@ function Grapple.start(ctx: Context.Context, target: Vector3): Context.Action
 			return
 		end
 		stopped = true
-		velocity:Destroy()
+		if velocity then
+			velocity:Destroy()
+		end
 		rope.destroy()
+		humanoid.AutoRotate = true
 		if boost then
 			local v = root.AssemblyLinearVelocity
 			root.AssemblyLinearVelocity =
@@ -90,21 +92,80 @@ function Grapple.start(ctx: Context.Context, target: Vector3): Context.Action
 		end
 	end
 
+	local function beginPull()
+		local created = Instance.new("LinearVelocity")
+		created.Name = "GrappleVelocity"
+		created.Attachment0 = ctx.attachment
+		created.RelativeTo = Enum.ActuatorRelativeTo.World
+		created.VelocityConstraintMode = Enum.VelocityConstraintMode.Vector
+		created.MaxForce = root.AssemblyMass * FORCE_PER_MASS
+		created.VectorVelocity = root.AssemblyLinearVelocity
+		created.Parent = root
+		velocity = created
+		-- La traction part de la vitesse actuelle vers la cible.
+		local toward = (target - root.Position).Unit
+		Spring.snap(speed, math.max(0, root.AssemblyLinearVelocity:Dot(toward)))
+		speed.target = cfg.GRAPPLE_SPEED
+		humanoid.AutoRotate = false
+		humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+	end
+
 	local function update(dt: number): boolean
 		if stopped then
 			return false
 		end
 		elapsed += dt
+
+		-- 1. Vol du crochet
+		if elapsed < flightTime then
+			local t = elapsed / flightTime
+			rope.setEnd(root.Position:Lerp(target, t))
+			rope.setSlack(INITIAL_SLACK * (1 - t))
+			return true
+		end
+		if velocity == nil then
+			rope.setEnd(target)
+			rope.setSlack(0)
+			beginPull()
+		end
+
+		-- 2. Traction
+		pullTime += dt
 		local offset = target - root.Position
-		if offset.Magnitude <= cfg.GRAPPLE_STOP_DISTANCE or elapsed >= cfg.GRAPPLE_MAX_TIME then
+		local remaining = offset.Magnitude
+		if remaining <= cfg.GRAPPLE_STOP_DISTANCE or pullTime >= cfg.GRAPPLE_MAX_TIME then
 			stop(false)
 			return false
 		end
-		velocity.VectorVelocity = offset.Unit * cfg.GRAPPLE_SPEED
+		-- Ralentissement en approche : la vitesse visée baisse dans les derniers studs.
+		local approach = math.clamp(
+			(remaining - cfg.GRAPPLE_STOP_DISTANCE) / cfg.GRAPPLE_SLOWDOWN_DISTANCE,
+			0,
+			1
+		)
+		speed.target = cfg.GRAPPLE_ARRIVAL_SPEED
+			+ (cfg.GRAPPLE_SPEED - cfg.GRAPPLE_ARRIVAL_SPEED) * approach
+		local currentSpeed = Spring.step(speed, dt)
+		local direction = offset.Unit;
+		(velocity :: LinearVelocity).VectorVelocity = direction * currentSpeed
+
+		-- Le corps se tourne vers la cible (horizontalement).
+		local flat = Vector3.new(direction.X, 0, direction.Z)
+		if flat.Magnitude > 0.1 then
+			local facing = CFrame.lookAt(root.Position, root.Position + flat)
+			root.CFrame = root.CFrame:Lerp(facing, math.min(1, dt * 12))
+		end
 		return true
 	end
 
-	return { update = update, stop = stop }
+	local function getProgress(): number
+		if elapsed < flightTime then
+			return 0
+		end
+		return math.clamp(pullTime / cfg.GRAPPLE_MAX_TIME, 0, 1)
+	end
+
+	return { update = update, stop = stop, progress = getProgress }
 end
 
 return table.freeze(Grapple)

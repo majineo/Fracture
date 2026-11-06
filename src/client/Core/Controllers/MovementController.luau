@@ -31,6 +31,7 @@ local MovementConfig =
 local Stamina = require(Shared.Movement:WaitForChild("Stamina")) :: any
 local Signal = require(Shared:WaitForChild("Util"):WaitForChild("Signal")) :: any
 local Spring = require(Shared.Util:WaitForChild("Spring")) :: any
+local CombatConfig = require(Shared:WaitForChild("Combat"):WaitForChild("CombatConfig")) :: any
 
 local Client = script.Parent.Parent
 local Net = require(Client.Lib.Net)
@@ -115,6 +116,11 @@ local function onGround(context: Context.Context): boolean
 	return context.humanoid.FloorMaterial ~= Enum.Material.Air
 end
 
+-- À terre (attribut publié par le serveur) : on rampe, aucun mouvement spécial.
+local function isDowned(context: Context.Context?): boolean
+	return context ~= nil and context.character:GetAttribute("Downed") == true
+end
+
 -- Actions ------------------------------------------------------------------------------
 
 local function startMantle(context: Context.Context, target: CFrame)
@@ -126,7 +132,7 @@ end
 -- Renvoie true si la glissade a démarré.
 local function trySlide(): boolean
 	local context = ctx
-	if context == nil or mode ~= "Normal" or not onGround(context) then
+	if context == nil or mode ~= "Normal" or not onGround(context) or isDowned(context) then
 		return false
 	end
 	if os.clock() - lastSlide < MovementConfig.SLIDE_COOLDOWN then
@@ -148,7 +154,7 @@ end
 
 local function tryGrapple(useScreenCenter: boolean)
 	local context = ctx
-	if context == nil or mode == "Mantle" or mode == "Grapple" then
+	if context == nil or mode == "Mantle" or mode == "Grapple" or isDowned(context) then
 		return
 	end
 	if os.clock() - lastGrapple < MovementConfig.GRAPPLE_COOLDOWN then
@@ -171,7 +177,7 @@ end
 -- Renvoie true si une escalade a démarré.
 local function tryMantle(reach: number?): boolean
 	local context = ctx
-	if context == nil or mode ~= "Normal" then
+	if context == nil or mode ~= "Normal" or isDowned(context) then
 		return false
 	end
 	local target = Mantle.find(context, reach)
@@ -346,6 +352,22 @@ local function onHeartbeat(dt: number)
 	end
 
 	updateGrounding(context)
+
+	-- À terre : on interrompt tout mouvement spécial, on rampe, on ne saute plus.
+	local downed = isDowned(context)
+	if downed then
+		if action then
+			endAction()
+		end
+		sprintToggled = false
+		sprinting = false
+		context.humanoid.JumpHeight = 0
+		context.humanoid.WalkSpeed = CombatConfig.DOWNED_WALK_SPEED
+		Stamina.step(stamina, dt, false, MovementConfig)
+		return
+	elseif context.humanoid.JumpHeight == 0 then
+		context.humanoid.JumpHeight = 7.2
+	end
 
 	-- Commandes retenues
 	local now = os.clock()

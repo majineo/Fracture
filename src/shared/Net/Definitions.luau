@@ -25,6 +25,13 @@ export type RemoteName =
 	| "GrappleState"
 	| "DevCommand"
 	| "MovementMode"
+	| "EquipWeapon"
+	| "FireWeapon"
+	| "ReloadWeapon"
+	| "MeleeSwing"
+	| "WeaponState"
+	| "CombatEvent"
+	| "ShotFx"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -43,6 +50,19 @@ local Definitions: { [string]: RemoteDef } = {
 	-- recopié par le serveur dans l'attribut "MoveMode" du personnage pour que tous les clients
 	-- jouent la bonne animation. Ne donne aucun droit (la garde de mouvement reste seule juge).
 	MovementMode = { direction = "ToServer", rate = 10, burst = 20 },
+
+	-- Combat. Le client annonce ce qu'il fait ; le serveur vérifie tout (arme équipée, cadence,
+	-- munitions, origin du tir, ligne de vue) et calcule lui-même les touches et les dégâts.
+	EquipWeapon = { direction = "ToServer", rate = 6, burst = 8 }, -- (emplacement)
+	FireWeapon = { direction = "ToServer", rate = 15, burst = 15 }, -- (origine, direction, heure)
+	ReloadWeapon = { direction = "ToServer", rate = 2, burst = 3 },
+	MeleeSwing = { direction = "ToServer", rate = 5, burst = 5 }, -- (chargée, direction, heure)
+	-- Le serveur envoie au joueur l'état réel de son arme : (idArme, munitions, rechargeFin?)
+	WeaponState = { direction = "ToClient" },
+	-- Au tireur : touche confirmée ; à la victime : dégâts reçus. (table d'informations)
+	CombatEvent = { direction = "ToClient" },
+	-- À tous : effet visuel d'un tir ou d'un coup d'un autre joueur.
+	ShotFx = { direction = "ToClient" },
 
 	-- Commandes de test. Écoutées UNIQUEMENT dans Studio (voir Server > Systems > DevTools) :
 	-- en jeu publié, ce remote existe mais personne ne l'écoute.

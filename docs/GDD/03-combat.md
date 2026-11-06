@@ -16,6 +16,7 @@
 | Glissade | C pendant le sprint | Bouton accroupi pendant le sprint | B |
 | Saut / escalade | Espace | Bouton saut | A |
 | Capacité 1 / 2 | Q / E | Deux boutons | LB / RB |
+| Arme 1 / 2 (même touche = ranger) | 1 / 2 | Bouton Arme (fait défiler) | Croix ◀ / ▶ |
 | Recharger | R | Bouton | X |
 | Interagir | F | Bouton contextuel | Y |
 
@@ -52,6 +53,9 @@ Caméra : champ de vision élargi en sprint / glissade / grappin, inclinaison en
 
 ## 3. Santé et dégâts
 
+✅ Implémenté en v0.4.0 (santé, armure, à terre, tête ×1,5, chute des dégâts avec la
+distance). La réanimation par un coéquipier arrive avec les escouades.
+
 - **Santé** : 100. **Armure** : 0 à 50 points selon l'équipement, absorbe les dégâts en premier.
 - Pas de régénération naturelle : bandages (lent) et injecteurs (rapide) en consommables.
 - **Coups à la tête** : ×1,5 pour les armes à distance.
@@ -60,6 +64,10 @@ Caméra : champ de vision élargi en sprint / glissade / grappin, inclinaison en
 - **Joueur à terre** : à 0 santé, le joueur rampe pendant 20 s ; il peut être réanimé ou achevé.
 
 ## 4. Armes de la vertical slice
+
+✅ v0.4.0 : pistolet de Fractureur (24 dégâts, 5 tirs/s, 12 balles, 1,4 s de rechargement,
+pleins dégâts jusqu'à 35 studs puis 55 % à 90 studs) et lame courte (30, attaque chargée
+×1,8 après 0,6 s, cône de 75° sur 6,5 studs). 📋 Les trois autres en v0.4.1.
 
 | Arme | Type | Source | Rôle |
 |---|---|---|---|

@@ -135,7 +135,25 @@ Controllers/CharacterAnimation (tous les personnages, RunService.Stepped)
 Controllers/CameraFeel : FOV, inclinaison, choc de réception (après la caméra Roblox)
 ```
 
-## 7. Tests
+## 7. Combat (v0.4.0)
+
+```text
+Client : Controllers/CombatController ── FireWeapon(origine, direction, heure) ──▶ Serveur
+           tir affiché tout de suite          MeleeSwing(chargée, direction, heure)   Systems/WeaponService
+           (traçante, son, recul)             EquipWeapon(emplacement), ReloadWeapon     vérifie tout, puis
+                                                                                           Lib/PositionHistory + Systems/CombatTargets
+         ◀── CombatEvent (touche / dégâts reçus), WeaponState (munitions réelles) ──     (cibles remontées dans le temps)
+         ◀── ShotFx (tirs et coups des autres joueurs)                                    Systems/HealthService (seul à modifier la santé)
+Controllers/CombatHUD : réticule, marqueur, munitions, santé, dégâts reçus, « à terre »
+```
+
+- Santé publiée en attributs sur le modèle : `Health`, `MaxHealth`, `Armor`, `MaxArmor`,
+  `Downed`, `DownedHealth`, `Dead`, `EquippedWeapon`.
+- Statistiques des armes : `Shared/Combat/WeaponDefs` (le serveur ne lit que celles-ci).
+- Logique pure testée : `Damage`, `WeaponState`, `HitMath`, `PositionHistory`.
+- Tests Studio côté client : `PlayerScripts.FractureCombatQA:Invoke("equip" | "fire" | "fireAt" | "reload" | "aim", …)`.
+
+## 8. Tests
 
 | Niveau | Outil | Ce qui est couvert |
 |---|---|---|
@@ -145,7 +163,7 @@ Controllers/CameraFeel : FOV, inclinaison, choc de réception (après la caméra
 Règle : la logique importante est écrite en **modules purs** (sans dépendance Roblox, horloge
 et attentes injectables) pour être testable hors Studio.
 
-## 8. Prévu
+## 9. Prévu
 
 - 📋 Téléportation Refuge ↔ Éclat et file d'attente (MemoryStore) — nécessite de publier les
   deux places dans un même univers Roblox.

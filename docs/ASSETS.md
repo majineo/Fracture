@@ -23,8 +23,10 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 1 | Relique « Pas de Faille » | Objet | 📋 À créer | Premier modèle : valide le pipeline Blender → Studio |
 | 2 | Relique « Stase » | Objet | 📋 À créer | |
 | 3 | Relique « Onde de choc » | Objet | 📋 À créer | |
-| 4 | Lame courte | Arme | 📋 À créer | Équipement de base |
-| 5 | Pistolet de Fractureur | Arme | 📋 À créer | Équipement de base, style bricolage d'époques |
+| 4 | Lame courte | Arme | 📋 À créer (forme provisoire en jeu) | Équipement de base. Intégration : `ServerStorage > WeaponModels > weapon.short_blade` avec une pièce « Grip », lame vers -Z |
+| 5 | Pistolet de Fractureur | Arme | 📋 À créer (forme provisoire en jeu) | Équipement de base, style bricolage d'époques. `ServerStorage > WeaponModels > weapon.fracture_pistol`, pièce « Grip », canon vers -Z, attachement « Muzzle » au bout du canon |
+| 21 | Mannequin d'entraînement | Décor | 📋 À créer (avatar gris provisoire) | Champ de tir du Refuge |
+| 22 | Sons de combat (tir, rechargement, coups, touche) | Audio | 📦 Provisoires | `src/client/Core/Combat/CombatSounds.luau` ; à valider à l'oreille |
 | 6 | Fusil à répétition | Arme | 📋 À créer | |
 | 7 | Arbalète lourde | Arme | 📋 À créer | Époque médiévale |
 | 8 | Épée longue | Arme | 📋 À créer | Époque médiévale |

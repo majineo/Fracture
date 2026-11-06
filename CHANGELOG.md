@@ -5,6 +5,79 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.0] — 2026-11-06 — « Combat »
+
+### Description générale
+Première version du combat : équipement de base (pistolet de Fractureur, lame courte), visée
+par-dessus l'épaule, dégâts calculés par le serveur avec compensation de latence, santé et
+armure, mise à terre, mannequins d'entraînement au Refuge.
+
+### Nouvelles fonctionnalités
+- **Pistolet** : 24 dégâts, tête ×1,5, 5 tirs/s, 12 balles, rechargement 1,4 s, chute des
+  dégâts de 35 à 90 studs (55 % au minimum), dispersion qui grandit en courant, en l'air et en
+  enchaînant les tirs, très réduite en visée.
+- **Lame courte** : 30 dégâts, attaque chargée (maintenir 0,6 s) ×1,8, cône de 75° sur 6,5 studs.
+- **Visée** : caméra par-dessus l'épaule, zoom en visée, réticule dynamique, souris verrouillée
+  au centre sur PC, personnage tourné vers la caméra ; recul de caméra.
+- **Serveur** : vérification de chaque tir (arme, cadence, munitions, origine, mur), cibles
+  remontées dans le temps pour juger le tir sur ce que le tireur voyait.
+- **Santé / armure / à terre** : 100 PV + 15 d'armure ; à 0, un joueur tombe à terre (rampe,
+  20 s, 30 de « santé à terre ») ; publiée en attributs pour l'interface.
+- **Interface** : réticule, marqueur de touche (blanc / orange tête / rouge KO), chiffres de
+  dégâts, munitions, barres santé et armure, bords rouges et flèche de direction des dégâts
+  reçus, écran « À TERRE », barres de vie des mannequins.
+- **Effets** : traçantes, lueur de bouche, impacts teintés selon la surface, traînée de lame.
+- **Animations** : pistolet tenu à deux mains et pointé vers la cible, lame en garde, coups
+  (balayage ou coup vertical chargé, préparation visible), pose à terre.
+- **Armes visibles par tous** (formes provisoires), remplaçables par des modèles Blender.
+- **Champ de tir** au Refuge : mannequin proche, lointain et mobile ; brisés à 0, réparés en 3 s.
+- 14 nouveaux tests unitaires (Damage, WeaponState, HitMath, PositionHistory) : 64 au total.
+
+### Modifications
+- La caméra (CameraFeel) gère aussi le décalage d'épaule, le zoom de visée et le recul.
+- Le déplacement est bridé à terre (vitesse 4, plus de saut ni de mouvement spécial).
+
+### Corrections de bugs
+- Détecté en test : le canon de l'arme pointait vers l'arrière (orientation des mains du
+  nouveau système d'articulations). Corrigé.
+- Détecté en test : bras gauche écarté vers l'extérieur en visée. Corrigé (soutien à deux mains).
+- Détecté par les tests unitaires : arrondi qui pouvait refuser un tir à la cadence exacte.
+
+### Vérifications
+- Mannequin proche : 24 au corps, 36 à la tête. Chute des dégâts : 18,9 à 60 studs, 13,9 à 90.
+- Lame : 30 / 30 / 30 / 54 (chargée), mise KO puis réparation à 150 PV en 3 s.
+- Compensation de latence : 8 touches sur 10 sur une cible à 12 studs/s avec 200 ms de latence.
+
+### Problèmes connus
+- **Non testé à plusieurs joueurs** : PvP et mise à terre (le PvP n'existe que dans la place
+  Éclat). Test possible dans Studio : onglet Test → Clients et serveur → 2 joueurs, place Éclat.
+- **Trop de boutons tactiles** par défaut sur mobile (déplacement + combat) : une disposition
+  mobile dédiée est prévue en v0.4.1.
+- Sons provisoires, choisis sans écoute.
+- Chez les autres joueurs, le bras du pistolet vise droit devant (l'inclinaison réelle de leur
+  visée n'est pas encore transmise).
+- Pas encore de réanimation par un coéquipier (arrive avec les escouades).
+
+### Fichiers
+- **Ajoutés** : `src/shared/Combat/{CombatConfig,WeaponDefs,Damage,WeaponState,HitMath}.luau`,
+  `src/server/Core/Lib/{PositionHistory,WeaponModels}.luau`,
+  `src/server/Core/Systems/{CombatTargets,HealthService,WeaponService}.luau`,
+  `src/server/Refuge/Systems/TrainingDummies.luau`,
+  `src/client/Core/Combat/{CombatSounds,WeaponFx}.luau`,
+  `src/client/Core/Controllers/{CombatController,CombatHUD}.luau`, `tests/specs/Combat.spec.luau`
+- **Modifiés** : `src/client/Core/Controllers/{CameraFeel,CharacterAnimation,MovementController}.luau`,
+  `src/client/Core/Animation/Poses.luau`, `src/shared/Net/Definitions.luau`,
+  `src/shared/Config.luau`, `tests/run.luau`, `README.md`, `CHANGELOG.md`,
+  `docs/{ARCHITECTURE,DECISIONS,ROADMAP,ASSETS}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Ton test du combat au champ de tir (à l'ouest du point d'apparition).
+- v0.4.1 « Arsenal » : fusil à répétition, arbalète lourde, épée longue, parade, interface
+  mobile dédiée.
+
+---
+
 ## [v0.3.2] — 2026-11-06 — « Poussière »
 
 ### Description générale

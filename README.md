@@ -4,15 +4,15 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.3.2 « Poussière »** · Phase 3 (architecture et prototypage)
+**Version actuelle : v0.4.0 « Combat »** · Phase 3 (architecture et prototypage)
 
 ## État du projet
 
 | Statut | Contenu |
 |---|---|
-| ✅ Implémenté | Deux places (Refuge, Éclat), couche réseau sécurisée, données joueur avec verrou de session, déplacement (sprint, glissade, escalade, grappin) avec garde anti-triche, tests automatiques |
+| ✅ Implémenté | Deux places (Refuge, Éclat), couche réseau sécurisée, données joueur avec verrou de session, déplacement avec animations et garde anti-triche, combat (pistolet, lame, santé, à terre, compensation de latence), champ de tir, tests automatiques |
 | 🔧 En cours | — |
-| 📋 Prévu | Combat (v0.4.0), puis Éclats, extraction (voir [feuille de route](docs/ROADMAP.md)) |
+| 📋 Prévu | Arsenal (v0.4.1), Échoués (v0.4.2), puis Éclats, extraction (voir [feuille de route](docs/ROADMAP.md)) |
 | 💭 À l'étude | Éléments marqués 💭 dans le GDD |
 
 Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
@@ -23,6 +23,12 @@ Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
 | Glisser (en courant) | C ou Ctrl | Bouton Glisser | B |
 | Escalader | Saut face à un rebord | Saut | A |
 | Grappin | G (vise le curseur) | Bouton Grappin (centre de l'écran) | R3 |
+| Pistolet / lame (même touche = ranger) | 1 / 2 | Bouton Arme | Croix ◀ / ▶ |
+| Tirer / frapper (lame : maintenir = coup chargé) | Clic gauche | Bouton Tirer | RT |
+| Viser | Clic droit (maintenir) | Bouton Viser | LT |
+| Recharger | R | Bouton Recharger | X |
+
+Champ de tir : à l'ouest du point d'apparition (3 mannequins, dont un mobile).
 
 ## Documentation
 

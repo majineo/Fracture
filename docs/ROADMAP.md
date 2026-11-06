@@ -10,7 +10,10 @@
 | v0.2.0 | Fondations | Architecture multi-places, réseau (remotes), données joueur sécurisées | ✅ |
 | v0.3.0 | Mouvement | Contrôleur de déplacement (glissade, escalade, grappin) | ✅ |
 | v0.3.1 | Ressenti | Animations, caméra, effets, sons, vitesse progressive | ✅ |
-| v0.4.0 | Combat | Armes, dégâts validés serveur, créatures de base | 📋 |
+| v0.3.2 | Poussière | Effets de glissade, correction du sol | ✅ |
+| v0.4.0 | Combat | Santé/armure/à terre, pistolet et lame, visée, dégâts validés serveur avec compensation de latence, mannequins | ✅ |
+| v0.4.1 | Arsenal | Fusil à répétition, arbalète, épée longue, parade, interface mobile dédiée | 📋 |
+| v0.4.2 | Échoués | Premiers ennemis (homme d'armes, arbalétrier) | 📋 |
 | v0.5.0 | Éclats | Génération procédurale à partir de tuiles, effondrement | 📋 |
 | v0.6.0 | Extraction | Inventaire, butin, extraction transactionnelle, Refuge minimal | 📋 |
 | v0.7.0 | Reliques | Utiliser ou ramener, Codex, Signature | 📋 |

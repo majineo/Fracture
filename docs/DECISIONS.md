@@ -166,3 +166,31 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   des ressorts amortis (`Shared/Util/Spring`), jamais des changements instantanés.
 - **Mesure** : plus gros à-coup de vitesse entre deux images ≤ 1 stud/s hors impulsions
   volontaires (départ de glissade).
+
+## D-024 — Touches jugées par le serveur avec compensation de latence
+- **Date** : 2026-11-06 · **Version** : v0.4.0 · **Statut** : ✅ Implémentée
+- **Choix** : le client envoie origine, direction et heure du tir ; le serveur remonte les
+  cibles dans le temps (historique de 1 s, au plus 0,4 s en arrière, moins la latence du
+  tireur) et teste le rayon contre des zones simplifiées (sphère de tête, boîte de corps,
+  +0,5 stud de tolérance). Le décor arrête le tir.
+- **Mesure** : 8 touches sur 10 sur une cible à 12 studs/s avec 200 ms de latence simulée.
+- **Limite connue** : un tricheur peut toujours viser automatiquement (impossible à prouver
+  côté serveur) ; il ne peut pas tirer plus vite, plus loin, à travers les murs, ni choisir
+  ses dégâts.
+
+## D-025 — Pas de dégâts entre joueurs au Refuge
+- **Date** : 2026-11-06 · **Version** : v0.4.0 · **Statut** : ✅ Implémentée
+- **Choix** : le PvP n'existe que dans la place Éclat. Au Refuge, seules les cibles
+  d'entraînement peuvent être touchées.
+
+## D-026 — Équipement de base : 5 balles pour tuer
+- **Date** : 2026-11-06 · **Version** : v0.4.0 · **Statut** : 💭 À valider en test
+- **Choix** : pistolet 24 dégâts (×1,5 à la tête), 5 tirs/s, 12 balles ; lame 30 (54 chargée).
+  Un joueur en équipement de base (100 PV + 15 d'armure) tombe en 5 balles au corps (0,8 s)
+  ou 4 à la tête. Avec de meilleures armures (v0.6), on visera 1 à 1,5 s (GDD 03).
+
+## D-027 — Armes provisoires remplaçables par des modèles Blender
+- **Date** : 2026-11-06 · **Version** : v0.4.0 · **Statut** : ✅ Implémentée
+- **Choix** : les armes tenues sont des formes simples créées par le code. Un modèle placé
+  dans `ServerStorage > WeaponModels` avec le nom de l'arme (et une pièce « Grip ») les
+  remplace automatiquement, sans changer le code.

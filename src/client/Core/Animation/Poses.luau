@@ -117,6 +117,39 @@ Poses.Land = table.freeze({
 	LeftAnkle = A(25, 0, 0),
 } :: Pose)
 
+-- Pistolet en main (bras droit orienté dynamiquement vers le point visé) : bras gauche en
+-- soutien quand on vise.
+Poses.AimSupport = table.freeze({
+	-- Bras gauche vers l'avant et vers l'intérieur (+Z = vers le centre pour le bras gauche)
+	-- pour venir soutenir la main droite.
+	LeftShoulder = A(85, 0, 62),
+	LeftElbow = A(22, 0, 0),
+	RightElbow = A(5, 0, 0),
+} :: Pose)
+
+-- Lame en main, en garde.
+Poses.BladeGuard = table.freeze({
+	RightShoulder = A(35, 0, 18),
+	RightElbow = A(65, 0, 0),
+	RightWrist = A(-20, 0, 0),
+	LeftShoulder = A(20, 0, -15),
+	LeftElbow = A(30, 0, 0),
+} :: Pose)
+
+-- À terre : allongé sur le ventre, appuyé sur les avant-bras (on rampe).
+Poses.Downed = table.freeze({
+	Root = CFrame.new(0, -2.3, 0) * A(-78, 0, 0),
+	Waist = A(-8, 0, 0),
+	Neck = A(55, 0, 0),
+	RightShoulder = A(150, 0, 20),
+	RightElbow = A(70, 0, 0),
+	LeftShoulder = A(150, 0, -20),
+	LeftElbow = A(70, 0, 0),
+	RightHip = A(-5, 0, 6),
+	LeftHip = A(10, 0, -6),
+	LeftKnee = A(-25, 0, 0),
+} :: Pose)
+
 -- Sprint (additif, s'ajoute à l'animation de course) : buste penché vers l'avant.
 Poses.SprintLean = table.freeze({
 	Root = A(-7, 0, 0),

@@ -16,6 +16,7 @@ local JointRig = require(Client.Animation.JointRig)
 local MovementEffects = require(Client.Animation.MovementEffects)
 local PoseAnimator = require(Client.Animation.PoseAnimator)
 local Poses = require(Client.Animation.Poses)
+local CombatController = require(script.Parent.CombatController)
 local GrappleVisuals = require(script.Parent.GrappleVisuals)
 local MovementController = require(script.Parent.MovementController)
 
@@ -60,8 +61,37 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	animator.addLayer("MantleReach", Poses.MantleReach, false, 24)
 	animator.addLayer("MantleVault", Poses.MantleVault, false, 20)
 	animator.addLayer("Grapple", Poses.Grapple, false, 14)
+	-- Combat : par-dessus le déplacement (on peut viser en glissant).
+	animator.addLayer("AimSupport", Poses.AimSupport, false, 16)
+	animator.addLayer("AimArm", { RightShoulder = CFrame.identity }, false, 22)
+	animator.addLayer("BladeGuard", Poses.BladeGuard, false, 12)
+	animator.addLayer("Swing", { RightShoulder = CFrame.identity }, false, 40)
+	animator.addLayer("Downed", Poses.Downed, false, 8)
 	return animator
 end
+
+local function A(x: number, y: number, z: number): CFrame
+	return CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
+end
+
+-- Coup de lame : le bras balaie de droite à gauche (coup simple) ou de haut en bas (chargé).
+local SWING_DURATION = { light = 0.2, heavy = 0.32 }
+local function swingPose(t: number, heavy: boolean): { [string]: CFrame }
+	local e = 1 - (1 - t) * (1 - t) -- départ vif, fin amortie
+	if heavy then
+		return {
+			RightShoulder = A(170, 0, 10):Lerp(A(35, 0, -15), e),
+			RightElbow = A(30, 0, 0):Lerp(A(5, 0, 0), e),
+			Waist = A(10, 0, 0):Lerp(A(-18, 0, 0), e),
+		}
+	end
+	return {
+		RightShoulder = A(95, 0, 75):Lerp(A(80, 0, -55), e),
+		RightElbow = A(40, 0, 0):Lerp(A(10, 0, 0), e),
+		Waist = A(0, -28, 0):Lerp(A(0, 32, 0), e),
+	}
+end
+local WIND_UP = { RightShoulder = A(120, 0, 65), RightElbow = A(70, 0, 0), Waist = A(0, -22, 0) }
 
 local function untrack(character: Model)
 	local entry = tracked[character]
@@ -236,7 +266,59 @@ local function updateEntry(entry: Tracked, dt: number)
 		animator.setWeight("Grapple", 0)
 	end
 
-	entry.effects.setSliding(mode == "Slide" and grounded, ground and ground.Instance.Color)
+	-- Combat ----------------------------------------------------------------------------
+	local downed = entry.character:GetAttribute("Downed") == true
+	local weapon: string? = if isLocal
+		then CombatController.getEquipped()
+		else entry.character:GetAttribute("EquippedWeapon") :: string?
+	local usable = not downed and (mode == "Normal" or mode == "Slide")
+	local holdingPistol = usable and weapon == "weapon.fracture_pistol"
+	local holdingBlade = usable and weapon == "weapon.short_blade"
+
+	if holdingPistol then
+		-- Bras droit vers le point visé (soi) ou droit devant (les autres joueurs).
+		local target = if isLocal
+			then CombatController.getAimPoint()
+			else root.Position + root.CFrame.LookVector * 60 + Vector3.new(0, 1, 0)
+		local arm = if target then aimArm(entry, target) else nil
+		animator.setPose("AimArm", { RightShoulder = arm or A(90, 0, 0) })
+		animator.setWeight("AimArm", 1)
+		local aiming = isLocal and CombatController.isAiming()
+		animator.setWeight("AimSupport", if aiming or not isLocal then 1 else 0.35)
+	else
+		animator.setWeight("AimArm", 0)
+		animator.setWeight("AimSupport", 0)
+	end
+
+	local swing = if holdingBlade
+		then CombatController.getSwing(if isLocal then nil else entry.player)
+		else nil
+	local swingActive = false
+	if swing then
+		local duration = if swing.heavy then SWING_DURATION.heavy else SWING_DURATION.light
+		local t = (os.clock() - swing.at) / duration
+		if t >= 0 and t <= 1.15 then
+			swingActive = true
+			animator.setPose("Swing", swingPose(math.min(t, 1), swing.heavy))
+			animator.snapWeight("Swing", 1)
+		end
+	end
+	if not swingActive and holdingBlade and isLocal and CombatController.getMeleeCharge() then
+		-- Attaque chargée en préparation : bras armé en arrière.
+		animator.setPose("Swing", WIND_UP)
+		animator.setWeight("Swing", CombatController.getMeleeCharge() :: number)
+		swingActive = true
+	end
+	if not swingActive then
+		animator.setWeight("Swing", 0)
+	end
+	animator.setWeight("BladeGuard", if holdingBlade then 1 else 0)
+	animator.setWeight("Downed", if downed then 1 else 0)
+
+	entry.effects.setSliding(
+		mode == "Slide" and grounded and not downed,
+		ground and ground.Instance.Color
+	)
 	animator.step(dt)
 end
 

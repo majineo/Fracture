@@ -17,13 +17,30 @@ export type RemoteDef = {
 	burst: number?,
 }
 
-export type RemoteName = "ClientReady" | "ProfileSnapshot"
+export type RemoteName =
+	"ClientReady"
+	| "ProfileSnapshot"
+	| "GrappleStart"
+	| "GrappleEnd"
+	| "GrappleState"
+	| "DevCommand"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
 	ClientReady = { direction = "ToServer", rate = 0.5, burst = 3 },
 	-- Le serveur envoie au joueur la vue publique de son profil.
 	ProfileSnapshot = { direction = "ToClient" },
+
+	-- Grappin : le client annonce sa cible (Vector3) ; le serveur vérifie portée, recharge et
+	-- ligne de vue avant d'autoriser la vitesse correspondante.
+	GrappleStart = { direction = "ToServer", rate = 1, burst = 2 },
+	GrappleEnd = { direction = "ToServer", rate = 2, burst = 3 },
+	-- Le serveur informe tous les clients d'un grappin (joueur, cible ou nil) pour la corde.
+	GrappleState = { direction = "ToClient" },
+
+	-- Commandes de test. Écoutées UNIQUEMENT dans Studio (voir Server > Systems > DevTools) :
+	-- en jeu publié, ce remote existe mais personne ne l'écoute.
+	DevCommand = { direction = "ToServer", rate = 5, burst = 10 },
 }
 
 return table.freeze(Definitions)

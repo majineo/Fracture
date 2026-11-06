@@ -5,6 +5,72 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.3.0] — 2026-11-06 — « Mouvement »
+
+### Description générale
+Premier système de jeu : le déplacement des Fractureurs, jouable sur PC, mobile et manette,
+avec une garde serveur contre les déplacements impossibles.
+
+### Nouvelles fonctionnalités
+- **Sprint** (22 studs/s) avec **jauge d'endurance** : 6 s de sprint, recharge en 4 s après
+  0,6 s de pause ; à bout de souffle, resprint possible à 25 %. Jauge affichée à l'écran.
+- **Glissade** en courant : 30 → 15 studs/s en 0,8 s (≈ 18 studs), 2,5 fois plus longue en
+  descente (≈ 45 studs), coûte 15 % d'endurance, sauter garde l'élan.
+- **Escalade de rebord** automatique de 2,5 à 7 studs, en 0,35 s, avec vérification de la
+  place disponible.
+- **Grappin** : portée 60 studs, 70 studs/s, recharge 8 s ; sauter pendant la traction lâche
+  avec une impulsion ; corde visible par tous les joueurs.
+- **Contrôles** clavier, boutons tactiles et manette.
+- **Garde de mouvement** serveur : échantillonnage toutes les 0,2 s, retour à la dernière
+  position valide après 3 anomalies (vitesse, téléportation, vol).
+- **Validation serveur du grappin** : type, recharge, portée, ligne de vue.
+- **Outils de test Studio** (`DevCommand`, inactifs dans le jeu publié).
+- **Parcours de test** dans le Refuge (blocs de 2 / 4 / 6,5 / 9 studs, tour, pente).
+- 12 nouveaux tests unitaires (Stamina, MovementValidator) : 45 au total.
+
+### Modifications
+- Réglages du personnage fixés par les places : vitesse de marche 14, hauteur de saut 7,2,
+  verrouillage de la souris (Maj) désactivé car Maj sert au sprint.
+- GDD 03 : sprint en bascule sur mobile et manette (D-018), touche du grappin, valeurs réelles.
+- Cartes de test déplacées dans `maps/refuge/Greybox.model.json`.
+
+### Corrections de bugs
+- Détecté en test : la jauge d'endurance pouvait rester bloquée à 0,000000000000001 sans
+  jamais atteindre 0 (erreur d'arrondi). Corrigé.
+- Détecté en test : la force de glissade et de grappin était trop faible face au freinage du
+  Humanoid (pic à 4 studs/s au lieu de 30). Force multipliée par 5.
+- Détecté en test : Rojo n'appliquait pas la propriété `Position` (sol et point d'apparition
+  au mauvais endroit). Toutes les positions passent par `CFrame`.
+
+### Problèmes connus
+- **Les contrôles n'ont pas été testés à la main** : la simulation de touches de Studio n'atteint
+  pas le jeu. Les mouvements ont été testés en appelant directement les modules ; il reste à
+  vérifier le ressenti au clavier, au tactile et à la manette.
+- Aucune animation dédiée (glissade, escalade, grappin) ; la hitbox ne se baisse pas pendant
+  la glissade.
+- Le grappin est donné à tous les joueurs en attendant le système d'équipement.
+- Le grappin sur mobile vise le centre de l'écran sans réticule visible.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Movement/{MovementConfig,Stamina}.luau`,
+  `src/server/Core/Lib/MovementValidator.luau`,
+  `src/server/Core/Systems/{MovementGuard,Grapple,DevTools}.luau`,
+  `src/client/Core/Movement/{Context,Rope,Slide,Mantle,Grapple}.luau`,
+  `src/client/Core/Controllers/{MovementController,GrappleVisuals,StaminaBar}.luau`,
+  `maps/refuge/Greybox.model.json`, `tests/specs/{Stamina,MovementValidator}.spec.luau`
+- **Modifiés** : `places/refuge.project.json`, `places/eclat.project.json`,
+  `src/shared/Net/Definitions.luau`, `src/shared/Config.luau`, `tests/run.luau`, `README.md`,
+  `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`,
+  `docs/ASSETS.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Ton test à la main du ressenti (PC, et mobile via l'émulateur de Studio).
+- v0.4.0 « Combat » : caméra par-dessus l'épaule, armes de base, dégâts validés par le serveur
+  avec historique des positions, santé et armure, premiers Échoués.
+
+---
+
 ## [v0.2.0] — 2026-11-06 — « Fondations »
 
 ### Description générale

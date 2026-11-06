@@ -11,7 +11,8 @@
 |---|---|---|---|
 | Tirer / frapper | Clic gauche | Bouton tir (droite) | RT |
 | Viser | Clic droit | Bouton visée | LT |
-| Sprint | Maj (maintien) | Automatique en poussant le joystick au bord | L3 |
+| Sprint | Maj (maintien) | Bouton Sprint (bascule) | L3 (bascule) |
+| Grappin | G (vise le curseur) | Bouton Grappin (vise le centre de l'écran) | R3 |
 | Glissade | C pendant le sprint | Bouton accroupi pendant le sprint | B |
 | Saut / escalade | Espace | Bouton saut | A |
 | Capacité 1 / 2 | Q / E | Deux boutons | LB / RB |
@@ -26,13 +27,18 @@ caméra sur une cible et faible attraction en visée. Jamais sur souris.
 | Mouvement | Valeur de départ | Note |
 |---|---|---|
 | Marche | 14 studs/s | |
-| Sprint | 22 studs/s | Endurance : 6 s, recharge en 4 s |
-| Glissade | Impulsion 30 studs/s, 0,8 s | Conserve l'élan en pente |
-| Escalade de rebord | Jusqu'à 7 studs de haut | Automatique en sautant face à un rebord |
-| Grappin | Portée 60 studs, recharge 8 s | **Équipement**, pas dans la base |
+| Sprint | 22 studs/s | Endurance : 6 s, recharge en 4 s après 0,6 s de pause ; jauge vide = resprint à 25 % |
+| Glissade | 30 → 15 studs/s en 0,8 s (≈ 18 studs) | En sprint uniquement, coûte 15 % d'endurance ; en descente elle dure 2,5 fois plus (≈ 45 studs) ; sauter pendant la glissade garde l'élan |
+| Escalade de rebord | De 2,5 à 7 studs de haut, en 0,35 s | Automatique en sautant face à un rebord |
+| Grappin | Portée 60 studs, 70 studs/s, recharge 8 s | Sauter pendant la traction = lâcher avec une petite impulsion. **Équipement** (pour l'instant donné à tous) |
 
-Le déplacement repose sur un contrôleur personnalisé construit au-dessus du Humanoid. La
-position est simulée côté client et vérifiée côté serveur (vitesse maximale, téléportation).
+✅ Implémenté en v0.3.0. Le déplacement repose sur un contrôleur personnalisé construit
+au-dessus du Humanoid. La position est simulée côté client et vérifiée côté serveur
+(vitesse maximale, montée maximale, téléportation) ; un grappin n'est autorisé qu'après
+validation serveur (portée, recharge, ligne de vue).
+
+Animations : 📋 aucune animation dédiée pour l'instant (glissade, escalade, grappin) ; la
+caméra s'abaisse pendant la glissade.
 
 ## 3. Santé et dégâts
 

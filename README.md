@@ -4,18 +4,25 @@
 > Chaque **Éclat** est un fragment instable d'une époque : on y plonge, on y pille des reliques,
 > et on s'en extrait avant qu'il ne s'effondre.
 
-**Version actuelle : v0.2.0 « Fondations »** · Phase 3 (architecture et prototypage)
+**Version actuelle : v0.3.0 « Mouvement »** · Phase 3 (architecture et prototypage)
 
 ## État du projet
 
 | Statut | Contenu |
 |---|---|
-| ✅ Implémenté | Deux places (Refuge, Éclat), démarrage modulaire, couche réseau sécurisée, données joueur avec verrou de session, tests automatiques |
+| ✅ Implémenté | Deux places (Refuge, Éclat), couche réseau sécurisée, données joueur avec verrou de session, déplacement (sprint, glissade, escalade, grappin) avec garde anti-triche, tests automatiques |
 | 🔧 En cours | — |
-| 📋 Prévu | Déplacement (v0.3.0), puis combat, Éclats, extraction (voir [feuille de route](docs/ROADMAP.md)) |
+| 📋 Prévu | Combat (v0.4.0), puis Éclats, extraction (voir [feuille de route](docs/ROADMAP.md)) |
 | 💭 À l'étude | Éléments marqués 💭 dans le GDD |
 
-Aucun gameplay n'est encore jouable : les places contiennent un sol et un point d'apparition.
+Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
+
+| Action | PC | Mobile | Manette |
+|---|---|---|---|
+| Sprint | Maj (maintenir) | Bouton Sprint | L3 |
+| Glisser (en courant) | C ou Ctrl | Bouton Glisser | B |
+| Escalader | Saut face à un rebord | Saut | A |
+| Grappin | G (vise le curseur) | Bouton Grappin (centre de l'écran) | R3 |
 
 ## Documentation
 

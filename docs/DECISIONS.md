@@ -122,3 +122,28 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Date** : 2026-11-06 · **Version** : v0.2.0 · **Statut** : ✅ Implémentée (applique D-004)
 - **Choix** : un fichier de projet Rojo par place (`places/*.project.json`) ; code commun dans
   `Core`, code propre dans `Refuge` / `Eclat` ; un seul Script serveur et un seul LocalScript.
+
+## D-018 — Sprint en bascule sur mobile et manette
+- **Date** : 2026-11-06 · **Version** : v0.3.0 · **Statut** : ✅ Implémentée (modifie le GDD 03)
+- **Choix** : sur mobile et manette, le sprint est un bouton à bascule au lieu d'un sprint
+  automatique en poussant le joystick au bord.
+- **Raison** : Roblox ne fournit pas de façon fiable l'intensité du joystick tactile ; la
+  bascule est prévisible et se désactive d'elle-même quand l'endurance est vide.
+
+## D-019 — Déplacement simulé par le client, borné par le serveur
+- **Date** : 2026-11-06 · **Version** : v0.3.0 · **Statut** : ✅ Implémentée
+- **Choix** : glissade, escalade et grappin sont simulés localement (réactivité, surtout sur
+  mobile). Le serveur échantillonne les positions toutes les 0,2 s et ramène en arrière tout
+  déplacement impossible (3 anomalies sur 1 s). Les mouvements rapides légitimes (grappin)
+  ne sont autorisés qu'après validation serveur. Aucun bannissement automatique.
+
+## D-020 — Outils de test réservés à Studio
+- **Date** : 2026-11-06 · **Version** : v0.3.0 · **Statut** : ✅ Implémentée
+- **Choix** : un remote `DevCommand` n'est écouté que si `RunService:IsStudio()`. Il permet
+  par exemple de téléporter son personnage sans déclencher la garde de mouvement.
+
+## D-021 — Cartes de test versionnées en fichiers `.model.json`
+- **Date** : 2026-11-06 · **Version** : v0.3.0 · **Statut** : ✅ Implémentée
+- **Choix** : les décors de test (greybox) vivent dans `maps/` et sont synchronisés par Rojo.
+  Les positions sont toujours données par la propriété `CFrame` (format explicite) :
+  `Position` n'est pas appliquée de façon fiable par Rojo (bug constaté en test).

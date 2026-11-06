@@ -11,6 +11,8 @@ local specs = {
 	require("./specs/Retry.spec"),
 	require("./specs/ProfileSchema.spec"),
 	require("./specs/SessionLock.spec"),
+	require("./specs/Stamina.spec"),
+	require("./specs/MovementValidator.spec"),
 }
 
 for _, spec in specs do

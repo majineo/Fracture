@@ -19,6 +19,12 @@
       }
     },
     "StarterPlayer": {
+      "$properties": {
+        "CharacterWalkSpeed": 14,
+        "CharacterUseJumpPower": false,
+        "CharacterJumpHeight": 7.2,
+        "EnableMouseLockOption": false
+      },
       "StarterPlayerScripts": {
         "Client": {
           "$path": "../src/client/Core",
@@ -39,7 +45,7 @@
           "$properties": {
             "Anchored": true,
             "Size": [320, 4, 320],
-            "Position": [0, -2, 0],
+            "CFrame": { "CFrame": { "position": [0, -2, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } },
             "Material": "Cobblestone",
             "Color": [0.42, 0.42, 0.45]
           }
@@ -49,7 +55,7 @@
           "$properties": {
             "Anchored": true,
             "Size": [12, 1, 12],
-            "Position": [0, 0.5, 0],
+            "CFrame": { "CFrame": { "position": [0, 0.5, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } },
             "Duration": 0
           }
         }

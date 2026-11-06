@@ -19,6 +19,12 @@
       }
     },
     "StarterPlayer": {
+      "$properties": {
+        "CharacterWalkSpeed": 14,
+        "CharacterUseJumpPower": false,
+        "CharacterJumpHeight": 7.2,
+        "EnableMouseLockOption": false
+      },
       "StarterPlayerScripts": {
         "Client": {
           "$path": "../src/client/Core",
@@ -33,26 +39,7 @@
         "StreamingEnabled": true
       },
       "Greybox": {
-        "$className": "Folder",
-        "Sol": {
-          "$className": "Part",
-          "$properties": {
-            "Anchored": true,
-            "Size": [256, 4, 256],
-            "Position": [0, -2, 0],
-            "Material": "Slate",
-            "Color": [0.35, 0.37, 0.42]
-          }
-        },
-        "SpawnLocation": {
-          "$className": "SpawnLocation",
-          "$properties": {
-            "Anchored": true,
-            "Size": [12, 1, 12],
-            "Position": [0, 0.5, 0],
-            "Duration": 0
-          }
-        }
+        "$path": "../maps/refuge/Greybox.model.json"
       }
     }
   }

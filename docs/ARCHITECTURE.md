@@ -1,6 +1,6 @@
 # Architecture technique
 
-> Dernière mise à jour : v0.2.0 — 2026-11-06
+> Dernière mise à jour : v0.3.0 — 2026-11-06
 
 ## 1. Vue d'ensemble
 
@@ -70,6 +70,10 @@ renvoie une table avec `init` et/ou `start`. Rien d'autre à modifier.
 |---|---|---|
 | `ClientReady` | Client → serveur | Le client est prêt ; demande son instantané de profil |
 | `ProfileSnapshot` | Serveur → client | Vue publique du profil du joueur |
+| `GrappleStart` | Client → serveur | Cible du grappin (Vector3), validée par le serveur |
+| `GrappleEnd` | Client → serveur | Fin du grappin |
+| `GrappleState` | Serveur → clients | Corde d'un joueur (cible ou nil) pour l'affichage |
+| `DevCommand` | Client → serveur | Commandes de test, écoutées uniquement dans Studio |
 
 ## 5. Données joueur
 
@@ -95,19 +99,39 @@ Départ / arrêt du serveur ─▶ sauvegarde finale + libération du verrou
 - **Studio** : sans accès aux API, stockage en mémoire (JSON) ; avec accès, DataStore séparé
   `PlayerProfiles_v1_Studio` pour ne jamais toucher aux données réelles.
 
-## 6. Tests
+## 6. Déplacement
+
+```text
+Client (Controllers/MovementController)          Serveur
+  entrées (clavier, tactile, manette)               Systems/MovementGuard
+  machine à états : Normal / Slide / Mantle /         positions toutes les 0,2 s
+                    Grapple                           → Lib/MovementValidator (pur)
+  Movement/Slide, Mantle, Grapple, Rope               → retour en arrière si impossible
+  Shared/Movement/Stamina (pur)                     Systems/Grapple
+        │ GrappleStart(cible) ───────────────────▶   type → recharge → portée → vue
+        │                                             → MovementGuard.allow(...)
+        ◀──────────────── GrappleState(joueur, cible) → corde chez les autres clients
+```
+
+- Les réglages sont dans `Shared/Movement/MovementConfig` (lisibles par le client ; le serveur
+  s'en sert pour fixer ses limites).
+- Tout système serveur qui déplace un joueur doit appeler `MovementGuard.grace` (téléportation)
+  ou `MovementGuard.allow` (vitesse exceptionnelle), sinon le joueur sera ramené en arrière.
+- Outils de test Studio : `Remotes.DevCommand:FireServer("teleport", position)`.
+
+## 7. Tests
 
 | Niveau | Outil | Ce qui est couvert |
 |---|---|---|
-| Unitaires | Lune (`lune run tests/run`), aussi en CI | Guard, RateLimiter, Retry, ProfileSchema, SessionLock |
-| Intégration | Studio (playtest) | Démarrage des deux places, chargement du profil, limite de fréquence, chaîne de stockage |
+| Unitaires | Lune (`lune run tests/run`), aussi en CI | Guard, RateLimiter, Retry, ProfileSchema, SessionLock, Stamina, MovementValidator |
+| Intégration | Studio (playtest) | Démarrage des deux places, profil, limite de fréquence, stockage, escalade, glissade, grappin, garde de mouvement |
 
 Règle : la logique importante est écrite en **modules purs** (sans dépendance Roblox, horloge
 et attentes injectables) pour être testable hors Studio.
 
-## 7. Prévu
+## 8. Prévu
 
 - 📋 Téléportation Refuge ↔ Éclat et file d'attente (MemoryStore) — nécessite de publier les
   deux places dans un même univers Roblox.
-- 📋 Outils de test en jeu réservés à Studio (commandes de QA protégées).
-- 📋 Stratégie de versionnement des cartes construites dans Studio (fichiers `.rbxm`).
+- 📋 Cartes définitives construites dans Studio : export en `.rbxm` dans `maps/` (les greybox
+  sont déjà en `.model.json`).

@@ -27,9 +27,9 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 5 | Pistolet de Fractureur | Arme | ✅ Intégré (v0.4.2) | `assets/blender/weapons/Pistolet_Fractureur.fbx` — 1 928 triangles, 4 pièces (métal sombre, laiton, cuir, noyau temporel cyan en cage). `ServerStorage > WeaponModels > weapon.fracture_pistol`, pièce « Grip », attachement « Muzzle » |
 | 21 | Mannequin d'entraînement | Décor | 📋 À créer (avatar gris provisoire) | Champ de tir du Refuge |
 | 22 | Sons de combat (tir, rechargement, coups, touche) | Audio | 📦 Provisoires | `src/client/Core/Combat/CombatSounds.luau` ; à valider à l'oreille |
-| 6 | Fusil à répétition | Arme | 📦 Modélisé (v0.4.3), à importer | `Fusil_Repetition.fbx` — 2 036 triangles, 4 pièces (bois, laiton, métal, tube cyan) ; jauge cyan côté visible |
-| 7 | Arbalète lourde | Arme | 📦 Modélisée (v0.4.3), à importer | `Arbalete_Lourde.fbx` — 1 232 triangles, 6 pièces (bois, acier, cuir, laiton, métal, carreau cyan) ; manivelle côté visible |
-| 8 | Épée longue | Arme | 📦 Modélisée (v0.4.3), à importer | `Epee_Longue.fbx` — 1 208 triangles, 4 pièces (acier, cuir, laiton, gorge cyan) |
+| 6 | Fusil à répétition | Arme | ✅ Intégré (v0.4.3) | `Fusil_Repetition.fbx` — 2 036 triangles, 4 pièces (bois, laiton, métal, tube cyan) ; jauge cyan côté visible |
+| 7 | Arbalète lourde | Arme | ✅ Intégrée (v0.4.3) | `Arbalete_Lourde.fbx` — 1 232 triangles, 6 pièces (bois, acier, cuir, laiton, métal, carreau cyan) ; manivelle côté visible |
+| 8 | Épée longue | Arme | ✅ Intégrée (v0.4.3) | `Epee_Longue.fbx` — 1 208 triangles, 4 pièces (acier, cuir, laiton, gorge cyan) |
 | 23 | Présentoir d'armurerie | Décor | 📋 À créer (bloc provisoire) | Refuge, 5 exemplaires |
 | 9 | Grappin | Outil | 📋 À créer | Animation de lancer |
 | 10 | Harnais et ancre de Fractureur | Accessoire avatar | 📋 À créer | Compatible avatars R15 |
@@ -61,6 +61,20 @@ réassembler) :
 | weapon.short_blade | Lame_Courte_Laiton | rbxassetid://84430999824243 | Metal #b0803a |
 | weapon.short_blade | Lame_Courte_Cuir | rbxassetid://105872046578087 | Fabric #5c341e |
 | weapon.short_blade | Lame_Courte_Noyau | rbxassetid://109126005441182 | Neon #50e6ff |
+| weapon.repeating_rifle | Fusil_Repetition_Bois | rbxassetid://102373580308972 | Wood #704224 |
+| weapon.repeating_rifle | Fusil_Repetition_Laiton | rbxassetid://137661167414841 | Metal #b0803a |
+| weapon.repeating_rifle | Fusil_Repetition_Metal | rbxassetid://132747657906035 | Metal #2a2d34 |
+| weapon.repeating_rifle | Fusil_Repetition_Noyau | rbxassetid://82732534525727 | Neon #50e6ff |
+| weapon.heavy_crossbow | Arbalete_Lourde_Acier | rbxassetid://112649187551456 | Metal #bec6ce |
+| weapon.heavy_crossbow | Arbalete_Lourde_Bois | rbxassetid://72894353011037 | Wood #704224 |
+| weapon.heavy_crossbow | Arbalete_Lourde_Cuir | rbxassetid://104004205600598 | Fabric #5c341e |
+| weapon.heavy_crossbow | Arbalete_Lourde_Laiton | rbxassetid://98408635731593 | Metal #b0803a |
+| weapon.heavy_crossbow | Arbalete_Lourde_Metal | rbxassetid://133037587155497 | Metal #2a2d34 |
+| weapon.heavy_crossbow | Arbalete_Lourde_Noyau | rbxassetid://73814119236423 | Neon #50e6ff |
+| weapon.longsword | Epee_Longue_Acier | rbxassetid://119407037791299 | Metal #bec6ce |
+| weapon.longsword | Epee_Longue_Cuir | rbxassetid://123406162985384 | Fabric #5c341e |
+| weapon.longsword | Epee_Longue_Laiton | rbxassetid://96705191657164 | Metal #b0803a |
+| weapon.longsword | Epee_Longue_Noyau | rbxassetid://102522485897363 | Neon #50e6ff |
 
 ## Procédure d'import (vérifiée en v0.4.2)
 

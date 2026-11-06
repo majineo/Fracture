@@ -5,6 +5,64 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.2.0] — 2026-11-06 — « Fondations »
+
+### Description générale
+Phase 3 : les fondations techniques sur lesquelles tous les systèmes de jeu reposeront.
+Aucun gameplay encore : les places contiennent un sol et un point d'apparition.
+
+### Nouvelles fonctionnalités
+- **Deux places** construites à partir du même code : Refuge et Éclat
+  (`places/refuge.project.json`, `places/eclat.project.json`), StreamingEnabled activé.
+- **Démarrage modulaire** : un seul Script serveur et un seul LocalScript chargent les
+  systèmes communs puis ceux de la place, en deux phases (`init`, puis `start`).
+- **Couche réseau** : liste unique des remotes, création côté serveur, limite de fréquence
+  par joueur et par remote, validateurs d'arguments (`Guard`).
+- **Données joueur** : chargement avec verrou de session, réessais avec attente
+  exponentielle, sauvegarde automatique toutes les 60 s (décalée par joueur), sauvegarde au
+  départ et à l'arrêt du serveur, schéma versionné avec migrations, validation avant écriture,
+  expulsion propre en cas d'échec (jamais de profil vide).
+- **Instantané du profil** envoyé au joueur (`ProfileSnapshot`) ; contrôleur client en lecture seule.
+- **Tests automatiques** : 33 tests unitaires (Lune) ; la CI vérifie formatage, lint, tests
+  et construction des deux places.
+
+### Modifications
+- Arborescence `src/server` et `src/client` réorganisée en `Core` / `Refuge` / `Eclat`.
+- `default.project.json` supprimé au profit de `places/*.project.json`.
+- Lune ajouté à la chaîne d'outils.
+
+### Corrections de bugs
+- Détecté pendant les tests dans Studio : le stockage en mémoire acceptait silencieusement
+  des données non stockables (ex. Vector3). Corrigé par la validation avant écriture.
+
+### Problèmes connus
+- La téléportation Refuge ↔ Éclat n'existe pas encore (nécessite la publication des places).
+- Le chemin « DataStore réel » n'a pas été testé (accès aux API désactivé dans Studio) ;
+  seule la chaîne en mémoire et la logique de verrou l'ont été.
+- Si le serveur s'arrête pendant le chargement d'un joueur, son verrou peut rester actif
+  jusqu'à 150 s (il expire ensuite tout seul).
+
+### Fichiers
+- **Ajoutés** : `places/refuge.project.json`, `places/eclat.project.json`,
+  `src/places/*/PlaceKind.luau`, `src/shared/Net/Definitions.luau`,
+  `src/shared/Util/Guard.luau`, `src/shared/Util/Signal.luau`,
+  `src/server/Core/init.server.luau`, `src/server/Core/Lib/{Net,RateLimiter,Retry,ProfileSchema,SessionLock,ProfileStore,DataConfig}.luau`,
+  `src/server/Core/Systems/{PlayerData,ProfileReplication}.luau`,
+  `src/client/Core/init.client.luau`, `src/client/Core/Lib/Net.luau`,
+  `src/client/Core/Controllers/ProfileController.luau`, `tests/` (run, TestKit, 5 fichiers de tests)
+- **Modifiés** : `.github/workflows/ci.yml`, `.gitignore`, `rokit.toml`, `README.md`,
+  `CHANGELOG.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`,
+  `src/shared/Config.luau`, `src/shared/Types.luau`
+- **Supprimés** : `default.project.json`, `src/server/init.server.luau`,
+  `src/client/init.client.luau`
+
+### Prochaines étapes
+- v0.3.0 « Mouvement » : contrôleur de déplacement (sprint, glissade, escalade, grappin),
+  contrôles tactiles, vérifications serveur de la vitesse.
+- En parallèle : première relique dans Blender (« Pas de Faille »).
+
+---
+
 ## [v0.1.2] — 2026-11-06 — « Game Design Document »
 
 ### Description générale

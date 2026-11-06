@@ -26,3 +26,6 @@ assets/**/export_tmp/
 Thumbs.db
 desktop.ini
 .vscode/
+
+# Places construites localement (rojo build)
+build/

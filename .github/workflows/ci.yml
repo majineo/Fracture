@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  checks:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +17,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check formatting
-        run: stylua --check src
+        run: stylua --check src tests
 
       - name: Lint
         run: selene src
+
+      - name: Unit tests
+        run: lune run tests/run
+
+      - name: Build places
+        run: |
+          rojo build places/refuge.project.json -o Fracture-Refuge.rbxl
+          rojo build places/eclat.project.json -o Fracture-Eclat.rbxl

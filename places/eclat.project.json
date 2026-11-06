@@ -1,0 +1,59 @@
+{
+  "name": "Fracture-Eclat",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "Shared": {
+        "$path": "../src/shared",
+        "PlaceKind": {
+          "$path": "../src/places/eclat/PlaceKind.luau"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "Server": {
+        "$path": "../src/server/Core",
+        "Place": {
+          "$path": "../src/server/Eclat"
+        }
+      }
+    },
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "../src/client/Core",
+          "Place": {
+            "$path": "../src/client/Eclat"
+          }
+        }
+      }
+    },
+    "Workspace": {
+      "$properties": {
+        "StreamingEnabled": true
+      },
+      "Greybox": {
+        "$className": "Folder",
+        "Sol": {
+          "$className": "Part",
+          "$properties": {
+            "Anchored": true,
+            "Size": [320, 4, 320],
+            "Position": [0, -2, 0],
+            "Material": "Cobblestone",
+            "Color": [0.42, 0.42, 0.45]
+          }
+        },
+        "SpawnLocation": {
+          "$className": "SpawnLocation",
+          "$properties": {
+            "Anchored": true,
+            "Size": [12, 1, 12],
+            "Position": [0, 0.5, 0],
+            "Duration": 0
+          }
+        }
+      }
+    }
+  }
+}

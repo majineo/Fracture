@@ -102,3 +102,23 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   Éclat de 5 × 5 tuiles de 64 studs, parties de 16 min, extraction en 8 s, 12 emplacements de
   butin, reliques à 3 charges (« utiliser ou ramener »), 2 capacités équipées, pas d'usure des
   objets, pas d'échange entre joueurs dans la vertical slice, monétisation uniquement cosmétique.
+
+## D-015 — Couche de données maison plutôt que la bibliothèque ProfileStore
+- **Date** : 2026-11-06 · **Version** : v0.2.0 · **Statut** : ✅ Implémentée
+- **Choix** : verrou de session, migrations et sauvegardes écrits dans le projet
+  (`SessionLock`, `ProfileSchema`, `PlayerData`) au lieu d'utiliser ProfileStore.
+- **Raisons** : l'extraction et le passage Refuge ↔ Éclat exigent un contrôle exact du verrou
+  et des transactions ; la logique critique est en modules purs, couverte par des tests
+  automatiques, sans dépendance externe.
+- **Revoir si** : des pertes ou duplications apparaissent en test réel ; ProfileStore reste
+  l'alternative de référence.
+
+## D-016 — Tests unitaires hors Studio avec Lune
+- **Date** : 2026-11-06 · **Version** : v0.2.0 · **Statut** : ✅ Implémentée
+- **Choix** : la logique critique est écrite en modules purs testés par Lune, localement et
+  dans la CI GitHub. Les comportements liés à Roblox sont testés en playtest dans Studio.
+
+## D-017 — Deux places, code partagé
+- **Date** : 2026-11-06 · **Version** : v0.2.0 · **Statut** : ✅ Implémentée (applique D-004)
+- **Choix** : un fichier de projet Rojo par place (`places/*.project.json`) ; code commun dans
+  `Core`, code propre dans `Refuge` / `Eclat` ; un seul Script serveur et un seul LocalScript.

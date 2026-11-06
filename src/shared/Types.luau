@@ -1,10 +1,18 @@
 --!strict
--- Types partagés client/serveur (charges utiles des remotes, schéma du profil).
--- Placement Studio : ReplicatedStorage > Shared > Types (synchronisé par Rojo).
--- v0.1.0 : squelette uniquement, le schéma réel sera défini avec le système de données.
+-- Types qui traversent la frontière client/serveur.
+-- Studio : ReplicatedStorage > Shared > Types
 
-export type PlayerProfile = {
-	version: number,
+-- Type de place : chaque fichier de projet Rojo (places/*.project.json) fournit Shared.PlaceKind.
+export type PlaceKind = "Refuge" | "Eclat"
+
+-- Vue publique du profil envoyée au joueur propriétaire (jamais le profil brut).
+export type ProfileSnapshot = {
+	rank: number,
+	xp: number,
+	grains: number,
+	codex: { [string]: number },
+	mastery: { [string]: number },
+	stashCount: number,
 }
 
 return nil

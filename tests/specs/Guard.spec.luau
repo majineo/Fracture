@@ -1,0 +1,52 @@
+local Guard = require("../../src/shared/Util/Guard")
+
+return function(T)
+	T.suite("Guard")
+
+	T.test("isFiniteNumber rejette NaN, l'infini et les non-nombres", function()
+		T.truthy(Guard.isFiniteNumber(0))
+		T.truthy(Guard.isFiniteNumber(-12.5))
+		T.falsy(Guard.isFiniteNumber(0 / 0), "NaN")
+		T.falsy(Guard.isFiniteNumber(math.huge), "+inf")
+		T.falsy(Guard.isFiniteNumber(-math.huge), "-inf")
+		T.falsy(Guard.isFiniteNumber("5"), "chaîne")
+		T.falsy(Guard.isFiniteNumber(nil), "nil")
+		T.falsy(Guard.isFiniteNumber({}), "table")
+	end)
+
+	T.test("isIntegerInRange vérifie entier et bornes", function()
+		T.truthy(Guard.isIntegerInRange(1, 1, 100))
+		T.truthy(Guard.isIntegerInRange(100, 1, 100))
+		T.falsy(Guard.isIntegerInRange(0, 1, 100), "sous le minimum")
+		T.falsy(Guard.isIntegerInRange(101, 1, 100), "au-dessus du maximum")
+		T.falsy(Guard.isIntegerInRange(2.5, 1, 100), "non entier")
+		T.falsy(Guard.isIntegerInRange(0 / 0, 1, 100), "NaN")
+		T.falsy(Guard.isIntegerInRange(math.huge, 1, math.huge), "infini")
+	end)
+
+	T.test("isNumberInRange", function()
+		T.truthy(Guard.isNumberInRange(0.5, 0, 1))
+		T.falsy(Guard.isNumberInRange(1.01, 0, 1))
+		T.falsy(Guard.isNumberInRange(0 / 0, 0, 1), "NaN")
+	end)
+
+	T.test("isStringOfLength", function()
+		T.truthy(Guard.isStringOfLength("abc", 1, 3))
+		T.falsy(Guard.isStringOfLength("", 1, 3), "vide")
+		T.falsy(Guard.isStringOfLength(string.rep("a", 1000), 1, 64), "trop longue")
+		T.falsy(Guard.isStringOfLength(42, 1, 3), "pas une chaîne")
+	end)
+
+	T.test("isKeyOf n'accepte que les clés connues", function()
+		local catalog = { sword = true, bow = true }
+		T.truthy(Guard.isKeyOf("sword", catalog))
+		T.falsy(Guard.isKeyOf("axe", catalog), "clé inconnue")
+		T.falsy(Guard.isKeyOf(1, catalog), "pas une chaîne")
+		T.falsy(Guard.isKeyOf(nil, catalog), "nil")
+	end)
+
+	T.test("isFiniteVector3 rejette ce qui n'est pas un Vector3", function()
+		T.falsy(Guard.isFiniteVector3({ X = 1, Y = 2, Z = 3 }), "table imitant un Vector3")
+		T.falsy(Guard.isFiniteVector3(5))
+	end)
+end

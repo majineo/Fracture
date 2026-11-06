@@ -1,22 +1,113 @@
 # Architecture technique
 
-> Statut : 📋 Prévue. Ce document sera détaillé en phase 3.
+> Dernière mise à jour : v0.2.0 — 2026-11-06
 
-## Implémenté (v0.1.0)
+## 1. Vue d'ensemble
 
-- Code synchronisé par Rojo depuis `src/` (voir [README](../README.md)).
-- Démarrage deux phases : le script serveur charge chaque ModuleScript de `Server/Systems`,
-  appelle `init()` sur tous, puis `start()` sur tous. Même principe côté client avec
-  `Client/Controllers`. Un système ne dépend d'un autre qu'après la phase `init`.
-- Luau `--!strict` dans tous les fichiers.
+Le jeu est un **univers Roblox à deux places** (D-004) qui partagent le même code :
 
-## Prévu
+| Place | Fichier de projet Rojo | Rôle |
+|---|---|---|
+| Refuge | `places/refuge.project.json` | Hub social, préparation, Forge, Portail |
+| Éclat | `places/eclat.project.json` | Parties d'extraction (serveurs réservés) |
 
-- **Multi-places** (voir D-004) : place Refuge + places d'Éclats, code partagé dans `src/shared`,
-  un fichier de projet Rojo par place.
-- **Réseau** : remotes déclarés à un seul endroit, chaque remote validé côté serveur (types,
-  limites de fréquence, cohérence de l'état). Le client ne décide jamais des dégâts, du butin
-  ou de l'inventaire.
-- **Données joueur** : session lock, sauvegardes périodiques, schéma versionné avec migrations,
-  objets identifiés par GUID.
-- **Tests** : modules de logique pure testables séparément, remotes de test réservés à Studio.
+Chaque fichier de projet assemble le **code commun** (`Core`) et le **code propre à la place**
+(`Refuge` ou `Eclat`), et fournit `Shared.PlaceKind`.
+
+## 2. Arborescence
+
+```text
+src/
+├── shared/                      → ReplicatedStorage > Shared (visible par les clients)
+│   ├── Config.luau                 réglages publics (version…)
+│   ├── Types.luau                  types qui traversent le réseau
+│   ├── Net/Definitions.luau        LISTE UNIQUE des remotes
+│   └── Util/Guard.luau, Signal.luau
+├── places/<place>/PlaceKind.luau → ReplicatedStorage > Shared > PlaceKind
+├── server/
+│   ├── Core/                    → ServerScriptService > Server (le seul Script serveur)
+│   │   ├── init.server.luau        démarrage deux phases
+│   │   ├── Lib/                    modules utilitaires serveur (non démarrés)
+│   │   └── Systems/                systèmes communs (démarrés)
+│   ├── Refuge/Systems/          → Server > Place > Systems (place Refuge)
+│   └── Eclat/Systems/           → Server > Place > Systems (place Éclat)
+└── client/
+    ├── Core/                    → StarterPlayerScripts > Client (le seul LocalScript)
+    │   ├── init.client.luau
+    │   ├── Lib/Net.luau
+    │   └── Controllers/
+    ├── Refuge/Controllers/
+    └── Eclat/Controllers/
+tests/                             tests unitaires hors Studio (Lune)
+```
+
+## 3. Démarrage
+
+Le Script serveur charge tous les ModuleScripts de `Server/Systems` et `Server/Place/Systems`,
+les trie par nom, appelle `init()` sur tous, puis `start()` sur tous (chacun dans son thread).
+Même principe côté client avec les `Controllers`.
+
+- `init()` : synchrone, ne bloque pas. Connexions, écoute des remotes, dépendances.
+- `start()` : boucles et travail long.
+- Un système en utilise un autre par `require` direct ; jamais de `_G`.
+
+**Ajouter un système** : un fichier dans `Systems/` (ou `Controllers/` côté client) qui
+renvoie une table avec `init` et/ou `start`. Rien d'autre à modifier.
+
+## 4. Réseau
+
+- Tous les remotes sont déclarés dans `shared/Net/Definitions.luau` avec leur direction et
+  leur limite de fréquence. Le serveur les crée au démarrage dans `ReplicatedStorage > Remotes`.
+- Serveur : `Net.on(nom, gestionnaire)` (requêtes du client), `Net.fire(nom, joueur, …)`,
+  `Net.fireAll(nom, …)`. Client : `Net.fire(nom, …)`, `Net.on(nom, gestionnaire)`.
+- Chaque requête passe par un **limiteur de fréquence** (seau à jetons par joueur et par remote).
+- Les arguments arrivent en `unknown` : chaque gestionnaire les valide avec `Guard`
+  (type → bornes → permission → plausibilité).
+- Le client n'envoie que des **intentions**. Le serveur décide de tout (dégâts, butin, objets).
+- Pas de `RemoteFunction` appelée vers le client.
+
+| Remote | Direction | Rôle |
+|---|---|---|
+| `ClientReady` | Client → serveur | Le client est prêt ; demande son instantané de profil |
+| `ProfileSnapshot` | Serveur → client | Vue publique du profil du joueur |
+
+## 5. Données joueur
+
+Un seul module touche aux DataStores : `Server/Systems/PlayerData`.
+
+```text
+Connexion ─▶ revendication du verrou (UpdateAsync) ─▶ profil en mémoire
+                 │ verrou d'un autre serveur ? réessais 8 × 3 s, sinon expulsion
+                 │ échec de lecture ? expulsion (jamais de profil vide)
+En jeu ─▶ PlayerData.get(player) : le jeu modifie la table en mémoire
+Toutes les 60 s (décalé) ─▶ sauvegarde + rafraîchissement du verrou
+Départ / arrêt du serveur ─▶ sauvegarde finale + libération du verrou
+```
+
+- **Verrou de session** (`Lib/SessionLock`) : un seul serveur à la fois peut écrire un profil.
+  Un serveur qui a perdu le verrou n'écrit plus rien. Un verrou de plus de 150 s est
+  considéré comme abandonné (serveur planté).
+- **Schéma versionné** (`Lib/ProfileSchema`) : migrations de version en version, ajout des
+  champs manquants, refus des données d'une version future ou illisibles (jamais écrasées).
+- **Validation avant écriture** : toute donnée non stockable (Vector3, Instance, NaN…) est
+  détectée ; la dernière sauvegarde valide est alors conservée.
+- **Objets indexés par GUID** dans le coffre : une seule copie possible de chaque objet.
+- **Studio** : sans accès aux API, stockage en mémoire (JSON) ; avec accès, DataStore séparé
+  `PlayerProfiles_v1_Studio` pour ne jamais toucher aux données réelles.
+
+## 6. Tests
+
+| Niveau | Outil | Ce qui est couvert |
+|---|---|---|
+| Unitaires | Lune (`lune run tests/run`), aussi en CI | Guard, RateLimiter, Retry, ProfileSchema, SessionLock |
+| Intégration | Studio (playtest) | Démarrage des deux places, chargement du profil, limite de fréquence, chaîne de stockage |
+
+Règle : la logique importante est écrite en **modules purs** (sans dépendance Roblox, horloge
+et attentes injectables) pour être testable hors Studio.
+
+## 7. Prévu
+
+- 📋 Téléportation Refuge ↔ Éclat et file d'attente (MemoryStore) — nécessite de publier les
+  deux places dans un même univers Roblox.
+- 📋 Outils de test en jeu réservés à Studio (commandes de QA protégées).
+- 📋 Stratégie de versionnement des cartes construites dans Studio (fichiers `.rbxm`).

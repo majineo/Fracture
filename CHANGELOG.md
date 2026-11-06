@@ -5,6 +5,46 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.2] — 2026-11-06 — « Armes en main »
+
+### Description générale
+Les modèles Blender du pistolet et de la lame sont importés, réglés et utilisés en jeu à la
+place des formes provisoires.
+
+### Nouvelles fonctionnalités
+- Pistolet de Fractureur et lame courte (modèles Blender) tenus en main, visibles par tous.
+- Matériaux Roblox : métal sombre, laiton, cuir, acier, noyau cyan en Neon.
+- Bouche du canon placée au bout du vrai canon (origine des traçantes et de la lueur).
+
+### Modifications
+- Garde de la lame : avant-bras à l'horizontale, lame pointée vers l'avant.
+
+### Corrections de bugs
+- **Armes tenues à l'envers** depuis v0.4.0 (canon et lame vers le corps) : en v0.4.0, j'avais
+  lu à l'envers l'axe avant de l'arme et « corrigé » dans le mauvais sens. Orientation
+  re-mesurée sur les deux axes (avant et haut) : corrigé pour les deux armes.
+- Modèles importés 100 fois trop grands (l'importeur lit les fichiers Blender en centimètres) :
+  remis à l'échelle (pistolet 0,46 × 1,19 × 1,62 studs, lame 2,78 studs, comme dans Blender).
+
+### Problèmes connus
+- Les modèles importés vivent dans la place de travail Place1 (`ServerStorage > WeaponModels`) :
+  **enregistrer Place1**. Les places construites par Rojo utilisent encore les formes
+  provisoires (stratégie de versionnement des maillages à venir).
+- Le noyau cyan du pistolet est sur le flanc gauche : moins visible depuis la caméra d'épaule
+  droite. À corriger au prochain export Blender (règle ajoutée à `CLAUDE.md`).
+
+### Fichiers
+- **Modifiés** : `src/server/Core/Lib/WeaponModels.luau`, `src/client/Core/Animation/Poses.luau`,
+  `src/shared/Config.luau`, `CLAUDE.md`, `CHANGELOG.md`, `README.md`, `docs/ASSETS.md`,
+  `docs/ROADMAP.md`
+- **Ajoutés / supprimés** : —
+
+### Prochaines étapes
+- v0.4.3 « Arsenal » : fusil à répétition, arbalète lourde, épée longue (modélisés dans
+  Blender), parade, interface mobile dédiée.
+
+---
+
 ## [v0.4.1] — 2026-11-06 — « Armes de base »
 
 ### Description générale

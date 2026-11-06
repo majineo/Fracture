@@ -129,9 +129,11 @@ Poses.AimSupport = table.freeze({
 
 -- Lame en main, en garde.
 Poses.BladeGuard = table.freeze({
-	RightShoulder = A(35, 0, 18),
-	RightElbow = A(65, 0, 0),
-	RightWrist = A(-20, 0, 0),
+	-- Bras à 50° + coude 35° ≈ avant-bras horizontal : la lame pointe vers l'avant.
+	-- (v0.4.0 : 35° + 65° dépassait la verticale, la lame pointait vers l'arrière.)
+	RightShoulder = A(50, 0, 14),
+	RightElbow = A(35, 0, 0),
+	RightWrist = A(-10, 0, 0),
 	LeftShoulder = A(20, 0, -15),
 	LeftElbow = A(30, 0, 0),
 } :: Pose)

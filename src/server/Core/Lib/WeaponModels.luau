@@ -12,6 +12,9 @@ local ServerStorage = game:GetService("ServerStorage")
 local METAL = Color3.fromRGB(45, 48, 56)
 local BRISURE_CYAN = Color3.fromRGB(80, 230, 255)
 
+-- Orientation de l'arme par rapport à la main (réglée par mesure en jeu, v0.4.1).
+local GRIP_ROTATION = CFrame.Angles(math.rad(-90), 0, 0)
+
 local WeaponModels = {}
 
 local function part(name: string, size: Vector3, color: Color3, material: Enum.Material): Part
@@ -129,9 +132,9 @@ function WeaponModels.equip(character: Model, id: string?)
 	local container = Instance.new("Model")
 	container.Name = "HeldWeapon"
 	model.Parent = container
-	-- Poignée dans la paume, canon / lame dans le prolongement du bras.
-	-- (Mesuré en v0.4.0 : avec -90°, le canon pointait vers l'arrière ; +90° est correct.)
-	model:PivotTo(hand.CFrame * CFrame.new(0, -0.15, -0.1) * CFrame.Angles(math.rad(90), 0, 0))
+	-- Poignée dans la paume, canon / lame dans le prolongement du bras (-Z de la poignée vers
+	-- l'avant), dessus de l'arme vers le haut.
+	model:PivotTo(hand.CFrame * CFrame.new(0, -0.15, -0.1) * GRIP_ROTATION)
 	local w = Instance.new("WeldConstraint")
 	w.Part0 = hand
 	w.Part1 = model.PrimaryPart

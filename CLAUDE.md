@@ -23,6 +23,13 @@ Claude est l'associé technique et créatif. Tout échange avec l'utilisateur se
 - Sources `.blend` et exports `.fbx` dans `assets/blender/` ; suivre l'état dans `docs/ASSETS.md`.
 - Intégration des armes : `ServerStorage > WeaponModels > <id de l'arme>` avec une pièce
   « Grip » et, pour les armes à feu, un attachement « Muzzle » (voir `src/server/Core/Lib/WeaponModels.luau`).
+- Leçons du premier import (v0.4.2) : l'importeur Studio lit les FBX Blender en centimètres
+  (réduire à 0,01) ; canon / lame vers -Y dans Blender = -Z dans Roblox ; le +X de Blender
+  devient le côté GAUCHE de l'arme tenue en main droite → placer les détails à montrer à la
+  caméra d'épaule (droite) du côté -X dans Blender. L'utilisateur doit faire l'import
+  (Fichier → Importer) : le reste se fait via Studio MCP. Procédure : `docs/ASSETS.md`.
+- Vérifier l'orientation en main en mesurant `LookVector` (= -Z, l'avant) et `UpVector` de la
+  poignée dans le repère du corps — attention à ne pas inverser le signe.
 
 ## Versions et Git
 - Chaque version : entrée complète dans `CHANGELOG.md` (10 rubriques), `Config.GAME_VERSION`,

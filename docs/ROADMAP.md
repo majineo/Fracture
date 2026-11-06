@@ -13,8 +13,9 @@
 | v0.3.2 | Poussière | Effets de glissade, correction du sol | ✅ |
 | v0.4.0 | Combat | Santé/armure/à terre, pistolet et lame, visée, dégâts validés serveur avec compensation de latence, mannequins | ✅ |
 | v0.4.1 | Armes de base | Caméra de combat corrigée, pistolet et lame modélisés dans Blender | ✅ |
-| v0.4.2 | Arsenal | Fusil à répétition, arbalète, épée longue (modélisés dans Blender), parade, interface mobile dédiée | 📋 |
-| v0.4.3 | Échoués | Premiers ennemis (homme d'armes, arbalétrier) | 📋 |
+| v0.4.2 | Armes en main | Modèles Blender intégrés, orientation des armes corrigée | ✅ |
+| v0.4.3 | Arsenal | Fusil à répétition, arbalète, épée longue (modélisés dans Blender), parade, interface mobile dédiée | 📋 |
+| v0.4.4 | Échoués | Premiers ennemis (homme d'armes, arbalétrier) | 📋 |
 | v0.5.0 | Éclats | Génération procédurale à partir de tuiles, effondrement | 📋 |
 | v0.6.0 | Extraction | Inventaire, butin, extraction transactionnelle, Refuge minimal | 📋 |
 | v0.7.0 | Reliques | Utiliser ou ramener, Codex, Signature | 📋 |

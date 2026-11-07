@@ -137,7 +137,7 @@ local function canUseWeapon(): boolean
 		return false
 	end
 	local mode = MovementController.getMode()
-	return mode == "Normal" or mode == "Slide"
+	return mode == "Normal" or mode == "Slide" or mode == "WallRun"
 end
 
 local function isAiming(): boolean

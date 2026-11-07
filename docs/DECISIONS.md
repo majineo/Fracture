@@ -305,3 +305,13 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   matérialisation, noyau chargé, poussière, ambiance) vivent dans un contrôleur client
   (`GameFeel`) qui ne lit que des attributs répliqués. Les textures de particules sont générées
   dans Blender (script reproductible) ; des textures Roblox intégrées servent en attendant l'import.
+
+## D-043 — FRACTURE est un jeu de mobilité
+- **Date** : 2026-11-07 · **Version** : v0.4.11 · **Statut** : ✅ Implémentée (kit de base)
+- **Choix** (demande de l'utilisateur) : la mobilité est au cœur du jeu. Au sprint, à la glissade,
+  à l'escalade et au grappin s'ajoutent l'élan (sol et air), la course sur les murs et le saut
+  mural. La course sur les murs est automatique (aucune touche de plus, confortable sur mobile).
+- **Conséquences** : les cartes des Éclats (v0.5) doivent offrir des murs longs, des écarts à
+  franchir et de la verticalité ; les armes restent utilisables en courant sur un mur.
+- **Affichage des touches** : les aides affichent la touche telle qu'imprimée sur le clavier du
+  joueur (Roblox lit la position physique ; AZERTY ≠ QWERTY).

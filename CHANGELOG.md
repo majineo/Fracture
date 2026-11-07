@@ -5,6 +5,58 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.11] — 2026-11-07 — « Mobilité »
+
+### Description générale
+FRACTURE devient un jeu de mobilité : élan au sol et en l'air, course sur les murs, saut mural.
+Et la glissade « disparue » est expliquée.
+
+### Nouvelles fonctionnalités
+- **Élan** (F, bouton « Élan », croix ▲) : poussée courte et nette dans la direction du
+  mouvement, au sol ou une fois en l'air ; images rémanentes cyan et son.
+- **Course sur les murs** : automatique en sautant le long d'un mur en courant ; corps penché vers
+  le mur, foulées rapides, poussière et étincelles contre le mur. Armes utilisables pendant la course.
+- **Saut mural** : sauter pendant la course pousse loin du mur, vers le haut et vers l'avant ;
+  toucher un mur rend l'élan aérien.
+- Bouton tactile « Élan ».
+
+### Modifications
+- Le serveur tolère l'élan et la course sur les murs (durée, vitesse, montée), au plus une fois
+  par recharge qu'il mesure lui-même.
+- Les aides de l'interface affichent la touche du clavier du joueur (AZERTY / QWERTY).
+
+### Corrections de bugs
+- **Glissade** : elle fonctionne (vérifié avec les vraies touches). Depuis v0.4.9, dans Studio
+  seulement, elle se fait avec **C** et non Ctrl (Ctrl + A / Ctrl + D dupliquait le décor dans la
+  fenêtre de test). Le jeu publié garde Ctrl.
+
+### Vérifications (Studio, vraies touches)
+- Glissade : sprint + C → mode Slide.
+- Élan au sol : 24 studs parcourus (≈ 7 en marchant) ; élan aérien après un saut : 29 studs ;
+  aucune correction de la garde de mouvement.
+- Course sur les murs le long d'un mur de test : 45 images de course, corps penché de 28° vers le
+  mur ; saut mural : hauteur atteinte 12,4 studs (≈ 10 pour un saut simple), poussé loin du mur.
+- Aucune erreur en console.
+
+### Problèmes connus
+- Ressenti à régler en jeu (vitesse et durée de l'élan, durée de la course sur les murs).
+- Le Refuge a peu de murs adaptés : la vraie mise en valeur viendra avec les cartes des Éclats.
+- Mobile et manette non testés avec de vraies pressions.
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Movement/{Dash,WallRun}.luau`
+- **Modifiés** : `src/shared/Movement/MovementConfig.luau`,
+  `src/client/Core/Controllers/{MovementController,CharacterAnimation,CombatController,GameFeel,MobileControls,AbilityController}.luau`,
+  `src/client/Core/Animation/Poses.luau`, `src/server/Core/Systems/MovementState.luau`,
+  `src/shared/Config.luau`, `README.md`, `CHANGELOG.md`, `docs/{DECISIONS,ROADMAP}.md`,
+  `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Retours sur le ressenti ; v0.5.0 « Éclats » avec des cartes pensées pour la mobilité.
+
+---
+
 ## [v0.4.10] — 2026-11-07 — « Éclat — textures »
 
 ### Description générale

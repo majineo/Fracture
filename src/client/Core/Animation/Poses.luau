@@ -142,6 +142,23 @@ Poses.SprintLean = table.freeze({
 	Neck = A(10, 0, 0),
 } :: Pose)
 
+-- Mobilité (v0.4.11) -----------------------------------------------------------------------
+
+-- Élan : buste jeté en avant, bras rejetés en arrière, jambes groupées.
+Poses.Dash = table.freeze({
+	Root = A(-24, 0, 0),
+	Waist = A(-12, 0, 0),
+	Neck = A(18, 0, 0),
+	RightShoulder = A(-50, 0, 25),
+	RightElbow = A(25, 0, 0),
+	LeftShoulder = A(-50, 0, -25),
+	LeftElbow = A(25, 0, 0),
+	RightHip = A(55, 0, 0),
+	RightKnee = A(-80, 0, 0),
+	LeftHip = A(-20, 0, 0),
+	LeftKnee = A(-60, 0, 0),
+} :: Pose)
+
 -- Échoués (v0.4.4) -----------------------------------------------------------------------
 
 -- Homme d'armes qui prépare son coup : épée levée haut au-dessus de l'épaule (signal lisible).

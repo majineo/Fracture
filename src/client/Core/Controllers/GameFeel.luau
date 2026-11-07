@@ -10,6 +10,8 @@
 --   * Noyau chargé : le cœur cyan de l'arme en main brille et scintille (visible par tous)
 --   * Course : bouffées de poussière sous les pieds
 --   * Ambiance : éclats de Temps qui flottent dans l'air autour de la caméra
+--   * Mobilité (v0.4.11) : images rémanentes cyan pendant l'élan, poussière contre le mur
+--     pendant la course sur les murs
 
 local Debris = game:GetService("Debris")
 local Lighting = game:GetService("Lighting")
@@ -24,6 +26,7 @@ local VfxTextures = require(Client.Combat.VfxTextures)
 local WeaponFx = require(Client.Combat.WeaponFx)
 local CameraFeel = require(script.Parent.CameraFeel)
 local CombatController = require(script.Parent.CombatController)
+local MovementController = require(script.Parent.MovementController)
 
 local CYAN = Color3.fromRGB(80, 230, 255)
 local RED = Color3.fromRGB(220, 40, 40)
@@ -361,6 +364,105 @@ local function updateDust()
 	end
 end
 
+-- Mobilité : élan et course sur les murs ---------------------------------------------------
+
+local lastModes: { [Model]: string } = {}
+local wallDustNext: { [Model]: number } = {}
+
+-- Silhouette cyan figée du personnage, qui s'efface (image rémanente).
+local function afterimage(character: Model)
+	for _, part in character:GetDescendants() do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" and part.Transparency < 0.9 then
+			local ghost = part:Clone()
+			for _, child in ghost:GetChildren() do
+				if not child:IsA("SpecialMesh") then
+					child:Destroy()
+				end
+			end
+			ghost.Anchored = true
+			ghost.CanCollide = false
+			ghost.CanQuery = false
+			ghost.CanTouch = false
+			ghost.CastShadow = false
+			ghost.Material = Enum.Material.Neon
+			ghost.Color = CYAN
+			ghost.Transparency = 0.55
+			if ghost:IsA("MeshPart") then
+				ghost.TextureID = ""
+			end
+			ghost.CFrame = part.CFrame
+			ghost.Parent = workspace.Terrain
+			TweenService:Create(ghost, TweenInfo.new(0.35), { Transparency = 1 }):Play()
+			Debris:AddItem(ghost, 0.4)
+		end
+	end
+end
+
+local function updateMobility()
+	local clock = os.clock()
+	for _, owner in Players:GetPlayers() do
+		local character = owner.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart")
+		if character and root and root:IsA("BasePart") then
+			local current = character:GetAttribute("MoveMode") :: string?
+			if owner == player then
+				current = MovementController.getMode()
+			end
+			local previous = lastModes[character]
+			lastModes[character] = current or "Normal"
+			if current == "Dash" and previous ~= "Dash" then
+				CombatSounds.playAt("AbilityShadow", root.Position, 1.35)
+				if owner == player then
+					CameraFeel.kick(0.8)
+				end
+				for i = 0, 3 do
+					task.delay(i * 0.045, afterimage, character)
+				end
+			end
+			if current == "WallRun" and clock >= (wallDustNext[character] or 0) then
+				wallDustNext[character] = clock + 0.08
+				local params = RaycastParams.new()
+				params.FilterType = Enum.RaycastFilterType.Exclude
+				params.FilterDescendantsInstances = { character }
+				local right = root.CFrame.RightVector
+				local hit = workspace:Raycast(root.Position, right * 3, params)
+					or workspace:Raycast(root.Position, -right * 3, params)
+				if hit then
+					local a = Instance.new("Attachment")
+					a.WorldPosition = hit.Position - Vector3.new(0, 1.5, 0)
+					a.Parent = workspace.Terrain
+					local p = emitter(VfxTextures.get("Dust"), hit.Instance.Color)
+					p.LightEmission = 0
+					p.LightInfluence = 1
+					p.Color = ColorSequence.new(hit.Instance.Color)
+					p.Lifetime = NumberRange.new(0.3, 0.6)
+					p.Speed = NumberRange.new(1, 3)
+					p.Size = NumberSequence.new({
+						NumberSequenceKeypoint.new(0, 0.4),
+						NumberSequenceKeypoint.new(1, 1),
+					})
+					p.Transparency = NumberSequence.new(0.5, 1)
+					p.Parent = a
+					p:Emit(2)
+					local s = emitter(VfxTextures.get("Spark"), CYAN)
+					s.Orientation = Enum.ParticleOrientation.VelocityParallel
+					s.Speed = NumberRange.new(6, 12)
+					s.Lifetime = NumberRange.new(0.1, 0.2)
+					s.Parent = a
+					s:Emit(2)
+					Debris:AddItem(a, 0.7)
+				end
+			end
+		end
+	end
+	for character in lastModes do
+		if character.Parent == nil then
+			lastModes[character] = nil
+			wallDustNext[character] = nil
+		end
+	end
+end
+
 -- Ambiance : éclats de Temps en suspension --------------------------------------------------------
 
 local function buildAmbience(): BasePart
@@ -451,6 +553,7 @@ function GameFeel.start()
 		updateHealthFx(dt)
 		updateGlows()
 		updateDust()
+		updateMobility()
 	end)
 end
 

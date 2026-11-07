@@ -6,6 +6,8 @@
 --   Normal ──(glisser en courant)──▶ Slide ──(fin / saut)──▶ Normal
 --   Normal ──(saut face à un rebord)──▶ Mantle ──(fin)──▶ Normal
 --   Normal / Slide ──(grappin)──▶ Grapple ──(arrivée / saut = lâcher)──▶ Normal (ou Mantle)
+--   Normal / Slide ──(élan)──▶ Dash ──(fin)──▶ Normal          (v0.4.11, sol ou air)
+--   Normal (en l'air, le long d'un mur) ──▶ WallRun ──(saut = saut mural / fin)──▶ Normal
 --
 -- Ressenti :
 --   * la vitesse suit un ressort (accélération au démarrage, sortie de glissade sans à-coup) ;
@@ -18,6 +20,8 @@
 --   Glisser  : C ou Ctrl pendant le sprint · manette B · bouton tactile
 --   Escalade : Saut face à un rebord (automatique)
 --   Grappin  : G (vise le curseur) · manette R3 et bouton tactile (visent le centre de l'écran)
+--   Élan     : F · manette croix ▲ · bouton tactile « Élan »
+--   Course sur les murs : automatique ; saut pendant la course = saut mural
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
@@ -39,12 +43,15 @@ local Context = require(Client.Movement.Context)
 local Grapple = require(Client.Movement.Grapple)
 local Mantle = require(Client.Movement.Mantle)
 local Slide = require(Client.Movement.Slide)
+local Dash = require(Client.Movement.Dash)
+local WallRun = require(Client.Movement.WallRun)
 
-type Mode = "Normal" | "Slide" | "Mantle" | "Grapple"
+type Mode = "Normal" | "Slide" | "Mantle" | "Grapple" | "Dash" | "WallRun"
 
 local ACTION_SPRINT = "Fracture_Sprint"
 local ACTION_SLIDE = "Fracture_Slide"
 local ACTION_GRAPPLE = "Fracture_Grapple"
+local ACTION_DASH = "Fracture_Dash"
 
 local LANDING_MIN_SPEED = 8 -- vitesse de chute minimale pour signaler une réception
 
@@ -75,6 +82,10 @@ local coyoteUsed = false
 local wasGrounded = true
 local peakFallSpeed = 0
 local characterConnections: { RBXScriptConnection } = {}
+local lastDash = -math.huge
+local airDashes = MovementConfig.DASH_AIR_CHARGES
+local lastWallRunEnd = -math.huge
+local wallSide = 0 -- 1 = mur à droite, -1 = à gauche (animations)
 
 local function setMode(newMode: Mode)
 	if newMode == mode then
@@ -89,6 +100,10 @@ end
 local function endAction(boost: boolean?)
 	local current = action
 	local wasGrapple = mode == "Grapple"
+	if mode == "WallRun" then
+		lastWallRunEnd = os.clock()
+		wallSide = 0
+	end
 	action = nil
 	grappleTarget = nil
 	setMode("Normal")
@@ -152,6 +167,66 @@ local function trySlide(): boolean
 	return true
 end
 
+-- Élan : direction du mouvement (ou du regard), au sol ou une fois en l'air.
+local function tryDash(): boolean
+	local context = ctx
+	if context == nil or isDowned(context) then
+		return false
+	end
+	if mode ~= "Normal" and mode ~= "Slide" then
+		return false
+	end
+	if os.clock() - lastDash < MovementConfig.DASH_COOLDOWN then
+		return false
+	end
+	local airborne = not onGround(context)
+	if airborne and airDashes <= 0 then
+		return false
+	end
+	if not Stamina.spend(stamina, MovementConfig.DASH_STAMINA_COST, MovementConfig) then
+		return false
+	end
+	if mode == "Slide" then
+		endAction()
+	end
+	lastDash = os.clock()
+	if airborne then
+		airDashes -= 1
+	end
+	local direction = context.humanoid.MoveDirection
+	if direction.Magnitude < 0.1 then
+		local camera = workspace.CurrentCamera
+		direction = if camera then camera.CFrame.LookVector else context.root.CFrame.LookVector
+	end
+	action = Dash.start(context, direction)
+	setMode("Dash")
+	return true
+end
+
+-- Course sur les murs : démarre seule quand on longe un mur en l'air, assez vite.
+local function tryWallRun(context: Context.Context)
+	if mode ~= "Normal" or onGround(context) or isDowned(context) then
+		return
+	end
+	if os.clock() - lastWallRunEnd < MovementConfig.WALLRUN_COOLDOWN then
+		return
+	end
+	if not isMoving(context) then
+		return
+	end
+	if Context.horizontalVelocity(context).Magnitude < MovementConfig.WALLRUN_MIN_SPEED then
+		return
+	end
+	local wall = WallRun.find(context, context.humanoid.MoveDirection)
+	if wall == nil then
+		return
+	end
+	airDashes = MovementConfig.DASH_AIR_CHARGES -- toucher un mur rend l'élan aérien
+	wallSide = wall.side
+	action = WallRun.start(context, wall)
+	setMode("WallRun")
+end
+
 local function tryGrapple(useScreenCenter: boolean)
 	local context = ctx
 	if context == nil or mode == "Mantle" or mode == "Grapple" or isDowned(context) then
@@ -200,6 +275,11 @@ local function onJumpRequest()
 	end
 	if mode == "Slide" then
 		endAction() -- le saut part avec l'élan de la glissade
+		return
+	end
+	if mode == "WallRun" then
+		endAction(true) -- saut mural
+		airDashes = MovementConfig.DASH_AIR_CHARGES
 		return
 	end
 	if mode ~= "Normal" then
@@ -255,7 +335,21 @@ local function handleGrapple(
 	return Enum.ContextActionResult.Sink
 end
 
+local function handleDash(_: string, state: Enum.UserInputState): Enum.ContextActionResult
+	if state == Enum.UserInputState.Begin then
+		tryDash()
+	end
+	return Enum.ContextActionResult.Sink
+end
+
 local function bindInputs()
+	ContextActionService:BindAction(
+		ACTION_DASH,
+		handleDash,
+		false,
+		Enum.KeyCode.F,
+		Enum.KeyCode.DPadUp
+	)
 	ContextActionService:BindAction(
 		ACTION_SPRINT,
 		handleSprint,
@@ -339,6 +433,7 @@ local function updateGrounding(context: Context.Context)
 		end
 		lastGroundedAt = os.clock()
 		coyoteUsed = false
+		airDashes = MovementConfig.DASH_AIR_CHARGES
 		peakFallSpeed = 0
 	else
 		peakFallSpeed = math.max(peakFallSpeed, -vy)
@@ -387,6 +482,7 @@ local function onHeartbeat(dt: number)
 	if now < jumpBufferedUntil and mode == "Normal" and not onGround(context) then
 		tryMantle()
 	end
+	tryWallRun(context)
 
 	local wantsSprint = sprintHeld or sprintToggled
 	sprinting = mode == "Normal"
@@ -429,6 +525,20 @@ function MovementController.touchSlide()
 	if not trySlide() then
 		slideBufferedUntil = os.clock() + MovementConfig.INPUT_BUFFER
 	end
+end
+
+function MovementController.touchDash()
+	tryDash()
+end
+
+-- Côté du mur pendant une course sur les murs (1 = droite, -1 = gauche, 0 = aucun).
+function MovementController.getWallSide(): number
+	return wallSide
+end
+
+-- Temps restant avant le prochain élan (secondes).
+function MovementController.dashCooldown(): number
+	return math.max(0, MovementConfig.DASH_COOLDOWN - (os.clock() - lastDash))
 end
 
 function MovementController.touchGrapple()
@@ -492,6 +602,8 @@ local function createStudioTestHook()
 			sprintHeld = argument == true
 		elseif command == "slide" then
 			return trySlide()
+		elseif command == "dash" then
+			return tryDash()
 		elseif command == "jump" then
 			onJumpRequest()
 		elseif command == "grapple" and typeof(argument) == "Vector3" then

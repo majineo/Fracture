@@ -48,4 +48,23 @@ return table.freeze({
 	GRAPPLE_ACCELERATION = 5, -- raideur de la mise en traction
 	GRAPPLE_SLOWDOWN_DISTANCE = 12, -- on ralentit en approchant de la cible
 	GRAPPLE_ARRIVAL_SPEED = 28,
+
+	-- Élan (dash, v0.4.11) : sol et air (une fois par saut)
+	DASH_SPEED = 62,
+	DASH_TIME = 0.16,
+	DASH_EXIT_SPEED = 26, -- vitesse conservée à la sortie
+	DASH_COOLDOWN = 1.1,
+	DASH_STAMINA_COST = 0.2,
+	DASH_AIR_CHARGES = 1,
+
+	-- Course sur les murs (automatique : en l'air, en mouvement, le long d'un mur)
+	WALLRUN_MIN_SPEED = 13,
+	WALLRUN_SPEED = 24,
+	WALLRUN_DURATION = 1.3,
+	WALLRUN_REACH = 2.6, -- distance maximale du mur sur le côté
+	WALLRUN_START_RISE = 6, -- petite montée au début
+	WALLRUN_END_SINK = -7, -- descente en fin de course
+	WALLRUN_COOLDOWN = 0.35, -- avant de pouvoir reprendre un mur
+	WALLJUMP_PUSH = 24, -- saut mural : éloignement du mur
+	WALLJUMP_UP = 42, -- saut mural : vers le haut
 })

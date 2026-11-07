@@ -174,6 +174,15 @@ function MobileControls.start()
 		onPress = MovementController.touchGrapple,
 	})
 
+	-- Élan (v0.4.11) : au sol ou en l'air.
+	makeButton(anchor, {
+		name = "Dash",
+		text = "Élan",
+		position = UDim2.fromScale(0.04, 0.36),
+		size = 0.2,
+		onPress = MovementController.touchDash,
+	})
+
 	-- Capacité de l'arme (v0.4.5) : le contour se remplit avec le noyau.
 	local ability = makeButton(anchor, {
 		name = "Ability",

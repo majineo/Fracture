@@ -23,6 +23,8 @@ Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
 | Glisser (en courant) | C ou Ctrl (C seulement dans Studio) | Bouton Glisser | B |
 | Escalader | Saut face à un rebord | Saut | A |
 | Grappin | G (vise le curseur) | Bouton Grappin (centre de l'écran) | R3 |
+| Élan (sol, ou une fois en l'air) | F | Bouton Élan | Croix ▲ |
+| Course sur les murs / saut mural | Sauter en courant le long d'un mur, puis sauter | Saut | A |
 | Pistolet / lame (même touche = ranger) | 1 / 2 | Bouton Arme | Croix ◀ / ▶ |
 | Tirer / frapper (lame : maintenir = coup chargé) | Clic gauche | Bouton Tirer | RT |
 | Viser (arme à feu) / Parer (mêlée) | Clic droit | Bouton Viser / Parer | LT |

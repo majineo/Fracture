@@ -275,6 +275,15 @@ local function onAction(_: string, state: Enum.UserInputState): Enum.ContextActi
 	return Enum.ContextActionResult.Sink
 end
 
+-- Nom de la touche telle qu'imprimée sur LE clavier du joueur : Roblox lit la position
+-- physique (KeyCode.Q = touche « A » sur un clavier AZERTY).
+local function abilityKey(): string
+	local ok, label = pcall(function()
+		return UserInputService:GetStringForKeyCode(Enum.KeyCode.Q)
+	end)
+	return if ok and typeof(label) == "string" and label ~= "" then string.upper(label) else "Q"
+end
+
 -- Texte d'aide de la jauge.
 local function hint(def: any, adef: any, ready: boolean): string
 	local second = def.ability2 and Ability.DEFS[def.ability2]
@@ -282,11 +291,11 @@ local function hint(def: any, adef: any, ready: boolean): string
 		return if second then `{adef.name} / {second.name}` else adef.name
 	end
 	if second and def.ability2 == "TimeGuard" then
-		return `[Q] {adef.name} · parade maintenue : {second.name}`
+		return `[{abilityKey()}] {adef.name} · parade maintenue : {second.name}`
 	elseif second then
-		return `[Q] {adef.name} · maintenir : {second.name}`
+		return `[{abilityKey()}] {adef.name} · maintenir : {second.name}`
 	end
-	return `[Q] {adef.name}`
+	return `[{abilityKey()}] {adef.name}`
 end
 
 -- Pour MobileControls : remplissage (0 à 1) et nom de la capacité en main.

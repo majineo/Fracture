@@ -52,6 +52,20 @@ vers la cible), le saut, la chute, la réception et l'inclinaison du sprint.
 Caméra : champ de vision élargi en sprint / glissade / grappin, inclinaison en glissade, choc
 à la réception. Effets : poussière de glissade et de réception, sons.
 
+### Kit de mobilité (✅ v0.4.11, D-043)
+
+FRACTURE est un jeu de **mobilité** : on se bat en mouvement.
+
+- **Élan** (F · bouton « Élan » · croix ▲) : poussée de 0,16 s à 62 studs/s dans la direction du
+  mouvement, au sol ou **une fois en l'air** (rendu au sol ou en touchant un mur) ; 20 %
+  d'endurance, recharge 1,1 s. Images rémanentes cyan.
+- **Course sur les murs** (automatique) : en l'air, en courant le long d'un mur quasi vertical, on
+  court dessus jusqu'à 1,3 s (petite montée puis descente). On peut tirer et frapper pendant la
+  course.
+- **Saut mural** : sauter pendant la course pousse loin du mur, vers le haut et vers l'avant ; on
+  enchaîne les murs.
+- Le serveur tolère ces vitesses brièvement, au plus une fois par recharge qu'il mesure lui-même.
+
 ## 3. Santé et dégâts
 
 ✅ Implémenté en v0.4.0 (santé, armure, à terre, tête ×1,5, chute des dégâts avec la

@@ -87,6 +87,9 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	animator.addLayer("MantleReach", Poses.MantleReach, false, 24)
 	animator.addLayer("MantleVault", Poses.MantleVault, false, 20)
 	animator.addLayer("Grapple", Poses.Grapple, false, 14)
+	-- Mobilité (v0.4.11) : course sur les murs (pose calculée à chaque image), élan.
+	animator.addLayer("WallRun", {}, false, 16)
+	animator.addLayer("Dash", Poses.Dash, false, 26)
 	-- Combat : par-dessus le déplacement (on peut viser en glissant).
 	-- Tenue de l'arme : bras calculés par cinématique inverse (Animation/WeaponHold).
 	animator.addLayer("Hold", {}, false, 14)
@@ -287,6 +290,17 @@ local function updateHold(
 	return true
 end
 
+-- Côté du mur d'un autre joueur en course sur les murs (1 = droite, -1 = gauche).
+local function wallSideOf(entry: Tracked): number
+	local right = entry.root.CFrame.RightVector
+	if workspace:Raycast(entry.root.Position, right * 3, entry.rayParams) then
+		return 1
+	elseif workspace:Raycast(entry.root.Position, -right * 3, entry.rayParams) then
+		return -1
+	end
+	return 1
+end
+
 local function updateEntry(entry: Tracked, dt: number)
 	local isLocal = entry.player == localPlayer
 	-- Touché : le buste recule un instant (impulsion sur le ressort de la couche « Flinch »).
@@ -362,6 +376,32 @@ local function updateEntry(entry: Tracked, dt: number)
 			else 0
 	)
 	animator.setWeight("Slide", if mode == "Slide" then 1 else 0)
+	animator.setWeight("Dash", if mode == "Dash" then 1 else 0)
+	if mode == "WallRun" then
+		-- Côté du mur : connu pour soi, retrouvé par un rayon pour les autres joueurs.
+		local side = if isLocal then MovementController.getWallSide() else wallSideOf(entry)
+		local t = os.clock() * 13
+		local s = math.sin(t)
+		local A = function(x: number, y: number, z: number): CFrame
+			return CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
+		end
+		animator.setPose("WallRun", {
+			-- Corps penché vers le mur, foulées rapides.
+			Root = CFrame.new(side * 0.35, 0, 0) * A(-8, 0, side * 28),
+			Waist = A(-6, 0, -side * 6),
+			RightHip = A(45 * s, 0, 0),
+			RightKnee = A(-45 + 35 * s, 0, 0),
+			LeftHip = A(-45 * s, 0, 0),
+			LeftKnee = A(-45 - 35 * s, 0, 0),
+			RightShoulder = A(-45 * s, 0, if side > 0 then 25 else 55),
+			RightElbow = A(40, 0, 0),
+			LeftShoulder = A(45 * s, 0, if side < 0 then -25 else -55),
+			LeftElbow = A(40, 0, 0),
+		})
+		animator.setWeight("WallRun", 1)
+	else
+		animator.setWeight("WallRun", 0)
+	end
 	animator.setWeight("MantleReach", if mode == "Mantle" and progress < MANTLE_SPLIT then 1 else 0)
 	animator.setWeight(
 		"MantleVault",
@@ -386,7 +426,7 @@ local function updateEntry(entry: Tracked, dt: number)
 	local weapon: string? = if isLocal
 		then CombatController.getEquipped()
 		else entry.character:GetAttribute("EquippedWeapon") :: string?
-	local usable = not downed and (mode == "Normal" or mode == "Slide")
+	local usable = not downed and (mode == "Normal" or mode == "Slide" or mode == "WallRun")
 	local def = if usable and weapon and weapon ~= "" then WeaponDefs[weapon] else nil
 	local hold = def and def.hold
 	local holdingGun = hold == "Pistol" or hold == "LongGun"

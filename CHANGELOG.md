@@ -5,6 +5,48 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.8] — 2026-11-07 — « Correctif arbalète »
+
+### Description générale
+Correctif signalé en test : « Arbalète, en faisant Q, rien ne se passe ».
+
+### Nouvelles fonctionnalités
+- Un message explique pourquoi une capacité est refusée (« Rechargement en cours », « Cible hors
+  d'atteinte »).
+
+### Modifications
+- **Carreau de stase** : tiré par le noyau, il n'a plus besoin d'un carreau chargé (utilisable
+  pendant le rechargement) ; portée de 60 studs ; s'il ne touche rien, la bulle tombe au sol à
+  cet endroit.
+- Tests : pressions de touches réelles (clavier, clic droit maintenu) envoyées à Studio.
+
+### Corrections de bugs
+- Arbalète : Q juste après un tir (arbalète en rechargement) était refusé sans aucun message.
+- Arbalète : un carreau de stase qui ne touchait rien (visée vers le ciel ou très loin) créait sa
+  bulle à 250 studs, hors de vue : on croyait qu'il ne s'était rien passé.
+
+### Vérifications (Studio, vraies touches)
+- Arbalète : tir normal puis Q pendant le rechargement, visée vers le ciel → bulle posée au sol à
+  22 studs.
+- Toutes les armes avec les vraies touches : pistolet Q (Retour), lame Q (Pas de l'ombre), fusil
+  Q bref (salve) et Q maintenu (balle de rebond), épée longue Q (onde) et clic droit maintenu
+  (Garde du Temps levée puis baissée au relâchement, noyau restant 61 %).
+
+### Problèmes connus
+- Manette et tactile non vérifiés avec de vraies pressions.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/server/Core/Systems/{AbilityService,WeaponService}.luau`,
+  `src/shared/Combat/Ability.luau`, `src/client/Core/Controllers/AbilityController.luau`,
+  `src/shared/Config.luau`, `CHANGELOG.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Retours de test, puis v0.5.0 « Éclats ».
+
+---
+
 ## [v0.4.7] — 2026-11-07 — « Noyaux II »
 
 ### Description générale

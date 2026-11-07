@@ -479,11 +479,21 @@ local function onUseAbility(player: Player, kind: unknown, a: unknown, b: unknow
 	-- Tirs spéciaux (fusil, arbalète) : un tir réel validé comme les autres.
 	if adef.id == "Ricochet" or adef.id == "Stasis" then
 		Ability.consume(core, adef, now)
-		local impact = WeaponService.fireSpecial(player, adef.id, a, b, c)
+		-- Le carreau de stase est tiré par le noyau : pas besoin d'un carreau chargé ; portée
+		-- limitée pour que la bulle reste visible.
+		local options = if adef.id == "Stasis" then { useAmmo = false, range = adef.range } else nil
+		local impact, reason = WeaponService.fireSpecial(player, adef.id, a, b, c, options)
 		if impact == nil then
 			Ability.refund(core, adef)
+			Net.fire("CombatEvent", player, { type = "AbilityRefused", reason = reason })
 		elseif adef.id == "Stasis" then
-			createBubble(impact, adef)
+			-- Rien touché à portée : la bulle tombe au sol à cet endroit.
+			local ground = workspace:Raycast(
+				impact + Vector3.new(0, 1, 0),
+				Vector3.new(0, -200, 0),
+				worldParams(character)
+			)
+			createBubble(if ground then ground.Position + Vector3.new(0, 1, 0) else impact, adef)
 		end
 		publish(player)
 		return

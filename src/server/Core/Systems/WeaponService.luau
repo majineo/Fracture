@@ -536,11 +536,13 @@ local function performShot(
 	o: Vector3,
 	dir: Vector3,
 	t: number,
-	ricochet: boolean
+	ricochet: boolean,
+	rangeOverride: number?
 ): ({ Vector3 }, Vector3)
 	local params = excludeAllTargets(player.Character)
-	local world = workspace:Raycast(o, dir * def.range, params)
-	local maxDistance = if world then world.Distance else def.range
+	local range = rangeOverride or def.range
+	local world = workspace:Raycast(o, dir * range, params)
+	local maxDistance = if world then world.Distance else range
 	local hits = traceTargets(player, o, dir, maxDistance, t)
 	local maxTargets = 1 + (def.pierce or 0)
 	local endDistance = maxDistance
@@ -644,26 +646,39 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 end
 
 -- Tir spécial d'une capacité (balle de rebond, carreau de stase) : mêmes vérifications qu'un
--- tir normal sauf la cadence ; consomme une munition. Renvoie le point d'impact, ou nil.
+-- tir normal sauf la cadence ; consomme une munition (sauf `useAmmo = false`). Renvoie le
+-- premier impact, ou nil et la raison du refus (« NoAmmo », « Invalid »).
 function WeaponService.fireSpecial(
 	player: Player,
 	kind: string,
 	origin: unknown,
 	direction: unknown,
-	clientTime: unknown
-): Vector3?
+	clientTime: unknown,
+	options: { useAmmo: boolean, range: number? }?
+): (Vector3?, string?)
 	local def, state, o, dir = validateShot(player, origin, direction, clientTime)
 	if def == nil or state == nil then
-		return nil
+		return nil, "Invalid"
 	end
 	local now = os.clock()
-	if state.ammo <= 0 or WeaponState.isReloading(state, now, def) then
-		return nil
+	-- Un tir spécial peut se passer de munition (carreau de stase : tiré par le noyau).
+	local useAmmo = options == nil or options.useAmmo
+	if useAmmo then
+		if state.ammo <= 0 or WeaponState.isReloading(state, now, def) then
+			return nil, "NoAmmo"
+		end
+		WeaponState.fire(state, def, now)
+		sendState(player, def, state)
 	end
-	WeaponState.fire(state, def, now)
-	sendState(player, def, state)
-	local points, impact =
-		performShot(player, def, o, dir, viewTime(player, clientTime :: number), kind == "Ricochet")
+	local points, impact = performShot(
+		player,
+		def,
+		o,
+		dir,
+		viewTime(player, clientTime :: number),
+		kind == "Ricochet",
+		options and options.range
+	)
 	for _, other in Players:GetPlayers() do
 		Net.fire(
 			"ShotFx",
@@ -671,7 +686,7 @@ function WeaponService.fireSpecial(
 			{ shooter = player, kind = kind, weapon = def.id, points = points }
 		)
 	end
-	return impact
+	return impact, nil
 end
 
 local function onReload(player: Player)

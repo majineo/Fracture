@@ -102,6 +102,7 @@ Ability.DEFS = table.freeze({
 		name = "Carreau de stase",
 		charge = 100,
 		windup = 0,
+		range = 60, -- portée du carreau (au-delà, la bulle tombe au sol)
 		radius = 4,
 		duration = 3,
 		slow = 0.5,

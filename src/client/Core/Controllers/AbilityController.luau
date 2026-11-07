@@ -310,7 +310,10 @@ local function onCombatEvent(info: any)
 	elseif info.type == "AbilityReady" then
 		CombatSounds.play2D("AbilityReady", 0.7)
 	elseif info.type == "AbilityRefused" then
-		showMessage("Cible hors d'atteinte", Color3.new(1, 1, 1))
+		showMessage(
+			if info.reason == "NoAmmo" then "Rechargement en cours" else "Cible hors d'atteinte",
+			Color3.new(1, 1, 1)
+		)
 	elseif info.type == "Passive" then
 		if info.passive == "Riposte" then
 			showMessage("RIPOSTE ×2", CYAN)

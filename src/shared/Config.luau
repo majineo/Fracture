@@ -4,5 +4,5 @@
 -- Studio : ReplicatedStorage > Shared > Config
 
 return table.freeze({
-	GAME_VERSION = "0.4.7",
+	GAME_VERSION = "0.4.8",
 })

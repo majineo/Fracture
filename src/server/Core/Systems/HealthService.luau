@@ -44,6 +44,10 @@ local HealthService = {}
 HealthService.Damaged = Signal.new()
 -- (model, info)
 HealthService.Killed = Signal.new()
+-- (model, info) : coup arrêté par la Garde du Temps
+HealthService.Blocked = Signal.new()
+
+local GUARD_FRONT_ANGLE = 75
 
 local downedTokens: { [Model]: number } = {}
 
@@ -111,6 +115,22 @@ function HealthService.applyDamage(model: Model, amount: number, info: DamageInf
 	local target = CombatTargets.get(model)
 	if target == nil then
 		return nil
+	end
+	-- Garde du Temps (épée longue) : tout ce qui vient de face est bloqué.
+	if model:GetAttribute("TimeGuard") == true and info.origin then
+		local toOrigin = info.origin - target.root.Position
+		local flat = Vector3.new(toOrigin.X, 0, toOrigin.Z)
+		local look = target.root.CFrame.LookVector
+		if
+			flat.Magnitude < 0.5
+			or math.deg(
+					math.acos(math.clamp(flat.Unit:Dot(Vector3.new(look.X, 0, look.Z).Unit), -1, 1))
+				)
+				<= GUARD_FRONT_ANGLE
+		then
+			HealthService.Blocked:Fire(model, info)
+			return nil
+		end
 	end
 
 	local result: DamageResult =

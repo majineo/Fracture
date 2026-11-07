@@ -91,6 +91,7 @@ local lastParry = -math.huge
 local lastFire = -math.huge
 local remoteFires: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
 local parryCooldownUntil = 0
+local parryHeldSince: number? = nil -- bouton de parade maintenu (Garde du Temps, v0.4.7)
 local stunnedUntil = 0
 local aimPoint: Vector3? = nil
 
@@ -244,7 +245,8 @@ local function reload()
 	end
 end
 
-local function fireHitscan(def: any)
+-- `volleyShot` : tir d'une salve au levier (cadence ignorée, dispersion ajoutée).
+local function fireHitscan(def: any, volleyShot: number?)
 	local state = stateOf(def.id)
 	local now = os.clock()
 	if WeaponState.isReloading(state, now, def) then
@@ -255,7 +257,7 @@ local function fireHitscan(def: any)
 		reload()
 		return
 	end
-	if not WeaponState.canFire(state, def, now) then
+	if volleyShot == nil and not WeaponState.canFire(state, def, now) then
 		return
 	end
 	local origin = muzzlePosition()
@@ -266,7 +268,8 @@ local function fireHitscan(def: any)
 	WeaponState.fire(state, def, now)
 	lastFire = now
 
-	local direction = applySpread((target - origin).Unit, CombatController.getSpread())
+	local direction =
+		applySpread((target - origin).Unit, CombatController.getSpread() + (volleyShot or 0))
 	bloom = math.min(bloom + SHOT_BLOOM, 4)
 
 	-- Affichage immédiat (le serveur confirmera les touches).
@@ -454,10 +457,13 @@ local function handleAim(
 	if def == nil then
 		return Enum.ContextActionResult.Pass
 	end
-	-- Arme de mêlée : le bouton de visée sert à parer.
+	-- Arme de mêlée : le bouton de visée sert à parer (le maintenir lève la Garde du Temps).
 	if def.kind == "Melee" then
 		if state == Enum.UserInputState.Begin and canUseWeapon() then
 			parry(def)
+			parryHeldSince = os.clock()
+		elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+			parryHeldSince = nil
 		end
 		return Enum.ContextActionResult.Sink
 	end
@@ -627,6 +633,18 @@ local function onShotFx(info: any)
 			info.origin,
 			if def then def.soundPitch else nil
 		)
+	elseif info.kind == "FractureWave" then
+		-- Onde de fracture : coup chargé (animation et traînée) pour le lanceur.
+		local wave = { at = os.clock(), heavy = true, combo = 1 }
+		if info.shooter == player then
+			lastSwing = wave
+		elseif info.shooter:IsA("Player") then
+			remoteSwings[info.shooter] = wave
+		end
+		local c = if info.shooter:IsA("Player") then info.shooter.Character else nil
+		if c then
+			WeaponFx.bladeTrail(c, 0.6, true)
+		end
 	elseif info.kind == "Parry" then
 		remoteParries[info.shooter] = os.clock()
 	elseif info.kind == "ParrySuccess" then
@@ -775,6 +793,35 @@ function CombatController.touchAim()
 	handleAim("", Enum.UserInputState.Begin, TOUCH_INPUT)
 end
 
+-- Fin d'appui sur le bouton Viser / Parer (tactile) : baisse la Garde du Temps.
+function CombatController.touchAimRelease()
+	parryHeldSince = nil
+end
+
+-- Depuis combien de secondes le bouton de parade est maintenu (nil s'il est relâché).
+function CombatController.getParryHeld(): number?
+	return if parryHeldSince then os.clock() - parryHeldSince else nil
+end
+
+-- Position du canon de l'arme en main (tirs spéciaux des capacités).
+function CombatController.getMuzzle(): Vector3?
+	return muzzlePosition()
+end
+
+-- Salve au levier (fusil) : `shots` tirs espacés de `interval`, dispersion ajoutée.
+function CombatController.volley(shots: number, interval: number, extraSpread: number)
+	task.spawn(function()
+		for _ = 1, shots do
+			local def = currentDef()
+			if def == nil or def.kind ~= "Hitscan" or not canUseWeapon() then
+				return
+			end
+			fireHitscan(def, extraSpread)
+			task.wait(interval)
+		end
+	end)
+end
+
 function CombatController.touchReload()
 	reload()
 end
@@ -851,6 +898,9 @@ function CombatController.start()
 				if def and def.kind == "Melee" then
 					parry(def)
 				end
+			elseif command == "aimAt" then
+				-- Point visé imposé (nil pour revenir au centre de l'écran).
+				qaAimOverride = if typeof(argument) == "Vector3" then argument else nil
 			elseif command == "fireAt" and typeof(argument) == "Vector3" then
 				qaAimOverride = argument
 				local def = currentDef()

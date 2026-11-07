@@ -136,6 +136,7 @@ function MobileControls.start()
 		position = UDim2.fromScale(0.86, 0.3),
 		size = 0.22,
 		onPress = CombatController.touchAim,
+		onRelease = CombatController.touchAimRelease,
 	})
 	local reload = makeButton(anchor, {
 		name = "Reload",
@@ -179,7 +180,8 @@ function MobileControls.start()
 		text = "Capa.",
 		position = UDim2.fromScale(0.95, 0.04),
 		size = 0.2,
-		onPress = AbilityController.use,
+		onPress = AbilityController.press,
+		onRelease = AbilityController.release,
 	})
 	local abilityStroke = ability:FindFirstChildOfClass("UIStroke") :: UIStroke
 

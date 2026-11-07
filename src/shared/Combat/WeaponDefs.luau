@@ -41,6 +41,7 @@ export type WeaponDef = {
 	swingTime: number?, -- durée visuelle d'un coup simple
 	-- Capacités (v0.4.5, Combat/Ability)
 	ability: string?, -- capacité active (touche Q / bouton « Capacité »)
+	ability2: string?, -- seconde capacité (appui long sur Q, ou maintien de la parade)
 	passive: string?, -- trait passif
 }
 
@@ -115,6 +116,9 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		recoil = 4,
 		sound = "PistolShot",
 		soundPitch = 0.72,
+		ability = "Volley",
+		ability2 = "Ricochet",
+		passive = "Steady",
 	},
 	-- Arbalète lourde : un carreau, gros dégâts, traverse une première cible.
 	["weapon.heavy_crossbow"] = {
@@ -136,6 +140,7 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		recoil = 2.5,
 		pierce = 1,
 		sound = "CrossbowShot",
+		ability = "Stasis",
 	},
 	-- Épée longue : coups amples et lents, longue portée de mêlée, parade généreuse.
 	["weapon.longsword"] = {
@@ -162,6 +167,8 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		heavyChargeTime = 0.8,
 		parryWindow = 0.3,
 		swingTime = 0.3,
+		ability = "FractureWave",
+		ability2 = "TimeGuard",
 	},
 }
 

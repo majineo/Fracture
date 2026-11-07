@@ -247,6 +247,53 @@ function WeaponFx.abilityTrail(origin: Vector3, finish: Vector3, color: Color3)
 	end)
 end
 
+-- Onde de fracture (épée longue) : fissures cyan qui courent au sol de `origin` à `finish`.
+function WeaponFx.groundWave(origin: Vector3, finish: Vector3)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = {}
+	local steps = 7
+	for i = 1, steps do
+		task.delay(i * 0.035, function()
+			local point = origin:Lerp(finish, i / steps)
+			local ground =
+				workspace:Raycast(point + Vector3.new(0, 2, 0), Vector3.new(0, -8, 0), params)
+			local at = if ground then ground.Position else point - Vector3.new(0, 3, 0)
+			local a = Instance.new("Attachment")
+			a.WorldPosition = at + Vector3.new(0, 0.1, 0)
+			a.Parent = workspace.Terrain
+			local shards = Instance.new("ParticleEmitter")
+			shards.Enabled = false
+			shards.Color = ColorSequence.new(BRISURE_CYAN, Color3.new(1, 1, 1))
+			shards.LightEmission = 0.7
+			shards.Lifetime = NumberRange.new(0.25, 0.5)
+			shards.Speed = NumberRange.new(6, 14)
+			shards.SpreadAngle = Vector2.new(30, 30)
+			shards.EmissionDirection = Enum.NormalId.Top
+			shards.Acceleration = Vector3.new(0, -40, 0)
+			shards.Size = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.35),
+				NumberSequenceKeypoint.new(1, 0),
+			})
+			shards.Parent = a
+			shards:Emit(12)
+			local dust = Instance.new("ParticleEmitter")
+			dust.Enabled = false
+			dust.Color = ColorSequence.new(
+				if ground then ground.Instance.Color else Color3.new(0.6, 0.6, 0.6)
+			)
+			dust.Lifetime = NumberRange.new(0.4, 0.8)
+			dust.Speed = NumberRange.new(2, 5)
+			dust.SpreadAngle = Vector2.new(180, 20)
+			dust.Transparency = NumberSequence.new(0.3, 1)
+			dust.Size = NumberSequence.new(0.8, 1.6)
+			dust.Parent = a
+			dust:Emit(6)
+			Debris:AddItem(a, 1)
+		end)
+	end
+end
+
 -- Traînée qui suit la VRAIE lame pendant un coup (v0.4.6) : de la garde à la pointe.
 function WeaponFx.bladeTrail(character: Model, duration: number, heavy: boolean)
 	local held = character:FindFirstChild("HeldWeapon")

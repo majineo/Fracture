@@ -10,9 +10,9 @@
 
 | Statut | Contenu |
 |---|---|
-| ✅ Implémenté | Deux places (Refuge, Éclat), couche réseau sécurisée, données joueur avec verrou de session, déplacement avec animations et garde anti-triche, combat (5 armes, parade, santé, à terre, compensation de latence), premiers ennemis (homme d'armes, arbalétrier), capacités du pistolet et de la lame, champ de tir, armurerie, tests automatiques |
+| ✅ Implémenté | Deux places (Refuge, Éclat), couche réseau sécurisée, données joueur avec verrou de session, déplacement avec animations et garde anti-triche, combat (5 armes, parade, santé, à terre, compensation de latence), premiers ennemis (homme d'armes, arbalétrier), capacités des 5 armes, mêlée assistée, champ de tir, armurerie, tests automatiques |
 | 🔧 En cours | — |
-| 📋 Prévu | Capacités des trois autres armes, puis Éclats, extraction (voir [feuille de route](docs/ROADMAP.md)) |
+| 📋 Prévu | Éclats (génération de cartes), extraction (voir [feuille de route](docs/ROADMAP.md)) |
 | 💭 À l'étude | Éléments marqués 💭 dans le GDD |
 
 Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
@@ -27,7 +27,8 @@ Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
 | Tirer / frapper (lame : maintenir = coup chargé) | Clic gauche | Bouton Tirer | RT |
 | Viser (arme à feu) / Parer (mêlée) | Clic droit | Bouton Viser / Parer | LT |
 | Recharger | R | Bouton Recharger | X |
-| Capacité de l'arme (noyau plein) | Q | Bouton Capa. | LB |
+| Capacité de l'arme (noyau plein) ; fusil : maintenir = rebond | Q | Bouton Capa. | LB |
+| Garde du Temps (épée longue, noyau plein) | Maintenir clic droit | Maintenir Parer | Maintenir LT |
 
 Champ de tir : à l'ouest du point d'apparition (3 mannequins, dont un mobile).
 Armurerie : au sud du point d'apparition (5 armes, maintenir la touche d'interaction pour équiper).

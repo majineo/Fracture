@@ -56,4 +56,14 @@ return function(T)
 		T.truthy(#h.times <= 27, "les vieux échantillons sont oubliés")
 		T.equal(Ability.sampleAt(h, -100), h.values[1], "trop ancien : le plus vieux connu")
 	end)
+
+	T.test("Garde du Temps : le noyau se vide en 3 s", function()
+		local guard = Ability.DEFS.TimeGuard
+		local core = Ability.newCore()
+		Ability.addDamage(core, 100, guard)
+		T.equal(Ability.drain(core, guard, 1.5), true)
+		T.truthy(math.abs(core.charge - 50) < 1e-6, "moitié après 1,5 s")
+		T.equal(Ability.drain(core, guard, 2), false, "vide")
+		T.equal(core.charge, 0)
+	end)
 end

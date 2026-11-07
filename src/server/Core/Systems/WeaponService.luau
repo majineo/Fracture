@@ -60,6 +60,10 @@ local WeaponService = {}
 local loadouts: { [Player]: Loadout } = {}
 -- Bonus du prochain coup de mêlée (Riposte, Pas de l'ombre) : multiplicateur et échéance.
 local hitBonuses: { [Player]: { multiplier: number, expires: number } } = {}
+-- Salve au levier (fusil) : tirs autorisés sans attendre la cadence.
+local volleys: { [Player]: { remaining: number, expires: number } } = {}
+-- Modificateur de dégâts des tirs (Souffle, bulle de stase), fourni par AbilityService.
+local damageModifier: ((Player, WeaponDefs.WeaponDef, Vector3, Vector3) -> number)? = nil
 
 local function rootOf(model: Model?): BasePart?
 	local root = model and model:FindFirstChild("HumanoidRootPart")
@@ -223,10 +227,20 @@ local function applyHit(
 	def: WeaponDefs.WeaponDef,
 	hit: Hit,
 	origin: Vector3,
-	extra: number?
+	extra: number?,
+	point: Vector3?
 )
-	local amount =
-		Damage.compute(def, hit.distance, hit.headshot, CombatConfig.HEADSHOT_MULTIPLIER, extra)
+	-- Modificateurs posés par les capacités (Souffle, bulle de stase…), voir AbilityService.
+	local modifier = if damageModifier and point
+		then damageModifier(shooter, def, origin, point)
+		else 1
+	local amount = Damage.compute(
+		def,
+		hit.distance,
+		hit.headshot,
+		CombatConfig.HEADSHOT_MULTIPLIER,
+		(extra or 1) * modifier
+	)
 	local result = HealthService.applyDamage(hit.target.model, amount, {
 		attacker = shooter,
 		weaponId = def.id,
@@ -420,6 +434,50 @@ function WeaponService.setWeapon(player: Player, slot: number, id: string): bool
 	return true
 end
 
+-- Salve au levier : les `shots` prochains tirs ignorent la cadence pendant `window` secondes.
+function WeaponService.grantVolley(player: Player, shots: number, window: number)
+	volleys[player] = { remaining = shots, expires = os.clock() + window }
+end
+
+-- Modificateur de dégâts appliqué à chaque tir (une seule fonction, fournie à l'init).
+function WeaponService.setDamageModifier(fn: (
+	Player,
+	WeaponDefs.WeaponDef,
+	Vector3,
+	Vector3
+) -> number)
+	damageModifier = fn
+end
+
+-- La cible pare-t-elle un coup venu de `fromPosition` ? (Onde de fracture : parable)
+function WeaponService.tryParryFrom(model: Model, fromPosition: Vector3): boolean
+	local target = CombatTargets.get(model)
+	return target ~= nil and tryParry(target, fromPosition)
+end
+
+-- Dégâts d'une capacité (Onde de fracture) : mêmes règles et retours qu'un coup normal.
+function WeaponService.dealDamage(
+	player: Player,
+	def: WeaponDefs.WeaponDef,
+	model: Model,
+	amount: number,
+	origin: Vector3
+): boolean
+	local target = CombatTargets.get(model)
+	if target == nil then
+		return false
+	end
+	local result = HealthService.applyDamage(
+		model,
+		amount,
+		{ attacker = player, weaponId = def.id, headshot = false, origin = origin }
+	)
+	if result then
+		notifyHit(player, target, result, false, origin)
+	end
+	return result ~= nil
+end
+
 -- Le prochain coup de mêlée du joueur (s'il touche dans `duration` secondes) fait ×multiplier.
 function WeaponService.grantNextHitBonus(player: Player, multiplier: number, duration: number)
 	hitBonuses[player] = { multiplier = multiplier, expires = os.clock() + duration }
@@ -470,47 +528,27 @@ local function onEquip(player: Player, slot: unknown)
 	end
 end
 
-local function onFire(player: Player, origin: unknown, direction: unknown, clientTime: unknown)
-	if
-		not (
-			Guard.isFiniteVector3(origin)
-			and Guard.isFiniteVector3(direction)
-			and Guard.isFiniteNumber(clientTime)
-		)
-	then
-		return
-	end
-	local o, dir = origin :: Vector3, direction :: Vector3
-	if dir.Magnitude < 0.5 or dir.Magnitude > 1.5 then
-		return
-	end
-	dir = dir.Unit
-	local def, state = equippedDef(player)
-	if def == nil or state == nil or def.kind ~= "Hitscan" or not canAct(player) then
-		return
-	end
-	local root = rootOf(player.Character)
-	if root == nil or (o - root.Position).Magnitude > CombatConfig.MAX_MUZZLE_OFFSET then
-		return
-	end
-	local now = os.clock()
-	if not WeaponState.canFire(state, def, now, FIRE_TOLERANCE) then
-		sendState(player, def, state) -- resynchronise un client qui s'est trompé
-		return
-	end
-	WeaponState.fire(state, def, now)
-
-	-- Obstacle du décor : le tir s'arrête au premier mur.
-	local world = workspace:Raycast(o, dir * def.range, excludeAllTargets(player.Character))
+-- Tir réel (déjà validé) : décor, cibles remontées dans le temps, perforation, ricochet.
+-- Renvoie les points de la trajectoire (départ, [rebond], arrivée) et le premier impact.
+local function performShot(
+	player: Player,
+	def: WeaponDefs.WeaponDef,
+	o: Vector3,
+	dir: Vector3,
+	t: number,
+	ricochet: boolean
+): ({ Vector3 }, Vector3)
+	local params = excludeAllTargets(player.Character)
+	local world = workspace:Raycast(o, dir * def.range, params)
 	local maxDistance = if world then world.Distance else def.range
-	local hits = traceTargets(player, o, dir, maxDistance, viewTime(player, clientTime :: number))
+	local hits = traceTargets(player, o, dir, maxDistance, t)
 	local maxTargets = 1 + (def.pierce or 0)
 	local endDistance = maxDistance
 	for index, hit in hits do
 		if index > maxTargets then
 			break
 		end
-		applyHit(player, def, hit, o, PIERCE_FALLOFF ^ (index - 1))
+		applyHit(player, def, hit, o, PIERCE_FALLOFF ^ (index - 1), o + dir * hit.distance)
 		endDistance = hit.distance
 	end
 	if #hits > 0 and #hits <= maxTargets and (def.pierce or 0) > 0 then
@@ -518,13 +556,122 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 	elseif #hits > 0 then
 		endDistance = hits[math.min(#hits, maxTargets)].distance
 	end
+	local finish = o + dir * endDistance
+	-- Premier impact (cible ou mur) : là où naît une bulle de stase.
+	local firstImpact = if hits[1] then o + dir * hits[1].distance else o + dir * maxDistance
+	local points = { o, finish }
+	-- Balle de rebond : si rien n'a été touché avant le mur, elle repart une fois.
+	if ricochet and #hits == 0 and world then
+		local normal = world.Normal
+		local bounced = (dir - 2 * dir:Dot(normal) * normal).Unit
+		local from = world.Position + normal * 0.05
+		local range = math.max(0, def.range - world.Distance)
+		local second = workspace:Raycast(from, bounced * range, params)
+		local secondMax = if second then second.Distance else range
+		local secondHits = traceTargets(player, from, bounced, secondMax, t)
+		local stop = secondMax
+		local first = secondHits[1]
+		if first then
+			local along = first.distance
+			first.distance += world.Distance -- chute des dégâts sur le trajet total
+			applyHit(player, def, first, from, nil, from + bounced * along)
+			stop = along
+		end
+		finish = from + bounced * stop
+		points = { o, world.Position, finish }
+		firstImpact = finish
+	end
+	return points, firstImpact
+end
+
+-- Vérifications communes à tout tir demandé par un client. Renvoie arme, état, origine, direction.
+local function validateShot(
+	player: Player,
+	origin: unknown,
+	direction: unknown,
+	clientTime: unknown
+): (WeaponDefs.WeaponDef?, WeaponState.State?, Vector3, Vector3)
+	if
+		not (
+			Guard.isFiniteVector3(origin)
+			and Guard.isFiniteVector3(direction)
+			and Guard.isFiniteNumber(clientTime)
+		)
+	then
+		return nil, nil, Vector3.zero, Vector3.zero
+	end
+	local o, dir = origin :: Vector3, direction :: Vector3
+	if dir.Magnitude < 0.5 or dir.Magnitude > 1.5 then
+		return nil, nil, o, dir
+	end
+	local def, state = equippedDef(player)
+	if def == nil or state == nil or def.kind ~= "Hitscan" or not canAct(player) then
+		return nil, nil, o, dir
+	end
+	local root = rootOf(player.Character)
+	if root == nil or (o - root.Position).Magnitude > CombatConfig.MAX_MUZZLE_OFFSET then
+		return nil, nil, o, dir
+	end
+	return def, state, o, dir.Unit
+end
+
+local function onFire(player: Player, origin: unknown, direction: unknown, clientTime: unknown)
+	local def, state, o, dir = validateShot(player, origin, direction, clientTime)
+	if def == nil or state == nil then
+		return
+	end
+	local now = os.clock()
+	-- Salve au levier : la cadence est ignorée pour les tirs de la salve (munitions requises).
+	local volley = volleys[player]
+	if volley and volley.remaining > 0 and now <= volley.expires then
+		if state.ammo <= 0 or WeaponState.isReloading(state, now, def) then
+			return
+		end
+		volley.remaining -= 1
+	elseif not WeaponState.canFire(state, def, now, FIRE_TOLERANCE) then
+		sendState(player, def, state) -- resynchronise un client qui s'est trompé
+		return
+	end
+	WeaponState.fire(state, def, now)
+	local points = performShot(player, def, o, dir, viewTime(player, clientTime :: number), false)
 	broadcastFx(player, {
 		shooter = player,
 		kind = "Shot",
 		weapon = def.id,
-		origin = o,
-		finish = o + dir * endDistance,
+		origin = points[1],
+		finish = points[#points],
 	})
+end
+
+-- Tir spécial d'une capacité (balle de rebond, carreau de stase) : mêmes vérifications qu'un
+-- tir normal sauf la cadence ; consomme une munition. Renvoie le point d'impact, ou nil.
+function WeaponService.fireSpecial(
+	player: Player,
+	kind: string,
+	origin: unknown,
+	direction: unknown,
+	clientTime: unknown
+): Vector3?
+	local def, state, o, dir = validateShot(player, origin, direction, clientTime)
+	if def == nil or state == nil then
+		return nil
+	end
+	local now = os.clock()
+	if state.ammo <= 0 or WeaponState.isReloading(state, now, def) then
+		return nil
+	end
+	WeaponState.fire(state, def, now)
+	sendState(player, def, state)
+	local points, impact =
+		performShot(player, def, o, dir, viewTime(player, clientTime :: number), kind == "Ricochet")
+	for _, other in Players:GetPlayers() do
+		Net.fire(
+			"ShotFx",
+			other,
+			{ shooter = player, kind = kind, weapon = def.id, points = points }
+		)
+	end
+	return impact
 end
 
 local function onReload(player: Player)
@@ -550,6 +697,7 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 		or state == nil
 		or def.kind ~= "Melee"
 		or not canAct(player)
+		or (player.Character :: Model):GetAttribute("TimeGuard") == true
 	then
 		return
 	end
@@ -649,6 +797,7 @@ function WeaponService.init()
 	Players.PlayerRemoving:Connect(function(player)
 		loadouts[player] = nil
 		hitBonuses[player] = nil
+		volleys[player] = nil
 	end)
 end
 

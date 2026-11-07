@@ -263,7 +263,7 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   de test, à replacer avec la vraie carte (v0.5).
 
 ## D-038 — Capacités des armes : une par arme, noyau chargé en combattant
-- **Date** : 2026-11-07 · **Version** : v0.4.5 · **Statut** : 🔧 En cours (2 armes sur 5)
+- **Date** : 2026-11-07 · **Version** : v0.4.5 · **Statut** : ✅ Implémentée (5 armes sur 5 en v0.4.7)
 - **Choix** (validé par l'utilisateur) : chaque arme a une capacité active (touche Q, bouton
   « Capa. », LB) et un trait passif. La capacité demande un noyau plein, rempli par les dégâts
   infligés avec l'arme (100 points), vidé à la mort. Liste des capacités : GDD 03 §6.1. Le fusil
@@ -283,3 +283,11 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   mobile c'est encore pire. La parade et le positionnement restent le vrai savoir-faire.
 - **Sécurité** : le client ne choisit que la direction ; le serveur juge la touche (portée, cône,
   ligne de vue, remontée dans le temps) et tolère la fente dans la garde de mouvement (0,5 s).
+
+## D-040 — Deux capacités sur une arme : appui long ou parade maintenue
+- **Date** : 2026-11-07 · **Version** : v0.4.7 · **Statut** : ✅ Implémentée
+- **Choix** : le fusil garde ses deux capacités sur la même touche (Q bref = salve, Q maintenu
+  0,35 s = balle de rebond) ; l'épée longue lève la Garde du Temps en maintenant la parade. Les
+  deux capacités partagent le noyau de l'arme. Aucun bouton supplémentaire sur mobile.
+- **Ajustement** : « Souffle » (fusil) se déclenche après 1 s d'immobilité, jugée par le serveur,
+  au lieu de « 1 s de visée immobile » (le serveur ne sait pas si l'on vise).

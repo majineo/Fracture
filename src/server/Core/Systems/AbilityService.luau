@@ -37,6 +37,9 @@ local AbilityService = {}
 local cores: { [Player]: { [string]: Ability.Core } } = {}
 local histories: { [Player]: Ability.History<Sample> } = {}
 local casting: { [Player]: boolean } = {}
+-- Souffle (fusil) : depuis quand le joueur est immobile.
+local stillSince: { [Player]: number } = {}
+local lastPositions: { [Player]: Vector3 } = {}
 
 local function rootOf(model: Model?): BasePart?
 	local root = model and model:FindFirstChild("HumanoidRootPart")
@@ -278,31 +281,231 @@ local function castShadowStep(
 	end)
 end
 
+-- Ralentissement (bulle de stase, onde de fracture, Garde du Temps) : attributs lus par le
+-- client (MovementController) et par les Échoués (EnemyService).
+local function slow(model: Model, factor: number, duration: number)
+	local now = workspace:GetServerTimeNow()
+	local untilTime = math.max((model:GetAttribute("SlowUntil") :: number?) or 0, now + duration)
+	local current = (model:GetAttribute("SlowFactor") :: number?) or 1
+	if ((model:GetAttribute("SlowUntil") :: number?) or 0) < now then
+		current = 1
+	end
+	model:SetAttribute("SlowFactor", math.min(current, factor))
+	model:SetAttribute("SlowUntil", untilTime)
+end
+
+-- Bulles de stase actives (arbalète).
+type Bubble = {
+	position: Vector3,
+	radius: number,
+	expires: number,
+	adef: Ability.AbilityDef,
+	part: BasePart,
+}
+local bubbles: { Bubble } = {}
+local bubbleFolder: Folder? = nil
+
+local function createBubble(position: Vector3, adef: Ability.AbilityDef)
+	if bubbleFolder == nil then
+		local folder = Instance.new("Folder")
+		folder.Name = "StasisBubbles"
+		folder.Parent = workspace
+		bubbleFolder = folder
+	end
+	local radius = adef.radius or 4
+	local part = Instance.new("Part")
+	part.Name = "StasisBubble"
+	part.Shape = Enum.PartType.Ball
+	part.Size = Vector3.one * radius * 2
+	part.CFrame = CFrame.new(position)
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanQuery = false
+	part.CanTouch = false
+	part.CastShadow = false
+	part.Material = Enum.Material.ForceField
+	part.Color = Color3.fromRGB(80, 230, 255)
+	part.Transparency = 0.25
+	part:SetAttribute("Expires", workspace:GetServerTimeNow() + (adef.duration or 3))
+	part.Parent = bubbleFolder
+	table.insert(bubbles, {
+		position = position,
+		radius = radius,
+		expires = os.clock() + (adef.duration or 3),
+		adef = adef,
+		part = part,
+	})
+end
+
+-- Distance d'un point à un segment (tir qui traverse une bulle).
+local function segmentDistance(a: Vector3, b: Vector3, point: Vector3): number
+	local ab = b - a
+	local length = ab.Magnitude
+	if length < 1e-4 then
+		return (point - a).Magnitude
+	end
+	local t = math.clamp((point - a):Dot(ab) / (length * length), 0, 1)
+	return (a + ab * t - point).Magnitude
+end
+
+-- Onde de fracture (épée longue) ----------------------------------------------------------
+
+local function castFractureWave(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	core: Ability.Core,
+	character: Model,
+	root: BasePart
+)
+	task.delay(adef.windup, function()
+		casting[player] = nil
+		setCast(character, nil)
+		if not stillValid(player, character) then
+			Ability.refund(core, adef)
+			publish(player)
+			return
+		end
+		local look = root.CFrame.LookVector
+		local forward = Vector3.new(look.X, 0, look.Z).Unit
+		local origin = root.Position
+		local length = adef.length or 8
+		local params = worldParams(character)
+		for model, target in CombatTargets.all() do
+			if model ~= character and HealthService.canDamage(player, model) then
+				local offset = target.root.Position - origin
+				local along = offset:Dot(forward)
+				local side = (Vector3.new(offset.X, 0, offset.Z) - forward * along).Magnitude
+				if
+					along >= 0
+					and along <= length + 1
+					and side <= (adef.halfWidth or 1.75) + 1
+					and math.abs(offset.Y) <= 4
+					and not workspace:Raycast(origin, offset, params)
+				then
+					-- Parable : un joueur qui pare de face annule l'onde (sans étourdir le lanceur).
+					if not WeaponService.tryParryFrom(model, origin) then
+						if
+							WeaponService.dealDamage(player, def, model, adef.damage or 35, origin)
+						then
+							if target.kind == "Player" then
+								slow(model, adef.slow or 0.4, adef.slowDuration or 1.2)
+							else
+								model:SetAttribute(
+									"StunnedUntil",
+									workspace:GetServerTimeNow() + (adef.slowDuration or 1.2)
+								)
+							end
+						end
+					end
+				end
+			end
+		end
+		broadcastFx({
+			shooter = player,
+			kind = "FractureWave",
+			origin = origin,
+			finish = origin + forward * length,
+		})
+	end)
+end
+
+-- Garde du Temps (épée longue) --------------------------------------------------------------
+
+local guards: { [Player]: { core: Ability.Core, adef: Ability.AbilityDef, character: Model } } = {}
+
+local function stopGuard(player: Player)
+	local guard = guards[player]
+	if guard then
+		guards[player] = nil
+		guard.character:SetAttribute("TimeGuard", nil)
+		publish(player)
+	end
+end
+
 -- Requête du client ------------------------------------------------------------------------
 
-local function onUseAbility(player: Player, target: unknown)
-	if casting[player] then
+-- UseAbility(capacité, ...) : la capacité doit être celle de l'arme en main (ability/ability2).
+local function onUseAbility(player: Player, kind: unknown, a: unknown, b: unknown, c: unknown)
+	if typeof(kind) ~= "string" then
 		return
 	end
 	local def = WeaponService.getEquipped(player)
-	local adef = def and abilityOf(def.id)
 	local character = player.Character
 	local root = rootOf(character)
-	if def == nil or adef == nil or character == nil or root == nil then
+	if def == nil or character == nil or root == nil then
+		return
+	end
+	if kind ~= def.ability and kind ~= def.ability2 then
+		return
+	end
+	local adef: Ability.AbilityDef? = (Ability.DEFS :: any)[kind]
+	if adef == nil then
+		return
+	end
+	local core = coreFor(player, def.id)
+
+	-- Garde du Temps : (true) pour lever la garde, (false) pour la baisser.
+	if adef.id == "TimeGuard" then
+		if a == false then
+			stopGuard(player)
+			return
+		end
+		if guards[player] or casting[player] or not WeaponService.canUseAbility(player) then
+			return
+		end
+		if not Ability.isReady(core, adef, os.clock()) then
+			publish(player)
+			return
+		end
+		core.lastUse = os.clock()
+		guards[player] = { core = core, adef = adef, character = character }
+		character:SetAttribute("TimeGuard", true)
+		return
+	end
+
+	if casting[player] or guards[player] then
 		return
 	end
 	if not WeaponService.canUseAbility(player) then
 		return
 	end
-	local core = coreFor(player, def.id)
 	local now = os.clock()
 	if not Ability.isReady(core, adef, now) then
 		publish(player) -- resynchronise un client qui s'est trompé
 		return
 	end
+
+	-- Tirs spéciaux (fusil, arbalète) : un tir réel validé comme les autres.
+	if adef.id == "Ricochet" or adef.id == "Stasis" then
+		Ability.consume(core, adef, now)
+		local impact = WeaponService.fireSpecial(player, adef.id, a, b, c)
+		if impact == nil then
+			Ability.refund(core, adef)
+		elseif adef.id == "Stasis" then
+			createBubble(impact, adef)
+		end
+		publish(player)
+		return
+	end
+	if adef.id == "Volley" then
+		Ability.consume(core, adef, now)
+		local shots = adef.shots or 3
+		local interval = adef.interval or 0.2
+		WeaponService.grantVolley(player, shots, shots * interval + 0.6)
+		Net.fire("CombatEvent", player, {
+			type = "Volley",
+			shots = shots,
+			interval = interval,
+			extraSpread = adef.extraSpread or 2.5,
+		})
+		publish(player)
+		return
+	end
+
 	local shadowTarget: Model? = nil
 	if adef.id == "ShadowStep" then
-		shadowTarget = validShadowTarget(player, character, root, adef, target)
+		shadowTarget = validShadowTarget(player, character, root, adef, a)
 		if shadowTarget == nil then
 			Net.fire("CombatEvent", player, { type = "AbilityRefused", reason = "NoTarget" })
 			return
@@ -314,8 +517,13 @@ local function onUseAbility(player: Player, target: unknown)
 	setCast(character, adef)
 	if adef.id == "Rewind" then
 		castRewind(player, adef, core, character, root)
+	elseif adef.id == "FractureWave" then
+		castFractureWave(player, def, adef, core, character, root)
 	elseif shadowTarget then
 		castShadowStep(player, adef, core, character, root, shadowTarget)
+	else
+		casting[player] = nil
+		setCast(character, nil)
 	end
 end
 
@@ -336,6 +544,39 @@ end
 function AbilityService.init()
 	Net.on("UseAbility", onUseAbility)
 
+	-- Modificateur de dégâts des tirs : Souffle (fusil) et bulles de stase traversées.
+	WeaponService.setDamageModifier(function(player, def, origin, point)
+		local multiplier = 1
+		if def.passive == "Steady" then
+			local since = stillSince[player]
+			if since and os.clock() - since >= Ability.STEADY_TIME then
+				multiplier *= Ability.STEADY_MULTIPLIER
+				stillSince[player] = os.clock() -- consommé : il faut de nouveau rester immobile
+				Net.fire("CombatEvent", player, { type = "Passive", passive = "Steady" })
+			end
+		end
+		for _, bubble in bubbles do
+			if segmentDistance(origin, point, bubble.position) <= bubble.radius then
+				multiplier *= bubble.adef.shotDamping or 0.5
+				break
+			end
+		end
+		return multiplier
+	end)
+
+	-- Garde du Temps : étincelles quand un coup est arrêté.
+	HealthService.Blocked:Connect(function(model: Model)
+		local root = rootOf(model)
+		if root then
+			broadcastFx({
+				shooter = model,
+				kind = "GuardBlock",
+				origin = root.Position + root.CFrame.LookVector * 1.4 + Vector3.new(0, 0.8, 0),
+				finish = root.Position,
+			})
+		end
+	end)
+
 	-- Les dégâts infligés remplissent le noyau de l'arme utilisée.
 	HealthService.Damaged:Connect(function(model: Model, result: any, info: any)
 		local attacker: Player? = info.attacker
@@ -354,6 +595,8 @@ function AbilityService.init()
 		player.CharacterAdded:Connect(function()
 			cores[player] = {}
 			casting[player] = nil
+			guards[player] = nil
+			stillSince[player] = nil
 			histories[player] = Ability.newHistory(HISTORY_DURATION)
 			publish(player)
 		end)
@@ -373,6 +616,9 @@ function AbilityService.init()
 		cores[player] = nil
 		histories[player] = nil
 		casting[player] = nil
+		guards[player] = nil
+		stillSince[player] = nil
+		lastPositions[player] = nil
 	end)
 end
 
@@ -384,8 +630,51 @@ function AbilityService.start()
 		if accumulator < SAMPLE_INTERVAL then
 			return
 		end
+		local elapsed = accumulator
 		accumulator = 0
 		local now = workspace:GetServerTimeNow()
+		local clock = os.clock()
+
+		-- Garde du Temps : vide le noyau, ralentit, s'arrête si vide ou si l'on ne peut plus agir.
+		for player, guard in guards do
+			local alive = player.Character == guard.character
+				and WeaponService.canUseAbility(player)
+			if not alive or not Ability.drain(guard.core, guard.adef, elapsed) then
+				stopGuard(player)
+			else
+				slow(guard.character, guard.adef.slow or 0.5, 0.3)
+				publish(player)
+			end
+		end
+
+		-- Bulles de stase : ralentissent tout ce qui est dedans, puis disparaissent.
+		for index = #bubbles, 1, -1 do
+			local bubble = bubbles[index]
+			if clock >= bubble.expires then
+				bubble.part:Destroy()
+				table.remove(bubbles, index)
+			else
+				for model, target in CombatTargets.all() do
+					if (target.root.Position - bubble.position).Magnitude <= bubble.radius + 1 then
+						slow(model, bubble.adef.slow or 0.5, 0.3)
+					end
+				end
+			end
+		end
+
+		-- Souffle : immobilité (moins de 0,3 stud depuis le dernier échantillon).
+		for _, player in Players:GetPlayers() do
+			local root = rootOf(player.Character)
+			if root then
+				local last = lastPositions[player]
+				local moved = last == nil or (root.Position - last).Magnitude > 0.3
+				if moved or stillSince[player] == nil then
+					stillSince[player] = clock
+				end
+				lastPositions[player] = root.Position
+			end
+		end
+
 		for player, history in histories do
 			local character = player.Character
 			local root = rootOf(character)

@@ -359,7 +359,21 @@ local function updateEntry(entry: Tracked, dt: number)
 		local who = if isLocal then nil else entry.player
 		local now = os.clock()
 		local swing = CombatController.getSwing(who)
-		if swing then
+		local character = entry.character
+		-- Capacités de l'épée longue (v0.4.7) : Garde du Temps (lame levée en travers tant
+		-- qu'elle dure), préparation de l'Onde de fracture (lame levée au-dessus de la tête).
+		if character:GetAttribute("TimeGuard") == true then
+			local grip, torsoTwist = MeleeMotion.sample("Parry", 1)
+			motion, twist = { grip = grip, direct = true }, torsoTwist
+		elseif
+			character:GetAttribute("AbilityCast") == "FractureWave"
+			and ((character:GetAttribute("AbilityCastEnd") :: number?) or 0)
+				> workspace:GetServerTimeNow()
+		then
+			local grip, torsoTwist = MeleeMotion.sample("Heavy", 0)
+			motion, twist = { grip = grip, direct = false, blend = 1 }, torsoTwist
+		end
+		if motion == nil and swing then
 			local light = def.swingTime or 0.2
 			local duration = if swing.heavy then light * 1.6 else light
 			local t = (now - swing.at) / duration

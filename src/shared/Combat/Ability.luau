@@ -8,7 +8,14 @@
 -- dégâts avec cette arme. Noyau plein → la capacité active est utilisable (touche Q, bouton
 -- « Capacité »). Chaque capacité est annoncée par un court temps de préparation.
 
-export type AbilityId = "Rewind" | "ShadowStep"
+export type AbilityId =
+	"Rewind"
+	| "ShadowStep"
+	| "Volley"
+	| "Ricochet"
+	| "Stasis"
+	| "FractureWave"
+	| "TimeGuard"
 
 export type AbilityDef = {
 	id: AbilityId,
@@ -23,6 +30,25 @@ export type AbilityDef = {
 	behind: number?, -- distance derrière la cible où l'on réapparaît
 	backstabMultiplier: number?, -- bonus du premier coup qui suit
 	backstabWindow: number?, -- durée pendant laquelle ce bonus attend
+	-- Salve au levier (fusil)
+	shots: number?, -- tirs de la salve
+	interval: number?, -- secondes entre deux tirs
+	extraSpread: number?, -- dispersion ajoutée (degrés)
+	-- Carreau de stase (arbalète)
+	radius: number?,
+	duration: number?,
+	slow: number?, -- vitesse conservée dans la bulle (0,5 = moitié)
+	shotDamping: number?, -- dégâts conservés par un tir qui traverse la bulle
+	-- Onde de fracture (épée longue)
+	length: number?,
+	halfWidth: number?,
+	damage: number?,
+	slowDuration: number?,
+	-- Garde du Temps (épée longue)
+	drainTime: number?, -- secondes pour vider un noyau plein
+	frontAngle: number?, -- demi-angle protégé (degrés)
+	-- Commande
+	hold: boolean?, -- capacité secondaire : appui long (fusil) ou maintien de la parade (épée)
 }
 
 export type Core = {
@@ -54,6 +80,54 @@ Ability.DEFS = table.freeze({
 		backstabMultiplier = 1.5,
 		backstabWindow = 1.5,
 	} :: AbilityDef),
+	-- v0.4.7 ---------------------------------------------------------------------------
+	Volley = table.freeze({
+		id = "Volley",
+		name = "Salve au levier",
+		charge = 100,
+		windup = 0,
+		shots = 3,
+		interval = 0.2,
+		extraSpread = 2.5,
+	} :: AbilityDef),
+	Ricochet = table.freeze({
+		id = "Ricochet",
+		name = "Balle de rebond",
+		charge = 100,
+		windup = 0,
+		hold = true,
+	} :: AbilityDef),
+	Stasis = table.freeze({
+		id = "Stasis",
+		name = "Carreau de stase",
+		charge = 100,
+		windup = 0,
+		radius = 4,
+		duration = 3,
+		slow = 0.5,
+		shotDamping = 0.5,
+	} :: AbilityDef),
+	FractureWave = table.freeze({
+		id = "FractureWave",
+		name = "Onde de fracture",
+		charge = 100,
+		windup = 0.5,
+		length = 8,
+		halfWidth = 1.75,
+		damage = 35,
+		slowDuration = 1.2,
+		slow = 0.4,
+	} :: AbilityDef),
+	TimeGuard = table.freeze({
+		id = "TimeGuard",
+		name = "Garde du Temps",
+		charge = 100,
+		windup = 0,
+		drainTime = 3,
+		frontAngle = 75,
+		slow = 0.5,
+		hold = true,
+	} :: AbilityDef),
 })
 
 -- Traits passifs (arme → effet), appliqués par le serveur.
@@ -62,7 +136,11 @@ Ability.PASSIVES = table.freeze({
 	ReloadOnKill = "ReloadOnKill",
 	-- Lame courte : après une parade réussie, le coup suivant fait ×2 (pendant 1,5 s).
 	Riposte = "Riposte",
+	-- Fusil : après 1 s immobile, le tir suivant fait +25 %.
+	Steady = "Steady",
 })
+Ability.STEADY_TIME = 1
+Ability.STEADY_MULTIPLIER = 1.25
 Ability.RIPOSTE_MULTIPLIER = 2
 Ability.RIPOSTE_WINDOW = 1.5
 
@@ -97,6 +175,13 @@ function Ability.consume(core: Core, def: AbilityDef, now: number): boolean
 	core.charge = 0
 	core.lastUse = now
 	return true
+end
+
+-- Garde du Temps : vide le noyau au fil du temps. Renvoie false quand il est vide.
+function Ability.drain(core: Core, def: AbilityDef, dt: number): boolean
+	local rate = def.charge / (def.drainTime or 1)
+	core.charge = math.max(0, core.charge - rate * math.max(dt, 0))
+	return core.charge > 0
 end
 
 -- Capacité annulée pendant sa préparation (mis à terre, cible disparue…) : noyau rendu.

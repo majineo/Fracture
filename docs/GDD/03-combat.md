@@ -99,7 +99,7 @@ Choix des armes à l'armurerie du Refuge (provisoire).
 
 ## 6. Capacités
 
-### 6.1 Capacités des armes (🔧 v0.4.5, D-038)
+### 6.1 Capacités des armes (✅ v0.4.5 – v0.4.7, D-038)
 
 Chaque arme a une **capacité active** et un **trait passif**. La capacité s'utilise quand le
 **noyau** de l'arme est plein ; il se remplit en infligeant des dégâts avec cette arme (100 points)
@@ -110,9 +110,9 @@ débloquées par la maîtrise de l'arme (permanente).
 |---|---|---|---|
 | Pistolet | **Retour** : après 0,25 s, retour à sa position d'il y a 2 s, avec la santé d'alors (+35 au plus, jamais moins) | Chargeur plein après une élimination / mise à terre | ✅ v0.4.5 |
 | Lame courte | **Pas de l'ombre** : ennemi visé à moins de 12 studs, réapparition dans son dos après 0,3 s ; premier coup ×1,5. La victime est prévenue (« DERRIÈRE TOI ! ») et peut parer | **Riposte** : après une parade réussie, coup suivant ×2 (1,5 s) | ✅ v0.4.5 |
-| Fusil à répétition | **Salve au levier** (3 balles en 0,6 s) **et** **balle de rebond** (ricoche une fois) | Souffle : +25 % après 1 s de visée immobile | 📋 |
-| Arbalète lourde | **Carreau de stase** : bulle de 4 studs, ralentit tout de 50 % (projectiles compris) 3 s | Perforation | 📋 |
-| Épée longue | **Onde de fracture** (coup au sol, onde de 8 studs, parable) ; **Garde du Temps** en maintenant la parade (bloque tout de face, vide le noyau) | Allonge | 📋 |
+| Fusil à répétition | **Salve au levier** (Q bref : 3 balles en 0,6 s, cadence ignorée, plus de dispersion) **et** **balle de rebond** (Q maintenu 0,35 s : ricoche une fois sur un mur) | **Souffle** : après 1 s immobile, tir suivant +25 % (immobilité jugée par le serveur) | ✅ v0.4.7 |
+| Arbalète lourde | **Carreau de stase** : bulle de 4 studs au premier impact, 3 s ; ralentit joueurs et Échoués de 50 % ; un tir qui la traverse perd 50 % | Perforation | ✅ v0.4.7 |
+| Épée longue | **Onde de fracture** (Q : 0,5 s d'annonce, onde de 8 studs, 35 dégâts, ralentit / étourdit, parable) ; **Garde du Temps** (parade maintenue 0,35 s : bloque tout de face, 75°, vide le noyau en 3 s, pas d'attaque, déplacement ralenti) | Allonge | ✅ v0.4.7 |
 
 ### 6.2 Capacités du Codex
 

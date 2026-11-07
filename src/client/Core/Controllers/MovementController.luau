@@ -394,7 +394,13 @@ local function onHeartbeat(dt: number)
 			-- À l'arrêt, on « recharge » la vitesse de départ : le prochain pas accélère.
 			Spring.snap(speedSpring, MovementConfig.START_SPEED)
 		end
-		context.humanoid.WalkSpeed = Spring.step(speedSpring, dt)
+		-- Ralenti par une capacité (bulle de stase, onde, Garde du Temps) : attributs serveur.
+		local character = context.humanoid.Parent
+		local slowedUntil = (character and character:GetAttribute("SlowUntil") :: number?) or 0
+		local scale = if slowedUntil > workspace:GetServerTimeNow()
+			then (character and character:GetAttribute("SlowFactor") :: number?) or 1
+			else 1
+		context.humanoid.WalkSpeed = Spring.step(speedSpring, dt) * scale
 	end
 end
 

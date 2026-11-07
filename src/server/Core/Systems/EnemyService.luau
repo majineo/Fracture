@@ -363,15 +363,20 @@ local function think(enemy: Enemy, params: RaycastParams)
 
 	local root = targetRoot(enemy)
 	local humanoid = enemy.humanoid
+	-- Ralenti par une capacité (bulle de stase, onde de fracture) : voir AbilityService.
+	local slowedUntil = (model:GetAttribute("SlowUntil") :: number?) or 0
+	local speedScale = if slowedUntil > now
+		then (model:GetAttribute("SlowFactor") :: number?) or 1
+		else 1
 	if command == "Chase" and root then
-		humanoid.WalkSpeed = enemy.def.chaseSpeed
+		humanoid.WalkSpeed = enemy.def.chaseSpeed * speedScale
 		moveTowards(enemy, root.Position, sight)
 	elseif command == "Retreat" and root then
-		humanoid.WalkSpeed = enemy.def.walkSpeed
+		humanoid.WalkSpeed = enemy.def.walkSpeed * speedScale
 		local away = (enemy.root.Position - root.Position) * Vector3.new(1, 0, 1)
 		moveTowards(enemy, enemy.root.Position + away.Unit * 10, true)
 	elseif command == "Return" then
-		humanoid.WalkSpeed = enemy.def.walkSpeed
+		humanoid.WalkSpeed = enemy.def.walkSpeed * speedScale
 		moveTowards(enemy, enemy.home, false)
 	elseif command == "BeginWindup" then
 		stop(enemy)

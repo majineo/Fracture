@@ -189,37 +189,104 @@ end
 
 -- Action -------------------------------------------------------------------------------
 
-function AbilityController.use()
+local HOLD_TIME = 0.35 -- appui long sur Q : seconde capacité (fusil)
+local pressedAt: number? = nil
+local guardRequested = false
+
+-- Utilise une capacité de l'arme en main (`kind` : nil = capacité principale).
+function AbilityController.use(kind: string?)
 	local character = player.Character
 	if character == nil or character:GetAttribute("Downed") == true then
 		return
 	end
-	local _, adef, charge = current()
-	if adef == nil then
+	local def, adef, charge = current()
+	if def == nil or adef == nil then
 		showMessage("Pas de capacité avec cette arme", Color3.new(1, 1, 1))
+		return
+	end
+	local chosen = if kind then Ability.DEFS[kind] else adef
+	if chosen == nil or (chosen.id ~= def.ability and chosen.id ~= def.ability2) then
 		return
 	end
 	if charge < 1 then
 		showMessage("Noyau pas encore chargé", Color3.new(1, 1, 1))
 		return
 	end
-	if adef.id == "ShadowStep" then
-		local target = pickShadowTarget(adef.range)
+	if chosen.id == "ShadowStep" then
+		local target = pickShadowTarget(chosen.range)
 		if target == nil then
 			showMessage("Aucune cible à portée", Color3.new(1, 1, 1))
 			return
 		end
-		Net.fire("UseAbility", target)
+		Net.fire("UseAbility", chosen.id, target)
+	elseif chosen.id == "Ricochet" or chosen.id == "Stasis" then
+		-- Tir spécial : même origine et même visée qu'un tir normal (le serveur vérifie).
+		local origin = CombatController.getMuzzle()
+		local aim = CombatController.getAimPoint()
+		if origin == nil or aim == nil then
+			return
+		end
+		Net.fire("UseAbility", chosen.id, origin, (aim - origin).Unit, workspace:GetServerTimeNow())
+		CombatSounds.play2D(def.sound, (def.soundPitch or 1) * 0.85)
+		CameraFeel.kick(def.recoil * 1.3)
 	else
-		Net.fire("UseAbility")
+		Net.fire("UseAbility", chosen.id)
+	end
+end
+
+-- Touche Q / bouton « Capa. » : appui bref = capacité principale ; appui long = seconde
+-- capacité quand elle se déclenche ainsi (fusil). La Garde du Temps se lève avec la parade.
+local function secondaryOnHold(): string?
+	local def = current()
+	if def and def.ability2 and def.ability2 ~= "TimeGuard" then
+		return def.ability2
+	end
+	return nil
+end
+
+function AbilityController.press()
+	if secondaryOnHold() then
+		pressedAt = os.clock()
+	else
+		AbilityController.use()
+	end
+end
+
+function AbilityController.release()
+	local started = pressedAt
+	pressedAt = nil
+	local second = secondaryOnHold()
+	if started == nil or second == nil then
+		return
+	end
+	if os.clock() - started >= HOLD_TIME then
+		AbilityController.use(second)
+	else
+		AbilityController.use()
 	end
 end
 
 local function onAction(_: string, state: Enum.UserInputState): Enum.ContextActionResult
 	if state == Enum.UserInputState.Begin then
-		AbilityController.use()
+		AbilityController.press()
+	elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+		AbilityController.release()
 	end
 	return Enum.ContextActionResult.Sink
+end
+
+-- Texte d'aide de la jauge.
+local function hint(def: any, adef: any, ready: boolean): string
+	local second = def.ability2 and Ability.DEFS[def.ability2]
+	if not ready then
+		return if second then `{adef.name} / {second.name}` else adef.name
+	end
+	if second and def.ability2 == "TimeGuard" then
+		return `[Q] {adef.name} · parade maintenue : {second.name}`
+	elseif second then
+		return `[Q] {adef.name} · maintenir : {second.name}`
+	end
+	return `[Q] {adef.name}`
 end
 
 -- Pour MobileControls : remplissage (0 à 1) et nom de la capacité en main.
@@ -249,16 +316,52 @@ local function onCombatEvent(info: any)
 			showMessage("RIPOSTE ×2", CYAN)
 		elseif info.passive == "ReloadOnKill" then
 			showMessage("Rechargé !", CYAN)
+		elseif info.passive == "Steady" then
+			showMessage("SOUFFLE +25 %", CYAN)
 		end
+	elseif info.type == "Volley" then
+		CombatController.volley(
+			if typeof(info.shots) == "number" then math.clamp(info.shots, 1, 6) else 3,
+			if typeof(info.interval) == "number" then math.clamp(info.interval, 0.05, 1) else 0.2,
+			if typeof(info.extraSpread) == "number" then info.extraSpread else 2.5
+		)
+		showMessage("SALVE !", CYAN)
 	end
 end
 
 local function onShotFx(info: any)
-	if
-		typeof(info) ~= "table"
-		or typeof(info.origin) ~= "Vector3"
-		or typeof(info.finish) ~= "Vector3"
-	then
+	if typeof(info) ~= "table" then
+		return
+	end
+	-- Tirs spéciaux : trajectoire en plusieurs points (rebond).
+	if (info.kind == "Ricochet" or info.kind == "Stasis") and typeof(info.points) == "table" then
+		local points = info.points
+		for i = 1, #points - 1 do
+			if typeof(points[i]) == "Vector3" and typeof(points[i + 1]) == "Vector3" then
+				WeaponFx.abilityTrail(
+					points[i],
+					points[i + 1],
+					if info.kind == "Stasis" then CYAN else Color3.new(1, 0.85, 0.5)
+				)
+			end
+		end
+		local last = points[#points]
+		if typeof(last) == "Vector3" then
+			CombatSounds.playAt(if info.kind == "Stasis" then "AbilityRewind" else "Hit", last, 0.6)
+		end
+		return
+	end
+	if typeof(info.origin) ~= "Vector3" or typeof(info.finish) ~= "Vector3" then
+		return
+	end
+	if info.kind == "FractureWave" then
+		WeaponFx.groundWave(info.origin, info.finish)
+		CombatSounds.playAt("MeleeHitHeavy", info.origin, 0.7)
+		CameraFeel.kick(-1.5)
+		return
+	elseif info.kind == "GuardBlock" then
+		WeaponFx.parrySparks(info.origin)
+		CombatSounds.playAt("Parry", info.origin, 1.15)
 		return
 	end
 	if info.kind == "Rewind" then
@@ -278,7 +381,8 @@ local function updateCastHighlights()
 		if model:IsA("Model") then
 			local castEnd = model:GetAttribute("AbilityCastEnd") :: number?
 			local marked = model:GetAttribute("ShadowMarkedAt") :: number?
-			local active = (castEnd and castEnd > now) or (marked and marked > now)
+			local guarding = model:GetAttribute("TimeGuard") == true
+			local active = guarding or (castEnd and castEnd > now) or (marked and marked > now)
 			if active then
 				seen[model] = true
 				local h = castHighlights[model]
@@ -329,7 +433,8 @@ function AbilityController.start()
 			gaugeFill.BackgroundColor3 = if ready
 				then Color3.new(1, 1, 1):Lerp(CYAN, 0.5 + 0.5 * math.sin(clock * 6))
 				else CYAN
-			gaugeLabel.Text = if ready then `[Q] {adef.name}` else adef.name
+			local def = current()
+			gaugeLabel.Text = hint(def, adef, ready)
 			gaugeLabel.TextColor3 = if ready then CYAN else Color3.fromRGB(200, 200, 200)
 			if ready and not wasReady then
 				CameraFeel.kick(0.4)
@@ -346,6 +451,22 @@ function AbilityController.start()
 		targetHighlight.Adornee = target
 		targetHighlight.Enabled = target ~= nil
 
+		-- Garde du Temps (épée longue) : parade maintenue avec un noyau plein.
+		local def = current()
+		if def and def.ability2 == "TimeGuard" then
+			local held = CombatController.getParryHeld()
+			if held and held >= HOLD_TIME and not guardRequested and charge >= 1 then
+				guardRequested = true
+				Net.fire("UseAbility", "TimeGuard", true)
+			elseif held == nil and guardRequested then
+				guardRequested = false
+				Net.fire("UseAbility", "TimeGuard", false)
+			end
+		elseif guardRequested then
+			guardRequested = false
+			Net.fire("UseAbility", "TimeGuard", false)
+		end
+
 		message.Visible = clock < messageUntil
 		warning.Visible = clock < warningUntil
 		if warning.Visible then
@@ -358,9 +479,9 @@ function AbilityController.start()
 	if RunService:IsStudio() then
 		local hook = Instance.new("BindableFunction")
 		hook.Name = "FractureAbilityQA"
-		hook.OnInvoke = function(command: string): any
+		hook.OnInvoke = function(command: string, argument: any): any
 			if command == "use" then
-				AbilityController.use()
+				AbilityController.use(argument)
 			elseif command == "target" then
 				local _, adef = current()
 				return if adef then pickShadowTarget(adef.range or 12) else nil

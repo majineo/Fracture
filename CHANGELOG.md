@@ -5,6 +5,68 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.7] — 2026-11-07 — « Noyaux II »
+
+### Description générale
+Les trois autres armes reçoivent leurs capacités : chaque arme du jeu a maintenant au moins une
+capacité active et un trait passif.
+
+### Nouvelles fonctionnalités
+- **Fusil à répétition**
+  - **Salve au levier** (Q bref) : 3 balles en 0,6 s, cadence ignorée, un peu moins précises.
+  - **Balle de rebond** (Q maintenu 0,35 s, ou bouton « Capa. » maintenu) : la balle ricoche une
+    fois sur un mur et peut toucher quelqu'un caché derrière un angle. Traçante dorée.
+  - **Souffle** (passif) : après 1 s immobile, le tir suivant fait +25 % (« SOUFFLE +25 % »).
+- **Arbalète lourde — Carreau de stase** : au premier impact, une bulle cyan de 4 studs pendant
+  3 s ralentit joueurs et Échoués de 50 % ; un tir qui la traverse perd 50 % de ses dégâts.
+- **Épée longue**
+  - **Onde de fracture** (Q) : 0,5 s d'annonce (épée levée), puis une onde de 8 studs au sol
+    (fissures cyan) : 35 dégâts, ralentit les joueurs touchés, étourdit les Échoués. Parable.
+  - **Garde du Temps** (parade maintenue 0,35 s avec un noyau plein) : bloque tout ce qui vient
+    de face (coups et tirs), lame levée en travers et contour cyan ; vide le noyau en 3 s ; on ne
+    peut pas attaquer et l'on avance au ralenti.
+- La jauge indique les deux capacités et comment les déclencher.
+
+### Modifications
+- Tirs côté serveur réorganisés (une seule fonction de tir pour les tirs normaux et spéciaux).
+- Ralentissement générique (attributs `SlowUntil` / `SlowFactor`) appliqué aux joueurs et aux
+  Échoués.
+- Outil de test Studio : `aimAt` (point visé imposé).
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Salve : mannequin de 150 détruit par la salve. Souffle : 60 au lieu de 48 après 1,5 s immobile.
+- Balle de rebond : tirée sur un mur de test, elle revient toucher le mannequin caché (−60).
+- Carreau de stase : homme d'armes touché (−75), ralenti de 13 à 6,5 studs/s ; bulle disparue
+  après 3 s.
+- Onde de fracture : annonce visible, homme d'armes 120 → 85 et étourdi.
+- Garde du Temps : coup de l'homme d'armes bloqué (santé 100 → 100), garde baissée seule après
+  3 s, noyau vidé.
+- Aucune erreur en console.
+
+### Problèmes connus
+- Ressenti à valider à la main pour les cinq armes (durées, puissance, lisibilité).
+- Tests faits contre des Échoués et des mannequins ; pas encore contre un vrai joueur.
+- La commande « appui long » (fusil) et la parade maintenue (Garde du Temps) n'ont été vérifiées
+  qu'en simulant les requêtes : à essayer au clavier, à la manette et au tactile.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/shared/Combat/{Ability,WeaponDefs}.luau`,
+  `src/server/Core/Systems/{AbilityService,WeaponService,HealthService,EnemyService}.luau`,
+  `src/client/Core/Controllers/{AbilityController,CombatController,CharacterAnimation,MobileControls,MovementController}.luau`,
+  `src/client/Core/Combat/WeaponFx.luau`, `tests/specs/Ability.spec.luau`, `src/shared/Config.luau`,
+  `CHANGELOG.md`, `docs/{DECISIONS,ROADMAP}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Retours de test et équilibrage des capacités.
+- v0.5.0 « Éclats » : génération procédurale à partir de tuiles (kit médiéval dans Blender).
+
+---
+
 ## [v0.4.6] — 2026-11-07 — « Lames »
 
 ### Description générale

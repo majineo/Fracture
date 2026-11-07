@@ -22,7 +22,8 @@
 | v0.4.11 | Mobilité | Élan (sol et air), course sur les murs, saut mural | ✅ |
 | v0.5.0 | Éclats | Génération procédurale à partir de tuiles (greybox), effondrement, chrono | ✅ |
 | v0.5.1 | Kit de forteresse | Modules de décor Blender (murs, escaliers, arches, toits) à la place de la greybox | 📋 |
-| v0.6.0 | Extraction | Inventaire, butin, extraction transactionnelle, Refuge minimal | 📋 |
+| v0.6.0 | Extraction | Inventaire de partie, caisses et coffres, sac à la mort, points d'extraction et Faille finale, versement au coffre | ✅ |
+| v0.6.1 | Retour au Refuge | Téléportation Éclat ↔ Refuge, coffre consultable au Refuge | 📋 |
 | v0.7.0 | Reliques | Utiliser ou ramener, Codex, Signature | 📋 |
 | v0.8.0 | Vertical slice | Première époque complète, Gardien, tests multijoueurs | 📋 |
 | v1.0.0 | Sortie | Première version publique jouable | 📋 |

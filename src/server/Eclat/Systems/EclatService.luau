@@ -49,6 +49,10 @@ function EclatService.layout(): EclatLayout.Layout?
 	return layout
 end
 
+function EclatService.schedule(): CollapseSchedule.Schedule?
+	return schedule
+end
+
 function EclatService.elapsed(): number
 	return workspace:GetServerTimeNow() - startTime
 end
@@ -215,7 +219,14 @@ local function build(seed: number, timeScale: number)
 	-- Tout le monde repart de sa tuile d'apparition.
 	for _, player in Players:GetPlayers() do
 		local character = player.Character
-		if character then
+		local extracted = player:GetAttribute("Extracted") == true
+		player:SetAttribute("Extracted", nil)
+		if character == nil or character.Parent == nil then
+			if extracted then
+				-- Extrait lors de la partie précédente : il repart.
+				player:LoadCharacter()
+			end
+		else
 			if character:GetAttribute("Dead") == true then
 				player:LoadCharacter()
 			else

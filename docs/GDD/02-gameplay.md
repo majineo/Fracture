@@ -38,6 +38,9 @@ le **Donjon**, où dort le Gardien.
   partir tôt avec un butin modeste.
 - **La Faille finale** : toujours ouverte pendant la dernière phase, mais près du Gardien.
 - Extraire = le butin transporté devient la propriété permanente du joueur (transaction serveur).
+- ✅ v0.6.0 : `Shared/Eclat/ExtractionPlan` (graine → points et fenêtres, testé), zones visibles de
+  loin (colonne de lumière, distance, compte à rebours annoncé 60 s avant), jauge de 8 s remise à
+  zéro au moindre dégât, bilan puis « Repartir » (téléportation au Refuge : v0.6.1).
 
 ## 4. Butin
 

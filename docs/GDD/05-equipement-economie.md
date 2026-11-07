@@ -14,6 +14,14 @@
 Tout ce qui est stocké au **coffre du Refuge** est en sécurité. Seul ce qui est emporté en
 partie est en jeu.
 
+### Butin de partie (✅ v0.6.0)
+- Objets : Grains, Fer, Bois, Cuir, Acier ancien (rare), Pierre de Faille (épique), Bandage.
+- Inventaire de partie : 12 emplacements, piles par type (`Shared/Loot/RunInventory`, testé).
+- Sources : caisses (cours, villages, remparts, pont-levis), coffres (crypte, sommet des tours,
+  toit du donjon), butin des Échoués (≈ 45 %), sac des joueurs morts.
+- Au coffre du profil : un enregistrement (GUID) par type de matériau, quantités cumulées ; les
+  Grains vont au solde.
+
 ## 2. Fabrication
 
 - À la **Forge du Refuge**, à partir de recettes (rang, maîtrise, réputation).

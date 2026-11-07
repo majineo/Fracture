@@ -5,6 +5,79 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.6.0] — 2026-11-07 — « Extraction »
+
+### Description générale
+La boucle d'extraction existe : on fouille l'Éclat, on remplit son inventaire de partie, et il
+faut rejoindre un point d'extraction et y tenir 8 s sans être touché pour que le butin soit
+versé au coffre du profil. Mourir laisse tout dans un sac, sur place.
+
+### Nouvelles fonctionnalités
+- **Inventaire de partie** : 12 emplacements, piles par type (`Shared/Loot/RunInventory`, testé),
+  barre en bas de l'écran (couleur selon la rareté), messages « +6 Bois ».
+- **Objets** (`Shared/Loot/ItemDefs`) : Grains, Fer, Bois, Cuir, Acier ancien (rare), Pierre de
+  Faille (épique), Bandage.
+- **Caisses et coffres** posés selon le type de tuile (coffres en haut des tours, sur le toit du
+  donjon, dans la crypte) ; fouille en maintenant E (ou le bouton de l'invite) ; contenu tiré par
+  le serveur (`Shared/Loot/LootTables`, testé) ; ce qui ne rentre pas reste dedans.
+- **Butin des Échoués** : environ une fois sur deux, un petit butin à ramasser.
+- **Sac à la mort** : tout ce que l'on portait reste dans « Sac de … », que n'importe qui peut
+  fouiller, jusqu'à l'effondrement de la tuile. Rien n'est laissé si l'on tombe dans le Vide.
+- **Points d'extraction** (`Shared/Eclat/ExtractionPlan`, testé) : 2 ou 3 points ouverts 90 s à
+  des moments tirés de la graine, toujours sur une tuile qui tient pendant leur fenêtre, plus la
+  **Faille finale** sur le toit du Donjon de 12 à 16 min. Colonne de lumière, distance et compte à
+  rebours (annoncé 60 s avant) ; jauge de 8 s remise à zéro au moindre dégât.
+- **Bilan d'extraction** : objets rapportés, Grains (et total), nombre d'extractions ; bouton
+  « Repartir ».
+- Statistiques du profil : extractions et morts comptées.
+- `tools/ouvrir-eclat.ps1` : construit la place Éclat et l'ouvre dans Studio en un clic.
+
+### Modifications
+- Remotes ajoutés : `InventoryState`, `LootEvent`, `ExtractionResult` (vers le client),
+  `RequestRedeploy` (vers le serveur, limité).
+- `EclatService.schedule()` ; une nouvelle partie relance les joueurs extraits.
+
+### Corrections de bugs
+- Invites de fouille invisibles quand elles étaient au ras d'une caisse : posées au-dessus.
+- « Repartir » refusé : détruire le personnage ne vidait pas `Player.Character`.
+
+### Vérifications (Studio)
+- Tests Lune : 9 nouveaux (piles, 12 emplacements, objets et quantités invalides refusés, reste
+  dans le conteneur, vidage, tirages valides, taux de butin des Échoués, plan d'extraction sur
+  200 graines, remise à zéro de la jauge) ; 99 au total.
+- Partie : 20 caisses, 5 coffres, 3 points + la Faille. Caisse fouillée (6 Bois, caisse vidée,
+  barre à jour) ; coffre (33 Grains, 1 Pierre de Faille).
+- Extraction accélérée : jauge qui monte, bilan affiché (capture), Grains et objets versés au
+  profil, personnage retiré ; « Repartir » : retour sur le Bord, santé 100.
+- Mort en portant du butin : à terre puis mort à 20 s, « Sac de … » posé ; sac fouillé après
+  réapparition : tout récupéré, sac retiré.
+- 8 Échoués tués : 4 butins au sol.
+
+### Problèmes connus
+- Pas encore de téléportation vers le Refuge après l'extraction (v0.6.1), ni de coffre
+  consultable au Refuge : le coffre se remplit, mais ne s'affiche pas encore.
+- Caisses, coffres et sacs en blocs provisoires (modèles Blender à venir).
+- Les Bandages ne s'utilisent pas encore.
+- L'envoi de touches clavier vers une seconde fenêtre de Studio n'a pas marché pendant les tests :
+  la fouille a été validée par l'API de l'invite, pas par une vraie pression de E.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Loot/{ItemDefs,RunInventory,LootTables}.luau`,
+  `src/shared/Eclat/ExtractionPlan.luau`,
+  `src/server/Eclat/Systems/{LootService,ExtractionService}.luau`,
+  `src/client/Eclat/Controllers/LootHud.luau`, `tests/specs/Loot.spec.luau`,
+  `tools/ouvrir-eclat.ps1`, `docs/OMNIROUTE.md`
+- **Modifiés** : `src/server/Eclat/Systems/EclatService.luau`, `src/shared/Net/Definitions.luau`,
+  `tests/run.luau`, `src/shared/Config.luau`, `CHANGELOG.md`, `docs/{ROADMAP,DECISIONS}.md`,
+  `docs/GDD/{02-gameplay,05-equipement-economie}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- v0.6.1 : téléportation Éclat ↔ Refuge et coffre au Refuge.
+- v0.5.1 : kit de forteresse dans Blender (tuiles, caisses, coffres).
+
+---
+
 ## [v0.5.0] — 2026-11-07 — « Éclats »
 
 ### Description générale

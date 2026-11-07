@@ -34,6 +34,10 @@ export type RemoteName =
 	| "ShotFx"
 	| "Parry"
 	| "UseAbility"
+	| "InventoryState"
+	| "LootEvent"
+	| "ExtractionResult"
+	| "RequestRedeploy"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -69,6 +73,17 @@ local Definitions: { [string]: RemoteDef } = {
 	CombatEvent = { direction = "ToClient" },
 	-- À tous : effet visuel d'un tir ou d'un coup d'un autre joueur.
 	ShotFx = { direction = "ToClient" },
+
+	-- Butin et extraction (v0.6.0, place Éclat). Les fouilles passent par des ProximityPrompt
+	-- (distance vérifiée par Roblox côté serveur) : aucun remote ToServer pour ramasser.
+	-- Le serveur envoie au joueur son inventaire de partie : { capacity, stacks = {{id, qty}} }.
+	InventoryState = { direction = "ToClient" },
+	-- Au joueur : ce qu'il vient de ramasser, ou ce qu'il a perdu en mourant. (table)
+	LootEvent = { direction = "ToClient" },
+	-- Au joueur extrait : le bilan (objets versés au coffre, Grains, nombre d'extractions).
+	ExtractionResult = { direction = "ToClient" },
+	-- Le joueur extrait demande à repartir dans l'Éclat (aucun argument).
+	RequestRedeploy = { direction = "ToServer", rate = 0.5, burst = 2 },
 
 	-- Commandes de test. Écoutées UNIQUEMENT dans Studio (voir Server > Systems > DevTools) :
 	-- en jeu publié, ce remote existe mais personne ne l'écoute.

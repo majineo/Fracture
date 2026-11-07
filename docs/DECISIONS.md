@@ -349,3 +349,17 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   à la règle « 3D dans Blender » : la greybox est un outil de conception de niveau, pas un asset.
 - **Densité d'Échoués** : Donjon gardé au complet, un poste par tuile du milieu, une tuile
   extérieure sur deux (≈ 17 ennemis ; 37 au premier essai, trop pour « l'exploration »).
+
+## D-047 — Extraction : serveur seul juge, zones calculées, pas de téléportation avant publication
+- **Date** : 2026-11-07 · **Version** : v0.6.0 · **Statut** : ✅ Implémentée
+- **Sécurité** : l'inventaire de partie n'existe que sur le serveur ; on fouille par
+  ProximityPrompt (distance vérifiée par Roblox côté serveur), le contenu est tiré à la première
+  fouille ; aucun remote ne permet de demander un objet. L'extraction vide l'inventaire et
+  crédite le profil dans la même fonction serveur (pas de rendement intermédiaire).
+- **Points d'extraction** : tirés de la graine (module pur, comme l'effondrement) sur des tuiles
+  qui tiennent debout pendant toute leur fenêtre ; jamais sur une apparition.
+- **Coffre** : un enregistrement par type de matériau (quantités cumulées) plutôt qu'un GUID par
+  pile, pour que le coffre ne grossisse pas sans fin ; les objets uniques (armes, reliques)
+  auront chacun leur GUID quand ils existeront.
+- **Après l'extraction** : faute de places publiées, pas encore de téléportation au Refuge ; le
+  joueur voit son bilan et peut repartir (v0.6.1).

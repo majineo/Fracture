@@ -27,6 +27,12 @@ local WeaponFx = require(Client.Combat.WeaponFx)
 local CameraFeel = require(script.Parent.CameraFeel)
 local CombatController = require(script.Parent.CombatController)
 local MovementController = require(script.Parent.MovementController)
+local WeaponDefs = require(
+	game:GetService("ReplicatedStorage")
+		:WaitForChild("Shared")
+		:WaitForChild("Combat")
+		:WaitForChild("WeaponDefs")
+) :: any
 
 local CYAN = Color3.fromRGB(80, 230, 255)
 local RED = Color3.fromRGB(220, 40, 40)
@@ -87,6 +93,10 @@ local function updateTargets()
 				if root and root:IsA("BasePart") then
 					WeaponFx.shatter(root.Position)
 					CombatSounds.playAt("EnemyShatter", root.Position, 1.1)
+					CombatSounds.playAt("BodyFall", root.Position)
+				end
+				if model == player.Character then
+					CombatSounds.play2D("Death")
 				end
 			end
 			entry.dead = dead
@@ -235,8 +245,15 @@ local function materialize(held: Instance)
 		end
 	end
 	local grip = held:FindFirstChild("Grip", true)
+	local character = held.Parent
+	local id = character and character:GetAttribute("EquippedWeapon")
+	local def = typeof(id) == "string" and WeaponDefs[id] or nil
 	if grip and grip:IsA("BasePart") then
-		CombatSounds.playAt("Equip", grip.Position, 1.25)
+		CombatSounds.playAt(
+			if def and def.drawSound then def.drawSound else "Equip",
+			grip.Position,
+			if def and def.drawSound then 1 else 1.25
+		)
 	end
 end
 
@@ -245,6 +262,24 @@ local function watchCharacter(character: Model)
 		if child.Name == "HeldWeapon" then
 			task.defer(materialize, child)
 		end
+	end)
+	character.ChildRemoved:Connect(function(child)
+		if child.Name ~= "HeldWeapon" then
+			return
+		end
+		task.defer(function()
+			local root = character:FindFirstChild("HumanoidRootPart")
+			if
+				character.Parent
+				and character:FindFirstChild("HeldWeapon") == nil
+				and character:GetAttribute("Dead") ~= true
+				and character:GetAttribute("Downed") ~= true
+				and root
+				and root:IsA("BasePart")
+			then
+				CombatSounds.playAt("Holster", root.Position, 0.85)
+			end
+		end)
 	end)
 end
 
@@ -411,13 +446,20 @@ local function updateMobility()
 			local previous = lastModes[character]
 			lastModes[character] = current or "Normal"
 			if current == "Dash" and previous ~= "Dash" then
-				CombatSounds.playAt("AbilityShadow", root.Position, 1.35)
+				CombatSounds.playAt("Dash", root.Position, 0.95 + math.random() * 0.1)
 				if owner == player then
 					CameraFeel.kick(0.8)
 				end
 				for i = 0, 3 do
 					task.delay(i * 0.045, afterimage, character)
 				end
+			end
+			if
+				previous == "WallRun"
+				and current ~= "WallRun"
+				and root.AssemblyLinearVelocity.Y > 8
+			then
+				CombatSounds.playAt("Dash", root.Position, 1.25, 0.8) -- saut mural
 			end
 			if current == "WallRun" and clock >= (wallDustNext[character] or 0) then
 				wallDustNext[character] = clock + 0.08

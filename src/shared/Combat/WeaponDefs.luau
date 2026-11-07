@@ -33,6 +33,11 @@ export type WeaponDef = {
 	pierce: number?, -- cibles supplémentaires traversées (perforation)
 	sound: string, -- nom du son de tir / de coup (Combat/CombatSounds)
 	soundPitch: number?,
+	-- Sons (v0.4.14) : noms de Combat/CombatSounds. Absents = sons génériques.
+	drawSound: string?, -- arme dégainée (apparaît dans la main)
+	reloadSound: string?,
+	impactSound: string?, -- balle / carreau qui touche le décor
+	cycleSounds: { { sound: string, delay: number } }?, -- mécanisme après le tir (levier, culasse)
 	-- Mêlée
 	arcDegrees: number?, -- angle du cône de frappe
 	heavyMultiplier: number?, -- dégâts de l'attaque chargée
@@ -66,8 +71,13 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		spreadHip = 7,
 		spreadAim = 0.04,
 		recoil = 4.5,
-		sound = "PistolShot",
-		soundPitch = 0.5,
+		sound = "SniperShot",
+		drawSound = "DrawRifle",
+		reloadSound = "RifleReload",
+		cycleSounds = {
+			{ sound = "SniperBoltBack", delay = 0.55 },
+			{ sound = "SniperBoltForward", delay = 0.85 },
+		},
 		ability = "ZenithBeam",
 		passive = "ScopeFocus",
 		scopeFov = 22,
@@ -92,6 +102,8 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		spreadAim = 0.35,
 		recoil = 1.6,
 		sound = "PistolShot",
+		drawSound = "DrawGun",
+		reloadSound = "PistolReload",
 		ability = "Rewind",
 		passive = "ReloadOnKill",
 	},
@@ -113,6 +125,7 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		spreadAim = 0,
 		recoil = 0,
 		sound = "Swing",
+		drawSound = "DrawBlade",
 		arcDegrees = 75,
 		heavyMultiplier = 1.8,
 		heavyChargeTime = 0.6,
@@ -141,8 +154,10 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		spreadHip = 3.5,
 		spreadAim = 0.12,
 		recoil = 4,
-		sound = "PistolShot",
-		soundPitch = 0.72,
+		sound = "RifleShot",
+		drawSound = "DrawRifle",
+		reloadSound = "RifleReload",
+		cycleSounds = { { sound = "RifleLever", delay = 0.22 } },
 		ability = "Volley",
 		ability2 = "Ricochet",
 		passive = "Steady",
@@ -167,6 +182,9 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		recoil = 2.5,
 		pierce = 1,
 		sound = "CrossbowShot",
+		drawSound = "DrawCrossbow",
+		reloadSound = "CrossbowReload",
+		impactSound = "CrossbowImpact",
 		ability = "Stasis",
 	},
 	-- Épée longue : coups amples et lents, longue portée de mêlée, parade généreuse.
@@ -189,6 +207,7 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		recoil = 0,
 		sound = "HeavySwing",
 		soundPitch = 0.9,
+		drawSound = "DrawSword",
 		arcDegrees = 100,
 		heavyMultiplier = 2.0,
 		heavyChargeTime = 0.8,

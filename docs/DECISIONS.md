@@ -325,3 +325,12 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   du Temps. On ne reproduit pas les modèles d'autres jeux.
 - **Méthode** : modèles construits par scripts Blender versionnés (`assets/blender/**/build_*.py`)
   à partir de primitives communes, pour pouvoir les retoucher et les régénérer.
+
+## D-045 — Sons : bibliothèque Roblox, sans sons copiés de jeux commerciaux
+- **Date** : 2026-11-07 · **Version** : v0.4.14 · **Statut** : ✅ Appliquée
+- **Choix** : les sons viennent du Creator Store gratuit, de préférence des catalogues sous licence
+  Roblox (ProSoundEffects, APM Music) ou d'enregistrements présentés comme originaux. On écarte les
+  sons annoncés comme extraits de jeux commerciaux (Call of Duty, Half-Life, CS…) : risque de
+  retrait pour droits d'auteur, et identité sonore empruntée.
+- **Conséquence** : les sons sont choisis sans écoute (Claude ne peut pas entendre) ; l'utilisateur
+  valide à l'oreille, et chaque son se remplace en changeant un identifiant dans `CombatSounds`.

@@ -220,6 +220,26 @@ end
 
 -- Actions -----------------------------------------------------------------------------
 
+local reloadSound: Sound? = nil
+
+-- Balle qui frôle : distance du segment de tir à la caméra.
+local function nearMiss(origin: Vector3, finish: Vector3): boolean
+	local camera = workspace.CurrentCamera
+	if camera == nil then
+		return false
+	end
+	local point = camera.CFrame.Position
+	local segment = finish - origin
+	local length = segment.Magnitude
+	if length < 1 then
+		return false
+	end
+	local along = math.clamp((point - origin):Dot(segment) / (length * length), 0, 1)
+	local closest = origin + segment * along
+	-- Seulement si la balle passe à côté sans finir sur nous, et pas à bout portant.
+	return (closest - point).Magnitude < 7 and along > 0.05 and along < 0.97
+end
+
 local function equip(slot: number)
 	if slot == equippedSlot then
 		slot = 0 -- même touche = ranger l'arme
@@ -228,6 +248,8 @@ local function equip(slot: number)
 	if previous then
 		WeaponState.cancelReload(stateOf(previous))
 	end
+	CombatSounds.stop(reloadSound)
+	reloadSound = nil
 	equippedSlot = slot
 	meleeChargeStart = nil
 	Net.fire("EquipWeapon", slot)
@@ -241,7 +263,8 @@ local function reload()
 	end
 	if WeaponState.reload(stateOf(def.id), def, os.clock()) then
 		Net.fire("ReloadWeapon")
-		CombatSounds.play2D("Reload")
+		CombatSounds.stop(reloadSound)
+		reloadSound = CombatSounds.play2D(def.reloadSound or "Reload", nil, def.reloadTime)
 	end
 end
 
@@ -282,13 +305,28 @@ local function fireHitscan(def: any, volleyShot: number?)
 	WeaponFx.muzzleFlash(origin, direction)
 	if hit and not hit.Instance:FindFirstAncestorOfClass("Model") then
 		WeaponFx.impact(hit.Position, hit.Normal, hit.Instance.Color)
+		CombatSounds.playAt(
+			def.impactSound or "BulletImpact",
+			hit.Position,
+			0.9 + math.random() * 0.2
+		)
 	elseif hit then
 		local model = hit.Instance:FindFirstAncestorOfClass("Model")
 		if model and model:GetAttribute("Health") == nil then
 			WeaponFx.impact(hit.Position, hit.Normal, hit.Instance.Color)
+			CombatSounds.playAt(
+				def.impactSound or "BulletImpact",
+				hit.Position,
+				0.9 + math.random() * 0.2
+			)
 		end
 	end
 	CombatSounds.play2D(def.sound, (def.soundPitch or 1) * (0.95 + math.random() * 0.1))
+	if def.cycleSounds and volleyShot == nil then
+		for _, step in def.cycleSounds do
+			task.delay(step.delay, CombatSounds.play2D, step.sound)
+		end
+	end
 	CameraFeel.kick(def.recoil)
 	CombatController.Fired:Fire()
 
@@ -566,10 +604,13 @@ local function onCombatEvent(info: any)
 	end
 	if info.type == "Hit" then
 		CombatController.HitConfirmed:Fire(info)
-		CombatSounds.play2D(
-			if info.killed then "Kill" else "Hit",
-			if info.headshot then 1.35 else 1
-		)
+		CombatSounds.play2D("Hit", if info.killed then 0.85 else 1)
+		if info.headshot then
+			CombatSounds.play2D("Headshot")
+		end
+		if info.killed then
+			CombatSounds.play2D("Kill")
+		end
 		-- Coup de lame qui porte : étincelles, son d'impact, micro-arrêt du coup (« hit stop »).
 		local swingNow = lastSwing
 		local def = currentDef()
@@ -594,6 +635,7 @@ local function onCombatEvent(info: any)
 		end
 	elseif info.type == "Damaged" then
 		CombatController.Damaged:Fire(info.amount, info.from)
+		CombatSounds.play2D("Hurt", 0.9 + math.random() * 0.2)
 		CameraFeel.kick(-1.5)
 	elseif info.type == "ParrySuccess" then
 		-- Coup paré : étincelles, son métallique, petite secousse.
@@ -633,6 +675,18 @@ local function onShotFx(info: any)
 			info.origin,
 			if def then def.soundPitch else nil
 		)
+		local range = if def then def.range else 300
+		if (info.finish - info.origin).Magnitude < range - 1 then
+			CombatSounds.playAt(
+				if def and def.impactSound then def.impactSound else "BulletImpact",
+				info.finish,
+				0.9 + math.random() * 0.2,
+				0.8
+			)
+		end
+		if info.shooter ~= player and nearMiss(info.origin, info.finish) then
+			CombatSounds.play2D("BulletWhiz", 0.9 + math.random() * 0.25)
+		end
 	elseif info.kind == "FractureWave" then
 		-- Onde de fracture : coup chargé (animation et traînée) pour le lanceur.
 		local wave = { at = os.clock(), heavy = true, combo = 1 }

@@ -5,6 +5,63 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.14] — 2026-11-07 — « Fracas »
+
+### Description générale
+Le combat a maintenant un vrai paysage sonore : chaque arme a son tir, son mécanisme, son
+rechargement et son dégainage, et chaque événement (touche, tête, élimination, dégâts, mort,
+élan) a son son.
+
+### Nouvelles fonctionnalités
+- **Tirs propres à chaque arme** : pistolet, fusil à répétition (avec coup de levier après le
+  tir), Fusil du Zénith (détonation lourde puis culasse tirée et repoussée), arbalète (départ du
+  carreau).
+- **Dégainer / ranger** : son de dégainage propre à chaque arme (armement des armes à feu,
+  mécanisme en bois de l'arbalète, lame tirée du fourreau, épée longue) ; petit bruit en rangeant.
+- **Rechargements** propres à chaque arme ; le son s'arrête si l'on change d'arme en cours.
+- **Impacts** : balle dans le décor, carreau d'arbalète (pour soi et pour les tirs des autres).
+- **Balle qui frôle** : sifflement quand le tir d'un autre joueur passe près de soi.
+- **Retours** : marqueur de touche, « ding » de tir dans la tête, note d'élimination ; coup sourd
+  quand on est touché.
+- **Mort** : chute du corps (entendue par tous) et note sombre pour sa propre mort.
+- **Mobilité** : souffle d'élan, son du saut mural.
+
+### Modifications
+- `CombatSounds` : coupure en fondu des sons trop longs (`maxTime`), volume réglable par appel,
+  arrêt d'un son (`stop`).
+- `WeaponDefs` : champs `drawSound`, `reloadSound`, `impactSound`, `cycleSounds`.
+- Le Zénith et le fusil n'utilisent plus le son du pistolet ralenti.
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Les 28 sons candidats se chargent (`ContentProvider` : Success, durées relevées).
+- Séquence complète en jeu, sons enregistrés au moment où ils jouent : dégainage, tir, impact,
+  mécanisme et rechargement de chaque arme à feu ; rangement ; dégainage et coups des deux lames ;
+  élimination du mannequin au Zénith (touche, élimination, bris, chute du corps) ; dégâts reçus
+  jusqu'à la mort (coups sourds, chute, note de mort) ; élan sur une vraie pression de F.
+- Pas d'erreur de nos scripts dans la console.
+
+### Problèmes connus
+- **Sons choisis sans écoute** : à juger à l'oreille (volumes, choix). Chaque son se remplace en
+  une ligne dans `CombatSounds.luau`.
+- Non vérifiés en jeu : « ding » de tir dans la tête (le tir de test a touché le corps), balle
+  qui frôle (il faut un second joueur), saut mural.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/client/Core/Combat/CombatSounds.luau`, `src/shared/Combat/WeaponDefs.luau`,
+  `src/client/Core/Controllers/{CombatController,GameFeel}.luau`, `src/shared/Config.luau`,
+  `CHANGELOG.md`, `docs/{ASSETS,DECISIONS}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Écoute par l'utilisateur ; remplacer les sons qui ne conviennent pas.
+- Sons des capacités et des Échoués (voix, pas), ambiance de la forteresse.
+
+---
+
 ## [v0.4.13] — 2026-11-07 — « Zénith — textures »
 
 ### Description générale

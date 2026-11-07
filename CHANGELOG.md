@@ -5,6 +5,56 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.6.2] — 2026-11-08 — « Kit de forteresse »
+
+### Description générale
+Les premiers modules de décor de la forteresse sont modélisés dans Blender (murs, créneaux,
+piliers, linteaux, caisses, coffres, sacs) et le jeu sait les utiliser à la place des blocs
+provisoires dès qu'ils sont importés dans Studio.
+
+### Nouvelles fonctionnalités
+- **Kit de forteresse** (`assets/blender/fortress/build_kit.py`, 7 modules, 88 à 2 092
+  triangles) : mur à pierres de taille en saillie, socle et chaperon ; créneau ; pilier d'angle à
+  assises et toit en pyramide ; linteau de porte à clé de voûte et consoles ; caisse à planches,
+  croisillon et ferrures ; coffre bombé à bandes de laiton et serrure ; sac de toile lié.
+- **Pose automatique** (`Server/Place/Lib/Kit`) : murs découpés en modules d'environ 8 studs
+  (étirés juste ce qu'il faut), créneaux, linteaux et piliers ; caisses, coffres, sacs et butins
+  en modèles (la pièce de fouille devient invisible). Couleur et matériau Roblox d'après le nom
+  de la pièce (Pierre, PierreSombre, Toit, Bois, Fer, Laiton, Toile, Cuir).
+- Repli automatique sur la greybox tant que le kit n'est pas dans `ServerStorage > FortressKit`.
+
+### Modifications
+- `docs/ASSETS.md` : tableau du kit et procédure d'import.
+
+### Corrections de bugs
+- —
+
+### Vérifications
+- Blender : rendus de contrôle des 7 modules (pilier et linteau repris deux fois : pierres
+  d'angle détachées, voussoirs désordonnés).
+- Studio, avec un kit de test aux dimensions des modules : 147 modules de mur, 113 créneaux,
+  42 linteaux, 20 piliers, 25 caisses et coffres posés ; hauteurs exactes ; vue d'ensemble
+  (capture) ; zone de fouille invisible sur les caisses.
+- 99 tests Lune.
+
+### Problèmes connus
+- **Le kit n'est pas encore importé** (import FBX par l'utilisateur) : le jeu reste en greybox
+  jusque-là. Le rendu réel (proportions, collisions des MeshParts) est à vérifier après l'import.
+- Pas encore de modules pour les maisons, la tour, le donjon, les rampes et escaliers.
+
+### Fichiers
+- **Ajoutés** : `assets/blender/fortress/{build_kit.py,fortress_kit.blend,Kit_*.fbx}`,
+  `src/server/Eclat/Lib/Kit.luau`
+- **Modifiés** : `src/server/Eclat/Lib/TileKit.luau`, `src/server/Eclat/Systems/LootService.luau`,
+  `src/shared/Config.luau`, `CHANGELOG.md`, `docs/{ASSETS,ROADMAP}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Importer le kit (utilisateur), vérifier en jeu ; deuxième série de modules (maisons, tour,
+  donjon, escaliers).
+
+---
+
 ## [v0.6.1] — 2026-11-08 — « Refuge »
 
 ### Description générale

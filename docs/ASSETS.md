@@ -166,6 +166,27 @@ Construites par script (`assets/blender/beasts/build_betes.py`, primitives de
 | Raie_Temps | Raie_Temps_Metal | rbxassetid://101095044798836 | Metal #2a2d34 |
 | Raie_Temps | Raie_Temps_Noyau | rbxassetid://106060926436233 | Neon #50e6ff |
 
+### Kit de forteresse (`ServerStorage > FortressKit`, v0.5.1) — 📦 À importer
+
+Construit par `assets/blender/fortress/build_kit.py` (source : `fortress_kit.blend`). Tant qu'il
+n'est pas importé, les tuiles et les caisses restent en greybox (repli automatique) ; une fois
+importé, la nouvelle partie l'utilise sans autre réglage (`Server/Place/Lib/Kit`).
+
+| Module | Taille (L × H × É, studs) | Triangles | Pièces (matériaux) | Usage |
+|---|---|---|---|---|
+| `Kit_Mur` | 8 × 14 × 4 | 1 084 | Pierre, PierreSombre | murs de bord (répété tous les ~8 studs) |
+| `Kit_Creneau` | 3 × 2,5 × 1,5 | 88 | Pierre, PierreSombre | créneaux |
+| `Kit_Pilier` | 7 × 18 × 7 | 2 092 | Pierre, PierreSombre, Toit | piliers d'angle |
+| `Kit_Linteau` | 11 × 3,6 × 4 | 220 | Pierre, PierreSombre | linteaux des portes |
+| `Kit_Caisse` | 3 × 2,4 × 2,4 | 204 | Bois, Fer | caisses de butin |
+| `Kit_Coffre` | 3,6 × 2,6 × 2,4 | 312 | Bois, Fer, Laiton | coffres de butin |
+| `Kit_Sac` | 2 × 2,1 × 1,8 | 256 | Toile, Cuir | sacs des morts, butin d'Échoué |
+
+**Import (à faire par l'utilisateur)** : pour chaque `assets/blender/fortress/Kit_*.fbx`,
+Fichier → Importer (échelle 0,01 comme pour les armes), puis ranger le Model obtenu dans
+`ServerStorage > FortressKit` sous le nom du module (`Kit_Mur`…), pièces nommées
+`Kit_Mur_Pierre`, etc. Couleurs et matériaux sont posés par le code d'après le suffixe.
+
 ## Procédure d'import (vérifiée en v0.4.2)
 
 1. Studio → **Fichier → Importer** (Ctrl+M) → choisir le `.fbx` → **Importer**.

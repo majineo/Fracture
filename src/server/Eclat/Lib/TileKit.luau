@@ -11,6 +11,7 @@
 -- |x|, |z| ≤ 22 (et tournent avec la tuile) pour ne jamais boucher les passages des bords.
 
 local EclatLayout = require(game:GetService("ReplicatedStorage").Shared.Eclat.EclatLayout)
+local Kit = require(script.Parent.Kit)
 
 type Layout = EclatLayout.Layout
 type Tile = EclatLayout.Tile
@@ -78,6 +79,28 @@ local function block(
 	return make(b, "Part", size, cf, material, color)
 end
 
+-- Module du kit Blender s'il est importé (v0.5.1), sinon bloc greybox. Mêmes repères que `block`.
+local function kitBlock(
+	b: Builder,
+	frame: CFrame,
+	name: string,
+	size: Vector3,
+	x: number,
+	y: number,
+	z: number,
+	material: Enum.Material,
+	color: Color3,
+	yaw: number?
+)
+	local placed =
+		Kit.place(name, frame * CFrame.new(x, y, z) * CFrame.Angles(0, yaw or 0, 0), size)
+	if placed then
+		placed.Parent = b.model
+		return
+	end
+	block(b, frame, size, x, y, z, material, color, yaw)
+end
+
 -- Rampe droite de `from` (bas) à `to` (haut), largeur `width` (repère `frame`).
 local function ramp(b: Builder, frame: CFrame, from: Vector3, to: Vector3, width: number): BasePart
 	local a = frame:PointToWorldSpace(from)
@@ -101,7 +124,17 @@ local function crenels(b: Builder, frame: CFrame, length: number, top: number, t
 	local count = math.floor(length / 6)
 	for i = 0, count - 1 do
 		local x = -length / 2 + 3 + i * 6
-		block(b, frame, Vector3.new(3, 2.5, thickness), x, top, 0, Enum.Material.Slate, C.stone)
+		kitBlock(
+			b,
+			frame,
+			"Kit_Creneau",
+			Vector3.new(3, 2.5, thickness),
+			x,
+			top,
+			0,
+			Enum.Material.Slate,
+			C.stone
+		)
 	end
 end
 
@@ -120,7 +153,35 @@ local function wallSegment(
 		return
 	end
 	local mid = (x0 + x1) / 2
-	block(b, frame, Vector3.new(length, height, thickness), mid, 0, 0, Enum.Material.Slate, C.stone)
+	if Kit.has("Kit_Mur") then
+		-- Modules de 8 studs environ, étirés juste ce qu'il faut pour remplir le segment.
+		local count = math.max(1, math.floor(length / 8 + 0.5))
+		local piece = length / count
+		for i = 1, count do
+			kitBlock(
+				b,
+				frame,
+				"Kit_Mur",
+				Vector3.new(piece, height, thickness),
+				x0 + piece * (i - 0.5),
+				0,
+				0,
+				Enum.Material.Slate,
+				C.stone
+			)
+		end
+	else
+		block(
+			b,
+			frame,
+			Vector3.new(length, height, thickness),
+			mid,
+			0,
+			0,
+			Enum.Material.Slate,
+			C.stone
+		)
+	end
 	if withCrenels then
 		crenels(b, frame * CFrame.new(mid, 0, 0), length, height, thickness)
 	end
@@ -147,9 +208,10 @@ local function buildEdge(b: Builder, dir: Direction, kind: EclatLayout.EdgeKind)
 		wallSegment(b, frame, 21, HALF, WALL_HEIGHT, 4, true)
 		for _, x in { -16, 16 } do
 			-- Linteau au-dessus de chaque porte.
-			block(
+			kitBlock(
 				b,
 				frame,
+				"Kit_Linteau",
 				Vector3.new(10, 3, 4),
 				x,
 				WALL_HEIGHT - 3,
@@ -162,9 +224,10 @@ local function buildEdge(b: Builder, dir: Direction, kind: EclatLayout.EdgeKind)
 		-- Une porte au sol et un chemin de ronde (mur épais) atteint par deux rampes.
 		wallSegment(b, frame, -HALF, -5, WALL_HEIGHT, 6, false)
 		wallSegment(b, frame, 5, HALF, WALL_HEIGHT, 6, false)
-		block(
+		kitBlock(
 			b,
 			frame,
+			"Kit_Linteau",
 			Vector3.new(10, 4, 6),
 			0,
 			WALL_HEIGHT - 4,
@@ -518,9 +581,10 @@ function TileKit.build(layout: Layout, tile: Tile): Model
 	local n = EclatLayout.edge(layout, tile.x, tile.z, "N")
 	local w = EclatLayout.edge(layout, tile.x, tile.z, "W")
 	if n == "Gates" or n == "Rampart" or w == "Gates" or w == "Rampart" then
-		block(
+		kitBlock(
 			b,
 			b.center,
+			"Kit_Pilier",
 			Vector3.new(7, WALL_HEIGHT + 4, 7),
 			-HALF,
 			0,

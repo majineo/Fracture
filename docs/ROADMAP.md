@@ -21,7 +21,8 @@
 | v0.4.7 | Noyaux II | Capacités du fusil, de l'arbalète et de l'épée longue | ✅ |
 | v0.4.11 | Mobilité | Élan (sol et air), course sur les murs, saut mural | ✅ |
 | v0.5.0 | Éclats | Génération procédurale à partir de tuiles (greybox), effondrement, chrono | ✅ |
-| v0.5.1 | Kit de forteresse | Modules de décor Blender (murs, escaliers, arches, toits) à la place de la greybox | 📋 |
+| v0.6.2 | Kit de forteresse | Modules Blender (murs, créneaux, piliers, linteaux, caisses, coffres, sacs) posés à la place de la greybox | ✅ (import à faire) |
+| v0.6.3 | Kit II | Maisons, tour, donjon, escaliers | 📋 |
 | v0.6.0 | Extraction | Inventaire de partie, caisses et coffres, sac à la mort, points d'extraction et Faille finale, versement au coffre | ✅ |
 | v0.6.1 | Refuge | Coffre consultable, portail, voyages Éclat ↔ Refuge (actifs après publication) | ✅ (voyages non testés) |
 | v0.7.0 | Reliques | Utiliser ou ramener, Codex, Signature | 📋 |

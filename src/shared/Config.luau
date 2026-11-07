@@ -4,7 +4,7 @@
 -- Studio : ReplicatedStorage > Shared > Config
 
 return table.freeze({
-	GAME_VERSION = "0.6.1",
+	GAME_VERSION = "0.6.2",
 	-- Identifiants des places publiées (même expérience). 0 = pas encore publiée : le portail du
 	-- Refuge et le retour après l'extraction restent désactivés (v0.6.1).
 	PLACE_IDS = table.freeze({

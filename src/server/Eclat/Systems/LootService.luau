@@ -21,6 +21,7 @@ local Net = require(Core.Lib.Net)
 local HealthService = require(Core.Systems.HealthService)
 local PlayerData = require(Core.Systems.PlayerData)
 local EclatService = require(script.Parent.EclatService)
+local Kit = require(script.Parent.Parent.Lib.Kit)
 
 type Stack = RunInventory.Stack
 
@@ -138,7 +139,13 @@ local function container(
 		else Enum.Material.WoodPlanks
 	part.Color = look.color
 	part:SetAttribute("Loot", kind)
-	if kind == "Coffre" then
+	-- Modèle Blender du kit s'il est importé (v0.5.1) : la pièce devient la zone de fouille.
+	local kitName = if kind == "Butin" then "Kit_Sac" else `Kit_{kind}`
+	local model = Kit.place(kitName, part.CFrame * CFrame.new(0, -look.size.Y / 2, 0), look.size)
+	if model then
+		part.Transparency = 1
+		model.Parent = part
+	elseif kind == "Coffre" then
 		local trim = Instance.new("Part")
 		trim.Anchored = true
 		trim.CanCollide = false

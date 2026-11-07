@@ -25,6 +25,9 @@ local SOUNDS = table.freeze({
 	AbilityShadow = { id = "rbxassetid://88724017134214", volume = 0.7 }, -- « SuddenMovement »
 	AbilityReady = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.4 },
 	ShadowWarning = { id = "rbxasset://sounds/unsheath.wav", volume = 0.8 },
+	-- v0.4.6 (lames) — Creator Store, gratuits, choisis sans écoute
+	MeleeHit = { id = "rbxassetid://138293953015099", volume = 0.6 }, -- « SFX_Hit_Sword_Medium_01 »
+	MeleeHitHeavy = { id = "rbxassetid://84636875169658", volume = 0.7 }, -- « Heavy Sword Hit 1 »
 })
 
 local CombatSounds = {}

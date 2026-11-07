@@ -85,7 +85,12 @@ Choix des armes à l'armurerie du Refuge (provisoire).
 
 ## 5. Mêlée
 
-- Attaque légère (enchaînement de 3) et **attaque chargée** (maintien).
+- Attaque légère (**enchaînement de 3** ✅ v0.4.6 : taille, revers, estoc ×1,3 ; coups espacés de
+  moins de 0,9 s) et **attaque chargée** (maintien), qui remet l'enchaînement à zéro.
+- **Aide à la mêlée** (✅ v0.4.6, tous supports) : le coup vise l'ennemi le plus proche du centre
+  de l'écran dans un cône de 55°, le personnage se tourne vers lui et avance d'au plus 2,5 studs
+  (jamais à travers un mur). Le serveur revérifie portée, cône et ligne de vue.
+- **Impact** (✅ v0.4.6) : traînée sur la vraie lame, étincelles, son d'impact, micro-arrêt.
 - **Parade** (✅ v0.4.3) : clic droit / LT / bouton « Parer » avec une arme de mêlée. Fenêtre
   de 0,22 s (lame) ou 0,3 s (épée longue), recharge 0,75 s ; un coup de face pendant la
   fenêtre est annulé et l'attaquant est étourdi 0,9 s. C'est la mécanique de skill principale

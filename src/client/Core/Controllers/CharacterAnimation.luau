@@ -16,6 +16,7 @@ local JointRig = require(Client.Animation.JointRig)
 local MovementEffects = require(Client.Animation.MovementEffects)
 local PoseAnimator = require(Client.Animation.PoseAnimator)
 local Poses = require(Client.Animation.Poses)
+local MeleeMotion = require(Client.Animation.MeleeMotion)
 local WeaponHold = require(Client.Animation.WeaponHold)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local WeaponDefs = require(
@@ -81,34 +82,15 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	-- Combat : par-dessus le déplacement (on peut viser en glissant).
 	-- Tenue de l'arme : bras calculés par cinématique inverse (Animation/WeaponHold).
 	animator.addLayer("Hold", {}, false, 14)
-	animator.addLayer("Swing", { RightShoulder = CFrame.identity }, false, 40)
-	animator.addLayer("Parry", Poses.Parry, false, 30)
+	-- Rotation du buste qui accompagne les coups de lame (additive).
+	animator.addLayer("Twist", { Waist = CFrame.identity }, true, 30)
 	animator.addLayer("Downed", Poses.Downed, false, 8)
 	return animator
 end
 
-local function A(x: number, y: number, z: number): CFrame
-	return CFrame.Angles(math.rad(x), math.rad(y), math.rad(z))
-end
-
--- Coup de lame : le bras balaie de droite à gauche (coup simple) ou de haut en bas (chargé).
-local SWING_DURATION = { light = 0.2, heavy = 0.32 }
-local function swingPose(t: number, heavy: boolean): { [string]: CFrame }
-	local e = 1 - (1 - t) * (1 - t) -- départ vif, fin amortie
-	if heavy then
-		return {
-			RightShoulder = A(170, 0, 10):Lerp(A(35, 0, -15), e),
-			RightElbow = A(30, 0, 0):Lerp(A(5, 0, 0), e),
-			Waist = A(10, 0, 0):Lerp(A(-18, 0, 0), e),
-		}
-	end
-	return {
-		RightShoulder = A(95, 0, 75):Lerp(A(80, 0, -55), e),
-		RightElbow = A(40, 0, 0):Lerp(A(10, 0, 0), e),
-		Waist = A(0, -28, 0):Lerp(A(0, 32, 0), e),
-	}
-end
-local WIND_UP = { RightShoulder = A(120, 0, 65), RightElbow = A(70, 0, 0), Waist = A(0, -22, 0) }
+-- Arme déplacée par un coup / une parade / une charge (Animation/MeleeMotion).
+type MeleeOverride = { grip: CFrame, direct: boolean, blend: number? }
+local SWING_HOLD = 0.1 -- la fin du coup reste affichée un instant avant le retour en garde
 
 local function untrack(character: Model)
 	local entry = tracked[character]
@@ -210,7 +192,8 @@ local function updateHold(
 	mode: string,
 	grounded: boolean,
 	horizontal: number,
-	dt: number
+	dt: number,
+	motion: MeleeOverride?
 ): boolean
 	local now = os.clock()
 	if entry.arms == nil or now - entry.armsMeasuredAt > ARMS_REMEASURE then
@@ -246,6 +229,16 @@ local function updateHold(
 	local wanted = WeaponHold.targetGrip(arms, hold, weapon, state, aimDirection, entry.stock)
 	if wanted == nil then
 		return false
+	end
+	if motion then
+		if motion.direct then
+			-- Coup / parade : on suit la trajectoire exactement (pas de retard).
+			entry.grip = motion.grip
+			entry.gripWeapon = weapon
+			entry.animator.setPose("Hold", (WeaponHold.solve(arms, hold, weapon, motion.grip)))
+			return true
+		end
+		wanted = wanted:Lerp(motion.grip, motion.blend or 1)
 	end
 	local grip = entry.grip
 	if grip == nil or entry.gripWeapon ~= weapon then
@@ -358,42 +351,47 @@ local function updateEntry(entry: Tracked, dt: number)
 	local holdingGun = hold == "Pistol" or hold == "LongGun"
 	local holdingBlade = hold == "Blade" or hold == "Greatsword"
 
-	-- Parade : lame levée en travers pendant la fenêtre de parade.
-	local parryAt = if holdingBlade
-		then CombatController.getParry(if isLocal then nil else entry.player)
-		else -math.huge
-	local parryWindow = (def and def.parryWindow) or 0.2
-	local parrying = os.clock() - parryAt <= parryWindow + 0.1
-	animator.setWeight("Parry", if parrying then 1 else 0)
-
-	local swing = if holdingBlade
-		then CombatController.getSwing(if isLocal then nil else entry.player)
-		else nil
-	local swingActive = false
-	if swing then
-		local light = (def and def.swingTime) or SWING_DURATION.light
-		local duration = if swing.heavy then light * 1.6 else light
-		local t = (os.clock() - swing.at) / duration
-		if t >= 0 and t <= 1.15 then
-			swingActive = true
-			animator.setPose("Swing", swingPose(math.min(t, 1), swing.heavy))
-			animator.snapWeight("Swing", 1)
+	-- Mêlée (v0.4.6) : coups, parade et charge déplacent l'ARME le long d'une trajectoire
+	-- (Animation/MeleeMotion) ; les mains suivent par cinématique inverse.
+	local motion: MeleeOverride? = nil
+	local twist: CFrame? = nil
+	if holdingBlade and def then
+		local who = if isLocal then nil else entry.player
+		local now = os.clock()
+		local swing = CombatController.getSwing(who)
+		if swing then
+			local light = def.swingTime or 0.2
+			local duration = if swing.heavy then light * 1.6 else light
+			local t = (now - swing.at) / duration
+			if t >= 0 and t <= 1 + SWING_HOLD / duration then
+				local kind = if swing.heavy
+					then "Heavy"
+					else MeleeMotion.comboKind(swing.combo or 1)
+				local grip, torsoTwist = MeleeMotion.sample(kind, t)
+				motion, twist = { grip = grip, direct = true }, torsoTwist
+			end
+		end
+		local parryAt = CombatController.getParry(who)
+		if motion == nil and now - parryAt <= (def.parryWindow or 0.2) + 0.1 then
+			local grip, torsoTwist = MeleeMotion.sample("Parry", 1)
+			motion, twist = { grip = grip, direct = true }, torsoTwist
+		end
+		local charge = if isLocal then CombatController.getMeleeCharge() else nil
+		if motion == nil and charge then
+			-- Coup chargé en préparation : l'arme monte vers le haut du coup.
+			local grip, torsoTwist = MeleeMotion.sample("Heavy", 0)
+			motion = { grip = grip, direct = false, blend = charge }
+			twist = CFrame.new():Lerp(torsoTwist, charge)
 		end
 	end
-	if not swingActive and holdingBlade and isLocal and CombatController.getMeleeCharge() then
-		-- Attaque chargée en préparation : bras armé en arrière.
-		animator.setPose("Swing", WIND_UP)
-		animator.setWeight("Swing", CombatController.getMeleeCharge() :: number)
-		swingActive = true
-	end
-	if not swingActive then
-		animator.setWeight("Swing", 0)
-	end
-	-- Tenue de l'arme (deux mains sur l'arme, voir Animation/WeaponHold). Effacée pendant un
-	-- coup ou une parade, qui ont leurs propres poses.
+	animator.setPose("Twist", { Waist = twist or CFrame.identity })
+	animator.setWeight("Twist", if twist then 1 else 0)
+
+	-- Tenue de l'arme (deux mains sur l'arme, voir Animation/WeaponHold).
 	local holding = false
-	if hold and weapon and WeaponHold.has(hold) and not swingActive and not parrying then
-		holding = updateHold(entry, hold, weapon, holdingGun, mode, grounded, horizontal, dt)
+	if hold and weapon and WeaponHold.has(hold) then
+		holding =
+			updateHold(entry, hold, weapon, holdingGun, mode, grounded, horizontal, dt, motion)
 	end
 	if not holding then
 		entry.grip = nil

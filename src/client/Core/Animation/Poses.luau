@@ -118,17 +118,8 @@ Poses.Land = table.freeze({
 } :: Pose)
 
 -- (v0.4.4) La tenue des armes (garde, port d'arme, visée) est calculée par cinématique
--- inverse : voir Animation/WeaponHold. Restent ici les poses de coups et de parade.
-
--- Parade : lame levée en travers devant soi.
-Poses.Parry = table.freeze({
-	RightShoulder = A(115, 0, -28),
-	RightElbow = A(70, 0, 0),
-	RightWrist = A(0, 0, 35),
-	LeftShoulder = A(60, 0, 30),
-	LeftElbow = A(50, 0, 0),
-	Waist = A(-6, 14, 0),
-} :: Pose)
+-- inverse : voir Animation/WeaponHold. Les coups et la parade (v0.4.6) suivent des trajectoires
+-- d'arme : voir Animation/MeleeMotion.
 
 -- À terre : allongé sur le ventre, appuyé sur les avant-bras (on rampe).
 Poses.Downed = table.freeze({

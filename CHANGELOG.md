@@ -5,6 +5,59 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.6] — 2026-11-07 — « Lames »
+
+### Description générale
+La mêlée retravaillée : enchaînements, coups qui suivent une vraie trajectoire d'arme, aide à
+la visée avec une petite fente, et des impacts qui se sentent.
+
+### Nouvelles fonctionnalités
+- **Enchaînement de 3 coups** : taille de droite à gauche, revers, puis **estoc** (×1,3), si les
+  coups s'enchaînent en moins de 0,9 s. Le serveur suit l'enchaînement et applique le bonus.
+- **Coups animés par la trajectoire de l'arme** : la lame décrit un vrai arc et les mains suivent
+  par cinématique inverse ; sur l'épée longue, **les deux mains restent sur la poignée** pendant
+  les coups. Le buste accompagne chaque coup. Coup chargé de haut en bas ; pendant la charge,
+  l'arme monte au-dessus de l'épaule. Parade : lame levée en travers.
+- **Aide à la mêlée** : le coup vise l'ennemi le plus proche du viseur (cône de 55°), le
+  personnage se tourne vers lui et **avance d'au plus 2,5 studs** (fente), jamais à travers un mur.
+- **Impacts** : traînée blanche et cyan qui suit la lame, étincelles et éclair à l'impact, son
+  d'impact (plus lourd pour le coup chargé), micro-arrêt de 0,06 s et secousse de caméra.
+- Les autres joueurs voient les mêmes coups (enchaînement transmis) et la même traînée.
+
+### Modifications
+- Anciennes poses fixes de coup et de parade supprimées (remplacées par les trajectoires).
+- La garde de mouvement tolère la fente pendant 0,5 s après chaque coup.
+
+### Corrections de bugs
+- Épée longue : la main gauche lâchait la poignée pendant les coups.
+- Coups ratés de peu à la souris ou au tactile (aide à la mêlée).
+
+### Vérifications (Studio)
+- À 6,1 studs du mannequin, caméra décalée de 25° : 3 coups qui portent (30, 30, puis 39 pour
+  l'estoc), fente jusqu'à 3,6 studs, position conservée (aucune correction anti-triche).
+- Épée longue : main gauche à 0,32 stud au plus de sa place sur la poignée pendant les 3 coups.
+- Capture : épée longue tenue à deux mains en plein coup, traînée visible.
+
+### Problèmes connus
+- Ressenti à valider à la main (vitesse des coups, fente, aide trop forte ou pas assez).
+- Sons d'impact choisis sans écoute (Creator Store, gratuits).
+- La charge du coup chargé n'est pas visible par les autres joueurs (seulement le coup).
+- Studio : un test lancé quand la fenêtre n'a pas le focus ne dessine aucune image (rien à voir
+  avec le jeu).
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Animation/MeleeMotion.luau`
+- **Modifiés** : `src/client/Core/Controllers/{CombatController,CharacterAnimation}.luau`,
+  `src/client/Core/Animation/Poses.luau`, `src/client/Core/Combat/{WeaponFx,CombatSounds}.luau`,
+  `src/server/Core/Systems/WeaponService.luau`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/{DECISIONS,ROADMAP}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- v0.4.7 « Noyaux II » : capacités du fusil, de l'arbalète et de l'épée longue.
+
+---
+
 ## [v0.4.5] — 2026-11-07 — « Noyaux »
 
 ### Description générale

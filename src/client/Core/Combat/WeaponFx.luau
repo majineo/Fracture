@@ -247,6 +247,83 @@ function WeaponFx.abilityTrail(origin: Vector3, finish: Vector3, color: Color3)
 	end)
 end
 
+-- Traînée qui suit la VRAIE lame pendant un coup (v0.4.6) : de la garde à la pointe.
+function WeaponFx.bladeTrail(character: Model, duration: number, heavy: boolean)
+	local held = character:FindFirstChild("HeldWeapon")
+	local grip = held and held:FindFirstChild("Grip", true)
+	if grip == nil or not grip:IsA("BasePart") then
+		return
+	end
+	-- Longueur de la lame : pièce la plus en avant (-Z) dans le repère de la poignée.
+	local tip = 0
+	for _, part in (held :: Instance):GetDescendants() do
+		if part:IsA("BasePart") then
+			local local_ = grip.CFrame:PointToObjectSpace(part.Position)
+			tip = math.min(tip, local_.Z - part.Size.Magnitude / 2)
+		end
+	end
+	tip = math.max(tip, -4.5)
+	if tip > -0.8 then
+		return
+	end
+	local base = Instance.new("Attachment")
+	base.Position = Vector3.new(0, 0, tip * 0.25)
+	base.Parent = grip
+	local point = Instance.new("Attachment")
+	point.Position = Vector3.new(0, 0, tip * 0.95)
+	point.Parent = grip
+	local trail = Instance.new("Trail")
+	trail.Attachment0 = base
+	trail.Attachment1 = point
+	trail.Lifetime = if heavy then 0.2 else 0.13
+	trail.LightEmission = 0.9
+	trail.FaceCamera = false
+	trail.Color = ColorSequence.new(Color3.new(1, 1, 1), BRISURE_CYAN)
+	trail.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, if heavy then 0.05 else 0.25),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	trail.WidthScale = NumberSequence.new(1, 0.4)
+	trail.Parent = grip
+	task.delay(duration, function()
+		trail.Enabled = false
+		task.delay(0.3, function()
+			trail:Destroy()
+			base:Destroy()
+			point:Destroy()
+		end)
+	end)
+end
+
+-- Coup de lame qui porte : gerbe d'étincelles blanches et cyan, éclair bref.
+function WeaponFx.meleeImpact(position: Vector3, heavy: boolean)
+	local a = Instance.new("Attachment")
+	a.WorldPosition = position
+	a.Parent = workspace.Terrain
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Enabled = false
+	sparks.Color = ColorSequence.new(Color3.new(1, 1, 1), BRISURE_CYAN)
+	sparks.LightEmission = 1
+	sparks.Lifetime = NumberRange.new(0.12, 0.3)
+	sparks.Speed = NumberRange.new(10, if heavy then 30 else 20)
+	sparks.SpreadAngle = Vector2.new(70, 70)
+	sparks.Acceleration = Vector3.new(0, -30, 0)
+	sparks.Drag = 3
+	sparks.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, if heavy then 0.3 else 0.2),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	sparks.Parent = a
+	sparks:Emit(if heavy then 30 else 16)
+	local light = Instance.new("PointLight")
+	light.Color = Color3.new(1, 1, 1)
+	light.Range = if heavy then 10 else 6
+	light.Brightness = 4
+	light.Parent = a
+	TweenService:Create(light, TweenInfo.new(0.15), { Brightness = 0 }):Play()
+	Debris:AddItem(a, 0.5)
+end
+
 -- Traînée de lame (coup de mêlée) le long d'un arc devant le personnage.
 function WeaponFx.swingArc(root: BasePart, heavy: boolean, color: Color3?)
 	local a0 = Instance.new("Attachment")

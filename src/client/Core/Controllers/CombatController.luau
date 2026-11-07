@@ -24,6 +24,7 @@ local Combat = Shared:WaitForChild("Combat")
 local WeaponDefs = require(Combat:WaitForChild("WeaponDefs")) :: any
 local WeaponState = require(Combat:WaitForChild("WeaponState")) :: any
 local Signal = require(Shared:WaitForChild("Util"):WaitForChild("Signal")) :: any
+local PlaceKind = require(Shared:WaitForChild("PlaceKind")) :: any
 
 local Client = script.Parent.Parent
 local Net = require(Client.Lib.Net)
@@ -72,8 +73,18 @@ local aimHeld = false -- souris / manette : maintenir
 local aimToggled = false -- tactile : bascule
 local meleeChargeStart: number? = nil
 local bloom = 0
-local lastSwing: { at: number, heavy: boolean }? = nil
-local remoteSwings: { [Player]: { at: number, heavy: boolean } } = {}
+type Swing = { at: number, heavy: boolean, combo: number }
+local lastSwing: Swing? = nil
+local remoteSwings: { [Player]: Swing } = {}
+-- Mêlée assistée (v0.4.6) : orientation forcée vers la cible et petite fente.
+local COMBO_WINDOW = 0.9 -- secondes entre deux coups pour enchaîner (comme le serveur)
+local MELEE_ASSIST_CONE = math.rad(55)
+local LUNGE_DISTANCE = 2.5
+local LUNGE_TIME = 0.12
+local HIT_STOP = 0.06
+local faceOverride: Vector3? = nil
+local faceOverrideUntil = 0
+local lunge: { direction: Vector3, remaining: number, speed: number }? = nil
 local remoteParries: { [Player]: number } = {}
 local lastParry = -math.huge
 -- Dernier tir (soi et les autres) : l'arme reste épaulée un instant après un tir.
@@ -299,6 +310,75 @@ local function parry(def: any)
 	Net.fire("Parry")
 end
 
+-- Aide à la mêlée (v0.4.6) : cible la plus proche du centre de l'écran, devant soi et à portée
+-- (+ marge de fente). Le serveur revérifie portée, cône et ligne de vue.
+local function meleeTarget(def: any, root: BasePart): BasePart?
+	local camera = workspace.CurrentCamera
+	if camera == nil then
+		return nil
+	end
+	local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+	if look.Magnitude < 0.1 then
+		return nil
+	end
+	look = look.Unit
+	local best: BasePart? = nil
+	local bestScore = math.huge
+	for _, model in workspace:GetChildren() do
+		if
+			model:IsA("Model")
+			and model ~= character()
+			and model:GetAttribute("MaxHealth") ~= nil
+		then
+			local targetRoot = model:FindFirstChild("HumanoidRootPart")
+			if
+				targetRoot
+				and targetRoot:IsA("BasePart")
+				and model:GetAttribute("Dead") ~= true
+				and not (Players:GetPlayerFromCharacter(model) and PlaceKind ~= "Eclat")
+			then
+				local offset = targetRoot.Position - root.Position
+				local flat = Vector3.new(offset.X, 0, offset.Z)
+				local distance = flat.Magnitude
+				if
+					distance <= def.range + LUNGE_DISTANCE
+					and math.abs(offset.Y) < 5
+					and distance > 0.1
+				then
+					local angle = math.acos(math.clamp(look:Dot(flat.Unit), -1, 1))
+					if angle <= MELEE_ASSIST_CONE then
+						local score = angle * 4 + distance * 0.1
+						if score < bestScore then
+							best, bestScore = targetRoot, score
+						end
+					end
+				end
+			end
+		end
+	end
+	return best
+end
+
+-- Petite fente vers la cible (jamais à travers un mur), et le personnage se tourne vers elle.
+local function lungeToward(root: BasePart, target: BasePart, def: any)
+	local offset = target.Position - root.Position
+	local flat = Vector3.new(offset.X, 0, offset.Z)
+	faceOverride = flat.Unit
+	faceOverrideUntil = os.clock() + 0.3
+	local wanted = math.clamp(flat.Magnitude - def.range * 0.55, 0, LUNGE_DISTANCE)
+	if wanted < 0.3 then
+		return
+	end
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = { character() :: Model, target.Parent :: Instance }
+	local blocked = workspace:Raycast(root.Position, flat.Unit * (wanted + 1), params)
+	if blocked then
+		wanted = math.max(0, blocked.Distance - 1)
+	end
+	lunge = { direction = flat.Unit, remaining = wanted, speed = wanted / LUNGE_TIME }
+end
+
 local function swing(def: any, heavy: boolean)
 	local state = stateOf(def.id)
 	local now = os.clock()
@@ -309,19 +389,32 @@ local function swing(def: any, heavy: boolean)
 	if heavy then
 		state.lastShot = now + (2.2 - 1) / def.fireRate
 	end
-	local camera = workspace.CurrentCamera
-	local direction = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
-	lastSwing = { at = now, heavy = heavy }
+	-- Enchaînement : 1 → 2 → 3 (estoc) si les coups s'enchaînent vite ; le coup chargé le coupe.
+	-- Même calcul que le serveur (WeaponService), qui seul applique les dégâts.
+	local combo = 1
+	if not heavy and lastSwing and not lastSwing.heavy and now - lastSwing.at <= COMBO_WINDOW then
+		combo = (lastSwing.combo or 1) % 3 + 1
+	end
 	local c = character()
 	local root = c and c:FindFirstChild("HumanoidRootPart")
+	local camera = workspace.CurrentCamera
+	local direction = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
 	if root and root:IsA("BasePart") then
-		WeaponFx.swingArc(root, heavy)
+		local target = meleeTarget(def, root)
+		if target then
+			direction = (target.Position - root.Position).Unit
+			lungeToward(root, target, def)
+		end
+	end
+	lastSwing = { at = now, heavy = heavy, combo = combo }
+	if c then
+		WeaponFx.bladeTrail(c, (def.swingTime or 0.2) * (if heavy then 1.6 else 1) + 0.08, heavy)
 	end
 	CombatSounds.play2D(
 		if heavy then "HeavySwing" else def.sound,
-		(def.soundPitch or 1) * (0.95 + math.random() * 0.1)
+		(def.soundPitch or 1) * (0.95 + math.random() * 0.1) * (if combo == 3 then 0.9 else 1)
 	)
-	CameraFeel.kick(if heavy then 1.2 else 0.5)
+	CameraFeel.kick(if heavy then 1.2 elseif combo == 3 then 0.8 else 0.5)
 	Net.fire("MeleeSwing", heavy, direction, workspace:GetServerTimeNow())
 end
 
@@ -471,6 +564,20 @@ local function onCombatEvent(info: any)
 			if info.killed then "Kill" else "Hit",
 			if info.headshot then 1.35 else 1
 		)
+		-- Coup de lame qui porte : étincelles, son d'impact, micro-arrêt du coup (« hit stop »).
+		local swingNow = lastSwing
+		local def = currentDef()
+		if swingNow and def and def.kind == "Melee" and os.clock() - swingNow.at < 0.6 then
+			if typeof(info.position) == "Vector3" then
+				WeaponFx.meleeImpact(info.position + Vector3.new(0, 0.8, 0), swingNow.heavy)
+			end
+			CombatSounds.play2D(
+				if swingNow.heavy then "MeleeHitHeavy" else "MeleeHit",
+				0.95 + math.random() * 0.1
+			)
+			swingNow.at += HIT_STOP
+			CameraFeel.kick(if swingNow.heavy then -2 else -1)
+		end
 		if typeof(info.position) == "Vector3" and typeof(info.amount) == "number" then
 			WeaponFx.damageNumber(
 				info.position,
@@ -531,11 +638,14 @@ local function onShotFx(info: any)
 		end
 	elseif info.kind == "Swing" or info.kind == "HeavySwing" then
 		local heavy = info.kind == "HeavySwing"
-		remoteSwings[info.shooter] = { at = os.clock(), heavy = heavy }
+		local combo = if typeof(info.combo) == "number" then math.clamp(info.combo, 1, 3) else 1
+		remoteSwings[info.shooter] = { at = os.clock(), heavy = heavy, combo = combo }
 		local c = info.shooter.Character
 		local root = c and c:FindFirstChild("HumanoidRootPart")
-		if root and root:IsA("BasePart") then
-			WeaponFx.swingArc(root, heavy)
+		local def = typeof(info.weapon) == "string" and WeaponDefs[info.weapon]
+		if c and root and root:IsA("BasePart") then
+			local swingTime = if def then def.swingTime or 0.2 else 0.2
+			WeaponFx.bladeTrail(c, swingTime * (if heavy then 1.6 else 1) + 0.08, heavy)
 			CombatSounds.playAt(if heavy then "HeavySwing" else "Swing", root.Position)
 		end
 	end
@@ -563,9 +673,23 @@ local function onRender(dt: number)
 			if camera then
 				local look = camera.CFrame.LookVector
 				local flat = Vector3.new(look.X, 0, look.Z)
+				-- Coup de lame assisté : on se tourne un instant vers la cible.
+				if faceOverride and os.clock() < faceOverrideUntil then
+					flat = faceOverride
+				end
 				if flat.Magnitude > 0.1 then
 					local target = CFrame.lookAt(root.Position, root.Position + flat)
 					root.CFrame = root.CFrame:Lerp(target, math.min(1, dt * FACE_SPEED))
+				end
+			end
+			-- Fente : quelques studs vers la cible en un éclair.
+			local current = lunge
+			if current then
+				local step = math.min(current.remaining, current.speed * dt)
+				root.CFrame += current.direction * step
+				current.remaining -= step
+				if current.remaining <= 1e-3 then
+					lunge = nil
 				end
 			end
 		else
@@ -630,7 +754,7 @@ function CombatController.getLastFire(other: Instance?): number
 end
 
 -- Dernier coup de mêlée (soi : `player` nil ; autre joueur : son objet Player).
-function CombatController.getSwing(other: Player?): { at: number, heavy: boolean }?
+function CombatController.getSwing(other: Player?): Swing?
 	if other == nil or other == player then
 		return lastSwing
 	end

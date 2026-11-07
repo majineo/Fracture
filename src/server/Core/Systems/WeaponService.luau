@@ -29,6 +29,7 @@ local Guard = require(Shared.Util.Guard)
 local Net = require(script.Parent.Parent.Lib.Net)
 local CombatTargets = require(script.Parent.CombatTargets)
 local HealthService = require(script.Parent.HealthService)
+local MovementGuard = require(script.Parent.MovementGuard)
 local WeaponModels = require(script.Parent.Parent.Lib.WeaponModels)
 
 local BASE_LOADOUT = table.freeze({ "weapon.fracture_pistol", "weapon.short_blade" })
@@ -37,12 +38,21 @@ local FIRE_TOLERANCE = 0.05 -- gigue réseau acceptée sur la cadence
 local INTERPOLATION_DELAY = 0.05 -- retard d'affichage des autres joueurs chez le tireur
 local HEAVY_COOLDOWN_FACTOR = 2.2 -- l'attaque chargée occupe plus de temps qu'un coup simple
 local PIERCE_FALLOFF = 0.7 -- dégâts conservés par cible traversée
+-- Enchaînement de mêlée (v0.4.6) : 3 coups, le 3e (estoc) fait plus mal.
+local COMBO_WINDOW = 0.9
+local COMBO_LENGTH = 3
+local THRUST_MULTIPLIER = 1.3
+-- Fente de mêlée côté client : quelques studs très vite (voir CombatController).
+local LUNGE_ALLOWANCE = 0.5
+local LUNGE_SPEED = 40
 
 type Loadout = {
 	weapons: { string }, -- [1] arme à feu, [2] mêlée
 	equipped: number, -- 0 = mains nues
 	states: { [string]: WeaponState.State },
 	parry: Parry.State,
+	lastMelee: number, -- heure du dernier coup simple (enchaînement)
+	combo: number,
 }
 
 local WeaponService = {}
@@ -555,6 +565,25 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 		-- L'attaque chargée occupe plus longtemps l'arme : jamais plus forte que le spam.
 		state.lastShot = now + (HEAVY_COOLDOWN_FACTOR - 1) / def.fireRate
 	end
+	-- Enchaînement (même calcul que le client) : le coup chargé le remet à zéro.
+	if heavy then
+		loadout.combo = 0
+	elseif now - loadout.lastMelee <= COMBO_WINDOW then
+		loadout.combo = loadout.combo % COMBO_LENGTH + 1
+	else
+		loadout.combo = 1
+	end
+	if not heavy then
+		loadout.lastMelee = now
+	else
+		loadout.lastMelee = -math.huge
+	end
+	local multiplier = if heavy
+		then def.heavyMultiplier
+		elseif loadout.combo == COMBO_LENGTH then THRUST_MULTIPLIER
+		else nil
+	-- Le client avance de quelques studs vers sa cible : la garde de mouvement le tolère.
+	MovementGuard.allow(player, LUNGE_ALLOWANCE, LUNGE_SPEED, 0)
 	local character = player.Character :: Model
 	WeaponService.meleeStrike(
 		character,
@@ -562,12 +591,14 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 		def,
 		direction :: Vector3,
 		viewTime(player, clientTime :: number),
-		if heavy then def.heavyMultiplier else nil
+		multiplier
 	)
-	broadcastFx(
-		player,
-		{ shooter = player, kind = if heavy then "HeavySwing" else "Swing", weapon = def.id }
-	)
+	broadcastFx(player, {
+		shooter = player,
+		kind = if heavy then "HeavySwing" else "Swing",
+		weapon = def.id,
+		combo = if heavy then 1 else loadout.combo,
+	})
 end
 
 local function onParry(player: Player)
@@ -592,7 +623,14 @@ function WeaponService.init()
 		local previous = loadouts[player]
 		-- La charge choisie est conservée d'une vie à l'autre (pas encore sauvegardée).
 		local weapons = if previous then previous.weapons else table.clone(BASE_LOADOUT)
-		loadouts[player] = { weapons = weapons, equipped = 0, states = {}, parry = Parry.new() }
+		loadouts[player] = {
+			weapons = weapons,
+			equipped = 0,
+			states = {},
+			parry = Parry.new(),
+			lastMelee = -math.huge,
+			combo = 0,
+		}
 		character:SetAttribute("EquippedWeapon", "")
 		sendLoadout(player)
 	end

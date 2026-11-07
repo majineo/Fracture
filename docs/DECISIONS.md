@@ -273,3 +273,13 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Rythme** : deux capacités d'abord (Retour, Pas de l'ombre) pour régler le ressenti, puis les
   trois autres armes. 📋 Déblocage par la maîtrise d'arme quand elle existera.
 - **Commandes** : la manette Y reste « Interagir » ; les capacités du Codex auront d'autres touches.
+
+## D-039 — Mêlée assistée pour tous
+- **Date** : 2026-11-07 · **Version** : v0.4.6 · **Statut** : ✅ Implémentée
+- **Choix** : chaque coup de lame vise l'ennemi le plus proche du centre de l'écran (cône de 55°),
+  tourne le personnage vers lui et avance d'au plus 2,5 studs. Actif au clavier comme au tactile
+  (contrairement à l'aide à la visée des armes à feu, réservée au tactile et à la manette).
+- **Raison** : la mêlée à la souris par-dessus l'épaule manque souvent de quelques degrés ; sur
+  mobile c'est encore pire. La parade et le positionnement restent le vrai savoir-faire.
+- **Sécurité** : le client ne choisit que la direction ; le serveur juge la touche (portée, cône,
+  ligne de vue, remontée dans le temps) et tolère la fente dans la garde de mouvement (0,5 s).

@@ -5,11 +5,11 @@
 -- Studio : StarterPlayer > StarterPlayerScripts > Client > Combat > VfxTextures
 
 local IMPORTED = {
-	Shard = "", -- éclat de Temps (bris, onde, ambiance)
-	Spark = "", -- étincelle étirée (impacts, parade)
-	Glow = "", -- halo doux (auras, noyau chargé)
-	Dust = "", -- bouffée de poussière (pas de course, réception)
-	Vignette = "", -- bords d'écran (santé basse, dégâts, soin)
+	Shard = "rbxassetid://92144878672223", -- éclat de Temps (bris, onde, ambiance)
+	Spark = "rbxassetid://132627852076050", -- étincelle étirée (impacts, parade)
+	Glow = "rbxassetid://113971661677731", -- halo doux (auras, noyau chargé)
+	Dust = "rbxassetid://128543269635465", -- bouffée de poussière (pas de course, réception)
+	Vignette = "rbxassetid://135127213697813", -- bords d'écran (santé basse, dégâts, soin)
 }
 
 local FALLBACK = {

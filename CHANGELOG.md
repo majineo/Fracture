@@ -5,6 +5,41 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.10] — 2026-11-07 — « Éclat — textures »
+
+### Description générale
+Les textures d'effets dessinées dans Blender sont importées et utilisées en jeu.
+
+### Nouvelles fonctionnalités
+- Particules avec les textures du jeu : éclats de Temps (bris, matérialisation, ambiance, onde),
+  étincelles étirées (impacts, parade), lueur (noyau chargé, capacités), poussière (course,
+  glissade, réception).
+- Vignettes d'écran (dégâts, santé basse, soin) en vrai dégradé radial.
+
+### Modifications
+- `Combat/VfxTextures` : identifiants des 5 images importées.
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Les 5 images se chargent (`ContentProvider` : succès).
+- Capture : bandeau « ÉLIMINÉ », mannequin brisé, vignette radiale en santé basse.
+
+### Problèmes connus
+- Intensité des effets à valider en jeu.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/client/Core/Combat/VfxTextures.luau`, `src/shared/Config.luau`,
+  `CHANGELOG.md`, `docs/ASSETS.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- v0.5.0 « Éclats » : génération procédurale à partir de tuiles.
+
+---
+
 ## [v0.4.9] — 2026-11-07 — « Éclat »
 
 ### Description générale

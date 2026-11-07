@@ -51,13 +51,13 @@ Générées dans Blender par `assets/blender/vfx/generate_sprites.py` (numpy, 25
 sur fond transparent : Roblox teinte les particules). Tant qu'elles ne sont pas importées, le
 jeu utilise des textures intégrées à Roblox (`Combat/VfxTextures`).
 
-| Fichier | Rôle | Statut |
+| Fichier | Rôle | Importée (v0.4.10) |
 |---|---|---|
-| `Eclat.png` | éclat de Temps (bris, matérialisation, ambiance, onde) | 📦 À importer |
-| `Etincelle.png` | étincelle étirée, orientée selon la vitesse (impacts, parade) | 📦 À importer |
-| `Lueur.png` | halo doux (noyau chargé, traînées de capacité) | 📦 À importer |
-| `Poussiere.png` | bouffée de poussière (course, glissade, réception) | 📦 À importer |
-| `Vignette.png` | bords d'écran (dégâts, santé basse, soin) | 📦 À importer |
+| `Eclat.png` | éclat de Temps (bris, matérialisation, ambiance, onde) | ✅ rbxassetid://92144878672223 |
+| `Etincelle.png` | étincelle étirée, orientée selon la vitesse (impacts, parade) | ✅ rbxassetid://132627852076050 |
+| `Lueur.png` | halo doux (noyau chargé, traînées de capacité) | ✅ rbxassetid://113971661677731 |
+| `Poussiere.png` | bouffée de poussière (course, glissade, réception) | ✅ rbxassetid://128543269635465 |
+| `Vignette.png` | bords d'écran (dégâts, santé basse, soin) | ✅ rbxassetid://135127213697813 |
 
 Import : Studio → **Gestionnaire d'assets** (Affichage → Gestionnaire d'assets) → **Importer
 en lot** → choisir les 5 PNG. Claude récupère ensuite les identifiants et les inscrit dans

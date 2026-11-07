@@ -19,7 +19,15 @@ local Spring = require(Shared:WaitForChild("Util"):WaitForChild("Spring")) :: an
 local MovementController = require(script.Parent.MovementController)
 
 local BASE_FOV = 70
-local FOV_BONUS = { Normal = 0, Sprint = 7, Slide = 11, Grapple = 15, Mantle = 3 }
+local FOV_BONUS = {
+	Normal = 0,
+	Sprint = 7,
+	Slide = 11,
+	Grapple = 15,
+	Mantle = 3,
+	Dash = 16,
+	WallRun = 9,
+}
 local AIM_FOV_REDUCTION = 20
 local SLIDE_ROLL = math.rad(4)
 local LAND_DIP_PER_SPEED = 0.03 -- studs d'abaissement par stud/s de chute
@@ -40,11 +48,18 @@ local kickPitch = Spring.new(0, 22, 0.6) -- recul : monte vite, redescend avec u
 
 local armed = false
 local aiming = false
+local scopeFov: number? = nil
 
--- Appelé chaque image par CombatController.
-function CameraFeel.setCombat(isArmed: boolean, isAiming: boolean)
+-- Appelé chaque image par CombatController. `scope` : champ de vision de la lunette (sniper).
+function CameraFeel.setCombat(isArmed: boolean, isAiming: boolean, scope: number?)
 	armed = isArmed
 	aiming = isAiming
+	scopeFov = scope
+end
+
+-- Visée à la lunette en cours ?
+function CameraFeel.isScoped(): boolean
+	return aiming and scopeFov ~= nil
 end
 
 -- Recul : la caméra se lève de `degrees` puis revient (négatif = choc vers le bas).
@@ -73,9 +88,11 @@ function CameraFeel.start()
 			local key = if mode == "Normal" and MovementController.isSprinting()
 				then "Sprint"
 				else mode
-			fov.target = BASE_FOV
-				+ (FOV_BONUS[key] or 0)
-				- (if aiming then AIM_FOV_REDUCTION else 0)
+			fov.target = if aiming and scopeFov
+				then scopeFov
+				else BASE_FOV + (FOV_BONUS[key] or 0) - (if aiming
+					then AIM_FOV_REDUCTION
+					else 0)
 			roll.target = if mode == "Slide" then SLIDE_ROLL else 0
 			drop.target = if mode == "Slide" then -MovementConfig.SLIDE_CAMERA_DROP else 0
 			shoulder.target = if armed

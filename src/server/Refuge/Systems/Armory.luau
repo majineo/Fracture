@@ -21,6 +21,7 @@ local SPACING = 6
 local ORDER = {
 	"weapon.fracture_pistol",
 	"weapon.repeating_rifle",
+	"weapon.zenith_rifle",
 	"weapon.heavy_crossbow",
 	"weapon.short_blade",
 	"weapon.longsword",

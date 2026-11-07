@@ -315,3 +315,13 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   franchir et de la verticalité ; les armes restent utilisables en courant sur un mur.
 - **Affichage des touches** : les aides affichent la touche telle qu'imprimée sur le clavier du
   joueur (Roblox lit la position physique ; AZERTY ≠ QWERTY).
+
+## D-044 — Armes de prestige et créatures : inspirations de l'utilisateur, designs originaux
+- **Date** : 2026-11-07 · **Version** : v0.4.12 · **Statut** : ✅ Implémentée (premier essai)
+- **Choix** : l'utilisateur a fourni des références (un sniper très orné, des créatures stylisées
+  en pièces superposées, un sort de cercles magiques). On en reprend le **style** (détails,
+  couleurs franches, matières lumineuses, effets intégrés) dans des designs **originaux** liés à
+  l'univers (Temps, rouages, cristaux) : Fusil du Zénith, Loup de Cristal, Scarabée-Horloge, Raie
+  du Temps. On ne reproduit pas les modèles d'autres jeux.
+- **Méthode** : modèles construits par scripts Blender versionnés (`assets/blender/**/build_*.py`)
+  à partir de primitives communes, pour pouvoir les retoucher et les régénérer.

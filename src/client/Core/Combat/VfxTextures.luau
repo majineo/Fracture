@@ -10,6 +10,8 @@ local IMPORTED = {
 	Glow = "rbxassetid://113971661677731", -- halo doux (auras, noyau chargé)
 	Dust = "rbxassetid://128543269635465", -- bouffée de poussière (pas de course, réception)
 	Vignette = "rbxassetid://135127213697813", -- bords d'écran (santé basse, dégâts, soin)
+	Runes = "", -- cercle runique (Rayon du Zénith, v0.4.12)
+	Beam = "", -- rayon de lumière vertical (v0.4.12)
 }
 
 local FALLBACK = {
@@ -18,6 +20,8 @@ local FALLBACK = {
 	Glow = "rbxasset://textures/particles/sparkles_main.dds",
 	Dust = "rbxasset://textures/particles/smoke_main.dds",
 	Vignette = "", -- pas d'équivalent intégré : bordure en attendant (ScreenVignette)
+	Runes = "rbxasset://textures/particles/sparkles_main.dds",
+	Beam = "rbxasset://textures/particles/sparkles_main.dds",
 }
 
 local VfxTextures = {}

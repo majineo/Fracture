@@ -715,7 +715,8 @@ local function onRender(dt: number)
 		end
 	end
 
-	CameraFeel.setCombat(armed, isAiming())
+	local scopeDef = currentDef()
+	CameraFeel.setCombat(armed, isAiming(), if scopeDef then scopeDef.scopeFov else nil)
 
 	-- Arme rangée de force si le joueur tombe à terre.
 	if equippedSlot ~= 0 and isDowned() then

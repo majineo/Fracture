@@ -219,6 +219,13 @@ function AbilityController.use(kind: string?)
 			return
 		end
 		Net.fire("UseAbility", chosen.id, target)
+	elseif chosen.id == "ZenithBeam" then
+		-- Point visé au centre de l'écran (le serveur vérifie portée et visibilité).
+		local aim = CombatController.getAimPoint()
+		if aim == nil then
+			return
+		end
+		Net.fire("UseAbility", chosen.id, aim)
 	elseif chosen.id == "Ricochet" or chosen.id == "Stasis" then
 		-- Tir spécial : même origine et même visée qu'un tir normal (le serveur vérifie).
 		local origin = CombatController.getMuzzle()
@@ -330,6 +337,8 @@ local function onCombatEvent(info: any)
 			showMessage("Rechargé !", CYAN)
 		elseif info.passive == "Steady" then
 			showMessage("SOUFFLE +25 %", CYAN)
+		elseif info.passive == "ScopeFocus" then
+			showMessage("CONCENTRATION — TÊTE ×2", Color3.fromRGB(255, 205, 90))
 		end
 	elseif info.type == "Volley" then
 		CombatController.volley(

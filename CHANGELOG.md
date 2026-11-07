@@ -5,6 +5,69 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.12] — 2026-11-07 — « Zénith »
+
+### Description générale
+Une arme de prestige inspirée des références de l'utilisateur, le Fusil du Zénith (sniper), avec
+une vraie lunette et une capacité spectaculaire, et trois bêtes de test modélisées dans Blender.
+
+### Nouvelles fonctionnalités
+- **Fusil du Zénith** (6e présentoir de l'armurerie) : modèle Blender de 2 268 triangles (indigo,
+  filigrane de laiton, ivoire, noyau serti, lentille-cadran d'horloge, rouage qui tourne, cristal
+  de Temps). 82 dégâts, portée énorme, 4 balles ; très imprécis sans viser.
+- **Lunette** : en visée, zoom à 22°, souris plus fine, voile sombre et réticule doré ; son
+  propre personnage disparaît (pour soi) pour dégager la vue.
+- **Concentration** (passif) : immobile depuis 0,8 s, un tir dans la tête fait environ ×2.
+- **Rayon du Zénith** (capacité) : on vise un point ; des cercles runiques dorés s'empilent et
+  tournent au-dessus pendant 1,2 s (visibles par tous) et un rayon descend du ciel ; puis éclair,
+  gerbe de pointes et onde au sol (70 dégâts au centre, 35 au bord, 7 studs).
+- **Bestiaire de test** au Refuge : Loup de Cristal, Scarabée-Horloge, Raie du Temps (modèles
+  Blender), sur des socles nommés ; respiration et vol simulés, pas d'IA.
+- Textures Blender du cercle runique et du rayon (à importer).
+- Champ de vision élargi pendant l'élan et la course sur les murs.
+
+### Modifications
+- Les modèles d'armes peuvent avoir un **rouage articulé** (pièce « Rouage » → Motor6D animé).
+- Le modificateur de dégâts des capacités sait si le tir touche la tête.
+- Sensibilité de la souris proportionnelle au zoom.
+- Bibliothèque Blender commune (`assets/blender/lib/`) : primitives, export par matériau, aperçus.
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Fusil du Zénith : 82 dégâts sur le mannequin ; lunette à 23° avec voile, personnage masqué
+  (capture) ; rouage articulé présent ; 6 présentoirs.
+- Rayon du Zénith : annonce visible (cercles, rayon), impact −55 sur un mannequin un peu décentré.
+- Bestiaire : 3 bêtes exposées et animées (capture).
+
+### Problèmes connus
+- `CercleRunique.png` et `Rayon.png` ne sont pas encore dans l'inventaire : cercles et rayon
+  utilisent une texture de secours (l'effet est bien moins beau tant qu'ils ne sont pas importés).
+- Son de tir du sniper provisoire (son du pistolet, plus grave).
+- Les bêtes n'ont ni squelette ni animations : ce sont des modèles de test.
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Controllers/ZenithFx.luau`,
+  `src/server/Refuge/Systems/Bestiary.luau`, `assets/blender/lib/{fracture_shapes,fracture_preview}.py`,
+  `assets/blender/weapons/{build_fusil_zenith.py,Fusil_Zenith.fbx}`,
+  `assets/blender/beasts/{build_betes.py,Loup_Cristal.fbx,Scarabee_Horloge.fbx,Raie_Temps.fbx,betes_test.blend}`,
+  `assets/blender/vfx/{CercleRunique.png,Rayon.png}`, `assets/blender/centres_v0412.json`
+- **Modifiés** : `src/shared/Combat/{WeaponDefs,Ability}.luau`,
+  `src/server/Core/Systems/{AbilityService,WeaponService}.luau`, `src/server/Core/Lib/WeaponModels.luau`,
+  `src/server/Refuge/Systems/Armory.luau`,
+  `src/client/Core/Controllers/{AbilityController,CameraFeel,CombatController,GameFeel,ShoulderCamera}.luau`,
+  `src/client/Core/Combat/VfxTextures.luau`, `assets/blender/vfx/generate_sprites.py`,
+  `assets/blender/weapons/armes_de_base.blend`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/{ASSETS,DECISIONS}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Importer les deux textures (cercle, rayon) ; son de tir du sniper.
+- Selon les retours : animer les bêtes (squelette Blender) et en faire des Échoués / créatures.
+
+---
+
 ## [v0.4.11] — 2026-11-07 — « Mobilité »
 
 ### Description générale

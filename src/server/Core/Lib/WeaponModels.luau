@@ -140,6 +140,30 @@ local function placeholder(id: string): Model?
 		edge.Parent = model
 		weld(grip, edge, CFrame.new(0, 0, -2.0))
 		model.PrimaryPart = grip
+	elseif id == "weapon.zenith_rifle" then
+		local indigo = Color3.fromRGB(38, 40, 118)
+		local grip = part("Grip", Vector3.new(0.17, 0.4, 0.22), indigo, Enum.Material.Metal)
+		grip.Parent = model
+		local body = part("Body", Vector3.new(0.26, 0.34, 1.2), indigo, Enum.Material.Metal)
+		body.Parent = model
+		weld(grip, body, CFrame.new(0, 0.2, -0.4))
+		local stock = part("Stock", Vector3.new(0.2, 0.36, 0.9), indigo, Enum.Material.Metal)
+		stock.Parent = model
+		weld(grip, stock, CFrame.new(0, 0.06, 0.6))
+		local barrel = part("Barrel", Vector3.new(0.13, 0.13, 2.9), METAL, Enum.Material.Metal)
+		barrel.Parent = model
+		weld(grip, barrel, CFrame.new(0, 0.22, -2.4))
+		local scope = part("Scope", Vector3.new(0.22, 0.22, 1.3), BRASS, Enum.Material.Metal)
+		scope.Parent = model
+		weld(grip, scope, CFrame.new(0, 0.63, -0.6))
+		local core = part("Core", Vector3.new(0.05, 0.16, 0.16), BRISURE_CYAN, Enum.Material.Neon)
+		core.Parent = model
+		weld(grip, core, CFrame.new(-0.14, 0.2, -0.5))
+		local muzzle = Instance.new("Attachment")
+		muzzle.Name = "Muzzle"
+		muzzle.Position = Vector3.new(0, 0.22, -3.9)
+		muzzle.Parent = grip
+		model.PrimaryPart = grip
 	elseif id == "enemy.rusty_sword" then
 		-- Épée des hommes d'armes figés : fer rouillé, sans éclat de Brisure.
 		local rust = Color3.fromRGB(122, 74, 48)
@@ -181,7 +205,15 @@ function build(id: string): Model?
 					d.CanTouch = false
 					d.Massless = true
 					d.CastShadow = false
-					if d ~= grip then
+					if d ~= grip and d.Name:match("Rouage") then
+						-- Rouage (v0.4.12) : articulé, les clients le font tourner (GameFeel).
+						local motor = Instance.new("Motor6D")
+						motor.Name = "Rouage"
+						motor.Part0 = grip
+						motor.Part1 = d
+						motor.C0 = grip.CFrame:ToObjectSpace(d.CFrame)
+						motor.Parent = d
+					elseif d ~= grip then
 						local w = Instance.new("WeldConstraint")
 						w.Part0 = grip
 						w.Part1 = d

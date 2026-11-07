@@ -463,6 +463,91 @@ local function updateMobility()
 	end
 end
 
+-- Lunette (Fusil du Zénith, v0.4.12) ----------------------------------------------------------
+
+local scopeFrame: Frame
+local scopeRunes: ImageLabel
+local scopeShown = 0
+local scopeHidden = false
+
+local function buildScope(gui: ScreenGui)
+	scopeFrame = Instance.new("Frame")
+	scopeFrame.Name = "Scope"
+	scopeFrame.Size = UDim2.fromScale(1, 1)
+	scopeFrame.BackgroundTransparency = 1
+	scopeFrame.Visible = false
+	scopeFrame.Parent = gui
+	local dark = ScreenVignette.new(scopeFrame, Color3.new(0, 0, 0), 0.32)
+	dark.set(1)
+	scopeRunes = Instance.new("ImageLabel")
+	scopeRunes.AnchorPoint = Vector2.new(0.5, 0.5)
+	scopeRunes.Position = UDim2.fromScale(0.5, 0.5)
+	scopeRunes.Size = UDim2.fromScale(0.8, 0.8)
+	scopeRunes.SizeConstraint = Enum.SizeConstraint.RelativeYY
+	scopeRunes.BackgroundTransparency = 1
+	scopeRunes.Image = VfxTextures.get("Runes")
+	scopeRunes.ImageColor3 = Color3.fromRGB(255, 205, 90)
+	scopeRunes.ImageTransparency = 0.7
+	scopeRunes.Parent = scopeFrame
+	for _, spec in
+		{
+			{ UDim2.fromScale(0.5, 0.5), UDim2.new(0, 2, 0.34, 0) },
+			{ UDim2.fromScale(0.5, 0.5), UDim2.new(0.22, 0, 0, 2) },
+		}
+	do
+		local line = Instance.new("Frame")
+		line.AnchorPoint = Vector2.new(0.5, 0.5)
+		line.Position = spec[1]
+		line.Size = spec[2]
+		line.BorderSizePixel = 0
+		line.BackgroundColor3 = Color3.fromRGB(255, 230, 170)
+		line.BackgroundTransparency = 0.25
+		line.Parent = scopeFrame
+	end
+end
+
+local function updateScope(dt: number)
+	local camera = workspace.CurrentCamera
+	local scoped = CameraFeel.isScoped() and camera ~= nil and camera.FieldOfView < 40
+	scopeShown = math.clamp(scopeShown + (if scoped then dt else -dt) * 8, 0, 1)
+	scopeFrame.Visible = scopeShown > 0.01
+	scopeRunes.Rotation = os.clock() * 6
+	-- Cercle runique seulement avec la vraie texture (pas la texture de secours).
+	scopeRunes.Visible = VfxTextures.isImported("Runes")
+	scopeRunes.ImageTransparency = 1 - scopeShown * 0.3
+	-- À la lunette, son propre personnage masquerait la vue : on le rend invisible (pour soi).
+	local character = player.Character
+	if character and (scoped or scopeHidden) then
+		local value = if scoped then 1 else 0
+		for _, part in character:GetDescendants() do
+			if part:IsA("BasePart") or part:IsA("Decal") then
+				part.LocalTransparencyModifier = value
+			end
+		end
+		scopeHidden = scoped
+	end
+end
+
+-- Rouages des armes (Motor6D « Rouage », v0.4.12) : ils tournent en permanence.
+local gears: { [Motor6D]: boolean } = {}
+
+local function trackGear(d: Instance)
+	if d:IsA("Motor6D") and d.Name == "Rouage" then
+		gears[d] = true
+	end
+end
+
+local function updateGears()
+	local angle = os.clock() * 1.6
+	for motor in gears do
+		if motor.Parent == nil then
+			gears[motor] = nil
+		else
+			motor.Transform = CFrame.Angles(0, 0, angle)
+		end
+	end
+end
+
 -- Ambiance : éclats de Temps en suspension --------------------------------------------------------
 
 local function buildAmbience(): BasePart
@@ -516,6 +601,11 @@ function GameFeel.start()
 	gui.Parent = player:WaitForChild("PlayerGui")
 	buildBanner(gui)
 	buildHealthFx(gui)
+	buildScope(gui)
+	for _, d in workspace:GetDescendants() do
+		trackGear(d)
+	end
+	workspace.DescendantAdded:Connect(trackGear)
 	local ambience = buildAmbience()
 
 	CombatController.HitConfirmed:Connect(function(info: any)
@@ -554,6 +644,8 @@ function GameFeel.start()
 		updateGlows()
 		updateDust()
 		updateMobility()
+		updateScope(dt)
+		updateGears()
 	end)
 end
 

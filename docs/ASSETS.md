@@ -28,6 +28,7 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 21 | Mannequin d'entraînement | Décor | 📋 À créer (avatar gris provisoire) | Champ de tir du Refuge |
 | 22 | Sons de combat (tir, rechargement, coups, touche) | Audio | 📦 Provisoires | `src/client/Core/Combat/CombatSounds.luau` ; à valider à l'oreille |
 | 6 | Fusil à répétition | Arme | ✅ Intégré (v0.4.3, crosse raccourcie en v0.4.4) | `Fusil_Repetition.fbx` — 2 036 triangles, 4 pièces (bois, laiton, métal, tube cyan) ; jauge cyan côté visible. Crosse ramenée de 1,55 à 1,0 stud (v0.4.4) : les bras d'un avatar Roblox ne pouvaient pas tenir l'arme. Ancienne version archivée dans `ServerStorage > ArchiveModels` |
+| 7b | Fusil du Zénith (sniper) | Arme | ✅ Intégré (v0.4.12) | `Fusil_Zenith.fbx` — 2 268 triangles, 7 pièces (indigo, laiton, ivoire, métal, noyau cyan, cristal violet, rouage articulé) ; lentille-cadran, cristal de Temps. Construit par `assets/blender/weapons/build_fusil_zenith.py` |
 | 7 | Arbalète lourde | Arme | ✅ Intégrée (v0.4.3) | `Arbalete_Lourde.fbx` — 1 232 triangles, 6 pièces (bois, acier, cuir, laiton, métal, carreau cyan) ; manivelle côté visible |
 | 8 | Épée longue | Arme | ✅ Intégrée (v0.4.3) | `Epee_Longue.fbx` — 1 208 triangles, 4 pièces (acier, cuir, laiton, gorge cyan) |
 | 23 | Présentoir d'armurerie | Décor | 📋 À créer (bloc provisoire) | Refuge, 5 exemplaires |
@@ -37,6 +38,7 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 12 | 8 tuiles médiévales | Décor | 📋 À assembler | Assemblées dans Studio à partir du kit |
 | 13 | Homme d'armes figé | Créature | ✅ Intégré (v0.4.4) | Équipement sur le corps R15 standard : `assets/blender/enemies/Homme_Armes_Equipement.fbx` — 1 222 triangles, 13 pièces (fer rouillé, cuir, laiton, fissures cyan) ; épée rouillée `Epee_Rouillee.fbx` — 268 triangles, 4 pièces. Source : `echoues.blend` |
 | 14 | Arbalétrier figé | Créature | ✅ Intégré (v0.4.4) | `assets/blender/enemies/Arbaletrier_Equipement.fbx` — 692 triangles, 11 pièces (tissu rouge, cuir, laiton, bois, éclats cyan) ; tient l'arbalète lourde |
+| 13b | Bêtes de test : Loup de Cristal, Scarabée-Horloge, Raie du Temps | Créatures (test) | ✅ Intégrées (v0.4.12) | 1 376 / 2 132 / 1 354 triangles ; exposées au bestiaire du Refuge, sans IA |
 | 15 | Le Roi Sans Heure | Gardien | 📋 À créer | En dernier ; rig dédié, ~10 animations |
 | 16 | Refuge (tour d'horlogerie, engrenages) | Décor | 📋 À créer | Compact |
 | 17 | Animation de glissade | Animation (R15) | ✅ Procédurale (v0.3.1) | Remplaçable plus tard par une animation faite main |
@@ -58,6 +60,8 @@ jeu utilise des textures intégrées à Roblox (`Combat/VfxTextures`).
 | `Lueur.png` | halo doux (noyau chargé, traînées de capacité) | ✅ rbxassetid://113971661677731 |
 | `Poussiere.png` | bouffée de poussière (course, glissade, réception) | ✅ rbxassetid://128543269635465 |
 | `Vignette.png` | bords d'écran (dégâts, santé basse, soin) | ✅ rbxassetid://135127213697813 |
+| `CercleRunique.png` | cercle magique (Rayon du Zénith, lunette) — v0.4.12 | 📦 À importer |
+| `Rayon.png` | rayon de lumière vertical (Rayon du Zénith) — v0.4.12 | 📦 À importer |
 
 Import : Studio → **Gestionnaire d'assets** (Affichage → Gestionnaire d'assets) → **Importer
 en lot** → choisir les 5 PNG. Claude récupère ensuite les identifiants et les inscrit dans
@@ -89,6 +93,13 @@ réassembler) :
 | weapon.heavy_crossbow | Arbalete_Lourde_Laiton | rbxassetid://98408635731593 | Metal #b0803a |
 | weapon.heavy_crossbow | Arbalete_Lourde_Metal | rbxassetid://133037587155497 | Metal #2a2d34 |
 | weapon.heavy_crossbow | Arbalete_Lourde_Noyau | rbxassetid://73814119236423 | Neon #50e6ff |
+| weapon.zenith_rifle | Fusil_Zenith_Cristal | rbxassetid://122317165031348 | Neon #965af0 |
+| weapon.zenith_rifle | Fusil_Zenith_Indigo | rbxassetid://117993483528391 | Metal #393caa |
+| weapon.zenith_rifle | Fusil_Zenith_Ivoire | rbxassetid://120278980002323 | SmoothPlastic #ece5d4 |
+| weapon.zenith_rifle | Fusil_Zenith_Laiton | rbxassetid://95346755237838 | Metal #b0803a |
+| weapon.zenith_rifle | Fusil_Zenith_Metal | rbxassetid://93341390282458 | Metal #2a2d34 |
+| weapon.zenith_rifle | Fusil_Zenith_Noyau | rbxassetid://124848811456675 | Neon #50e6ff |
+| weapon.zenith_rifle | Fusil_Zenith_Rouage | rbxassetid://102417892941707 | Metal #b0803a (articulé : tourne) |
 | enemy.rusty_sword | Epee_Rouillee_Cuir | rbxassetid://73770220924004 | Fabric #5c341e |
 | enemy.rusty_sword | Epee_Rouillee_Fer | rbxassetid://113003109992848 | CorrodedMetal #745c48 |
 | enemy.rusty_sword | Epee_Rouillee_Metal | rbxassetid://133447753616193 | Metal #2a2d34 |
@@ -129,6 +140,31 @@ corps indiquée (`EnemyService`). Repère du modèle : racine du personnage à l
 | Arbaletrier_Equipement | UpperTorso__Eclat2__Noyau | rbxassetid://97841030846391 | Neon #50e6ff |
 | Arbaletrier_Equipement | UpperTorso__Pourpoint__Cuir | rbxassetid://128310612555875 | Fabric #5c341e |
 | Arbaletrier_Equipement | UpperTorso__Sangle__Laiton | rbxassetid://76912599458458 | Metal #b0803a |
+
+### Bêtes de test (`ServerStorage > Beasts`, v0.4.12)
+
+Construites par script (`assets/blender/beasts/build_betes.py`, primitives de
+`assets/blender/lib/fracture_shapes.py`), exposées au Refuge (système `Bestiary`).
+
+| Bête | Pièce | MeshId | Matériau Roblox |
+|---|---|---|---|
+| Loup_Cristal | Loup_Cristal_Cristal | rbxassetid://133671796308588 | Neon #965af0 |
+| Loup_Cristal | Loup_Cristal_Indigo | rbxassetid://87316939695528 | Metal #393caa |
+| Loup_Cristal | Loup_Cristal_Ivoire | rbxassetid://131557604227260 | SmoothPlastic #ece5d4 |
+| Loup_Cristal | Loup_Cristal_Metal | rbxassetid://91241360306356 | Metal #2a2d34 |
+| Loup_Cristal | Loup_Cristal_Noyau | rbxassetid://78902958329289 | Neon #50e6ff |
+| Scarabee_Horloge | Scarabee_Horloge_Acier | rbxassetid://120315960778427 | Metal #bec6ce |
+| Scarabee_Horloge | Scarabee_Horloge_Indigo | rbxassetid://73638068716401 | Metal #393caa |
+| Scarabee_Horloge | Scarabee_Horloge_Ivoire | rbxassetid://129368561436895 | SmoothPlastic #ece5d4 |
+| Scarabee_Horloge | Scarabee_Horloge_Laiton | rbxassetid://84068151273216 | Metal #b0803a |
+| Scarabee_Horloge | Scarabee_Horloge_Metal | rbxassetid://97724015512777 | Metal #2a2d34 |
+| Scarabee_Horloge | Scarabee_Horloge_Noyau | rbxassetid://139396408990619 | Neon #50e6ff |
+| Raie_Temps | Raie_Temps_Cristal | rbxassetid://94454780582103 | Neon #965af0 |
+| Raie_Temps | Raie_Temps_Indigo | rbxassetid://93137796860814 | Metal #393caa |
+| Raie_Temps | Raie_Temps_Ivoire | rbxassetid://94372604535033 | SmoothPlastic #ece5d4 |
+| Raie_Temps | Raie_Temps_Laiton | rbxassetid://117752831742307 | Metal #b0803a |
+| Raie_Temps | Raie_Temps_Metal | rbxassetid://101095044798836 | Metal #2a2d34 |
+| Raie_Temps | Raie_Temps_Noyau | rbxassetid://106060926436233 | Neon #50e6ff |
 
 ## Procédure d'import (vérifiée en v0.4.2)
 

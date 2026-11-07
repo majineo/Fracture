@@ -16,6 +16,7 @@ export type AbilityId =
 	| "Stasis"
 	| "FractureWave"
 	| "TimeGuard"
+	| "ZenithBeam"
 
 export type AbilityDef = {
 	id: AbilityId,
@@ -119,6 +120,16 @@ Ability.DEFS = table.freeze({
 		slowDuration = 1.2,
 		slow = 0.4,
 	} :: AbilityDef),
+	-- v0.4.12 -----------------------------------------------------------------------------
+	ZenithBeam = table.freeze({
+		id = "ZenithBeam",
+		name = "Rayon du Zénith",
+		charge = 120,
+		windup = 1.2, -- cercles runiques visibles par tous avant la frappe
+		range = 160, -- distance maximale du point visé
+		radius = 7,
+		damage = 70, -- au centre ; moitié au bord
+	} :: AbilityDef),
 	TimeGuard = table.freeze({
 		id = "TimeGuard",
 		name = "Garde du Temps",
@@ -142,6 +153,9 @@ Ability.PASSIVES = table.freeze({
 })
 Ability.STEADY_TIME = 1
 Ability.STEADY_MULTIPLIER = 1.25
+-- Fusil du Zénith : après 0,8 s immobile, un tir dans la tête fait ×1,35 de plus (≈ ×2).
+Ability.SCOPE_FOCUS_TIME = 0.8
+Ability.SCOPE_FOCUS_HEADSHOT = 1.35
 Ability.RIPOSTE_MULTIPLIER = 2
 Ability.RIPOSTE_WINDOW = 1.5
 

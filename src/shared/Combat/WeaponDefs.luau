@@ -43,9 +43,36 @@ export type WeaponDef = {
 	ability: string?, -- capacité active (touche Q / bouton « Capacité »)
 	ability2: string?, -- seconde capacité (appui long sur Q, ou maintien de la parade)
 	passive: string?, -- trait passif
+	scopeFov: number?, -- lunette : champ de vision en visée (degrés)
 }
 
 local WeaponDefs: { [string]: WeaponDef } = {
+	-- Fusil du Zénith (v0.4.12) : sniper. Énormes dégâts à longue distance, lunette, très
+	-- imprécis sans viser. Capacité : Rayon du Zénith (frappe annoncée par des cercles runiques).
+	["weapon.zenith_rifle"] = {
+		id = "weapon.zenith_rifle",
+		name = "Fusil du Zénith",
+		kind = "Hitscan",
+		slot = "Firearm",
+		hold = "LongGun",
+		damage = 82,
+		falloffStart = 140,
+		falloffEnd = 320,
+		minDamageRatio = 0.8,
+		range = 500,
+		fireRate = 0.6,
+		magazine = 4,
+		reloadTime = 2.8,
+		spreadHip = 7,
+		spreadAim = 0.04,
+		recoil = 4.5,
+		sound = "PistolShot",
+		soundPitch = 0.5,
+		ability = "ZenithBeam",
+		passive = "ScopeFocus",
+		scopeFov = 22,
+	},
+
 	-- Équipement de base -----------------------------------------------------------------
 	["weapon.fracture_pistol"] = {
 		id = "weapon.fracture_pistol",

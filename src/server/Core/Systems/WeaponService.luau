@@ -63,7 +63,7 @@ local hitBonuses: { [Player]: { multiplier: number, expires: number } } = {}
 -- Salve au levier (fusil) : tirs autorisés sans attendre la cadence.
 local volleys: { [Player]: { remaining: number, expires: number } } = {}
 -- Modificateur de dégâts des tirs (Souffle, bulle de stase), fourni par AbilityService.
-local damageModifier: ((Player, WeaponDefs.WeaponDef, Vector3, Vector3) -> number)? = nil
+local damageModifier: ((Player, WeaponDefs.WeaponDef, Vector3, Vector3, boolean) -> number)? = nil
 
 local function rootOf(model: Model?): BasePart?
 	local root = model and model:FindFirstChild("HumanoidRootPart")
@@ -232,7 +232,7 @@ local function applyHit(
 )
 	-- Modificateurs posés par les capacités (Souffle, bulle de stase…), voir AbilityService.
 	local modifier = if damageModifier and point
-		then damageModifier(shooter, def, origin, point)
+		then damageModifier(shooter, def, origin, point, hit.headshot)
 		else 1
 	local amount = Damage.compute(
 		def,

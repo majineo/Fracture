@@ -110,7 +110,12 @@ function ShoulderCamera.start()
 			-- La souris reste au centre ; ses déplacements font tourner la vue.
 			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
 			local delta = UserInputService:GetMouseDelta()
-			local sensitivity = math.rad(DEGREES_PER_PIXEL) * UserGameSettings.MouseSensitivity
+			-- Plus le champ de vision est serré (lunette), plus la souris est fine.
+			local fov = workspace.CurrentCamera and workspace.CurrentCamera.FieldOfView or 70
+			local zoom = math.clamp(fov / 70, 0.2, 1)
+			local sensitivity = math.rad(DEGREES_PER_PIXEL)
+				* UserGameSettings.MouseSensitivity
+				* zoom
 			yaw -= delta.X * sensitivity
 			pitch = math.clamp(pitch - delta.Y * sensitivity, -MAX_PITCH, MAX_PITCH)
 

@@ -16,6 +16,7 @@ local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage.Shared
 local Ability = require(Shared.Combat.Ability)
+local Guard = require(Shared.Util.Guard)
 local WeaponDefs = require(Shared.Combat.WeaponDefs)
 local Net = require(script.Parent.Parent.Lib.Net)
 local CombatTargets = require(script.Parent.CombatTargets)
@@ -410,6 +411,61 @@ local function castFractureWave(
 	end)
 end
 
+-- Rayon du Zénith (Fusil du Zénith) --------------------------------------------------------
+
+local strikeFolder: Folder? = nil
+
+local function castZenith(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	character: Model,
+	impact: Vector3
+)
+	if strikeFolder == nil then
+		local folder = Instance.new("Folder")
+		folder.Name = "ZenithStrikes"
+		folder.Parent = workspace
+		strikeFolder = folder
+	end
+	-- Marqueur répliqué : les clients dessinent les cercles runiques (annonce visible par tous).
+	local marker = Instance.new("Part")
+	marker.Name = "ZenithStrike"
+	marker.Anchored = true
+	marker.CanCollide = false
+	marker.CanQuery = false
+	marker.CanTouch = false
+	marker.Transparency = 1
+	marker.Size = Vector3.one
+	marker.CFrame = CFrame.new(impact)
+	marker:SetAttribute("ImpactAt", workspace:GetServerTimeNow() + adef.windup)
+	marker:SetAttribute("Radius", adef.radius or 7)
+	marker.Parent = strikeFolder
+	task.delay(adef.windup, function()
+		casting[player] = nil
+		setCast(character, nil)
+		local radius = adef.radius or 7
+		local damage = adef.damage or 70
+		for model, target in CombatTargets.all() do
+			local distance = (target.root.Position - impact).Magnitude
+			if distance <= radius + 1 and HealthService.canDamage(player, model) then
+				local falloff = 1 - 0.5 * math.clamp(distance / radius, 0, 1)
+				WeaponService.dealDamage(
+					player,
+					def,
+					model,
+					damage * falloff,
+					impact + Vector3.new(0, 20, 0)
+				)
+			end
+		end
+		broadcastFx({ shooter = player, kind = "ZenithImpact", origin = impact, finish = impact })
+		task.delay(0.6, function()
+			marker:Destroy()
+		end)
+	end)
+end
+
 -- Garde du Temps (épée longue) --------------------------------------------------------------
 
 local guards: { [Player]: { core: Ability.Core, adef: Ability.AbilityDef, character: Model } } = {}
@@ -498,6 +554,34 @@ local function onUseAbility(player: Player, kind: unknown, a: unknown, b: unknow
 		publish(player)
 		return
 	end
+	if adef.id == "ZenithBeam" then
+		-- Point visé (le client propose) : à portée, visible, posé au sol.
+		if not Guard.isFiniteVector3(a) then
+			return
+		end
+		local point = a :: Vector3
+		if (point - root.Position).Magnitude > (adef.range or 160) + 5 then
+			Net.fire("CombatEvent", player, { type = "AbilityRefused", reason = "NoTarget" })
+			return
+		end
+		local head = character:FindFirstChild("Head")
+		local eye = if head and head:IsA("BasePart") then head.Position else root.Position
+		local params = worldParams(character)
+		local blocked = workspace:Raycast(eye, point - eye, params)
+		if blocked and (blocked.Position - point).Magnitude > 3 then
+			Net.fire("CombatEvent", player, { type = "AbilityRefused", reason = "NoTarget" })
+			return
+		end
+		local ground =
+			workspace:Raycast(point + Vector3.new(0, 3, 0), Vector3.new(0, -60, 0), params)
+		local impact = if ground then ground.Position else point
+		Ability.consume(core, adef, now)
+		publish(player)
+		casting[player] = true
+		setCast(character, adef)
+		castZenith(player, def, adef, character, impact)
+		return
+	end
 	if adef.id == "Volley" then
 		Ability.consume(core, adef, now)
 		local shots = adef.shots or 3
@@ -555,8 +639,16 @@ function AbilityService.init()
 	Net.on("UseAbility", onUseAbility)
 
 	-- Modificateur de dégâts des tirs : Souffle (fusil) et bulles de stase traversées.
-	WeaponService.setDamageModifier(function(player, def, origin, point)
+	WeaponService.setDamageModifier(function(player, def, origin, point, headshot)
 		local multiplier = 1
+		-- Concentration (Fusil du Zénith) : immobile depuis 0,8 s → tir dans la tête renforcé.
+		if def.passive == "ScopeFocus" and headshot then
+			local since = stillSince[player]
+			if since and os.clock() - since >= Ability.SCOPE_FOCUS_TIME then
+				multiplier *= Ability.SCOPE_FOCUS_HEADSHOT
+				Net.fire("CombatEvent", player, { type = "Passive", passive = "ScopeFocus" })
+			end
+		end
 		if def.passive == "Steady" then
 			local since = stillSince[player]
 			if since and os.clock() - since >= Ability.STEADY_TIME then

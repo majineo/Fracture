@@ -84,6 +84,9 @@ distance). La réanimation par un coéquipier arrive avec les escouades.
 pleins dégâts jusqu'à 35 studs puis 55 % à 90 studs) et lame courte (30, attaque chargée
 ×1,8 après 0,6 s, cône de 75° sur 6,5 studs).
 
+✅ v0.4.12 : **Fusil du Zénith** (sniper : 82 dégâts, 80 % jusqu'à 320 studs, 4 balles, 0,6 tir/s,
+lunette à 22° de champ, très imprécis sans viser).
+
 ✅ v0.4.3 : fusil à répétition (48 dégâts, 1,5 tir/s, 6 balles, 2,4 s, très précis en visée,
 dégâts pleins jusqu'à 80 studs), arbalète lourde (75 dégâts, 1 carreau, 1,9 s, traverse une
 cible) et épée longue (42 dégâts, ×2 chargée après 0,8 s, cône de 100° sur 8,5 studs).
@@ -126,6 +129,7 @@ débloquées par la maîtrise de l'arme (permanente).
 | Lame courte | **Pas de l'ombre** : ennemi visé à moins de 12 studs, réapparition dans son dos après 0,3 s ; premier coup ×1,5. La victime est prévenue (« DERRIÈRE TOI ! ») et peut parer | **Riposte** : après une parade réussie, coup suivant ×2 (1,5 s) | ✅ v0.4.5 |
 | Fusil à répétition | **Salve au levier** (Q bref : 3 balles en 0,6 s, cadence ignorée, plus de dispersion) **et** **balle de rebond** (Q maintenu 0,35 s : ricoche une fois sur un mur) | **Souffle** : après 1 s immobile, tir suivant +25 % (immobilité jugée par le serveur) | ✅ v0.4.7 |
 | Arbalète lourde | **Carreau de stase** (tiré par le noyau, même en rechargement ; portée 60 studs, sinon la bulle tombe au sol) : bulle de 4 studs au premier impact, 3 s ; ralentit joueurs et Échoués de 50 % ; un tir qui la traverse perd 50 % | Perforation | ✅ v0.4.7 |
+| Fusil du Zénith (sniper, v0.4.12) | **Rayon du Zénith** : on vise un point (160 studs max) ; 1,2 s de cercles runiques dorés et d'un rayon visibles par tous, puis frappe de 7 studs (70 au centre, 35 au bord) | **Concentration** : immobile depuis 0,8 s, tir dans la tête ≈ ×2 | ✅ v0.4.12 |
 | Épée longue | **Onde de fracture** (Q : 0,5 s d'annonce, onde de 8 studs, 35 dégâts, ralentit / étourdit, parable) ; **Garde du Temps** (parade maintenue 0,35 s : bloque tout de face, 75°, vide le noyau en 3 s, pas d'attaque, déplacement ralenti) | Allonge | ✅ v0.4.7 |
 
 ### 6.2 Capacités du Codex

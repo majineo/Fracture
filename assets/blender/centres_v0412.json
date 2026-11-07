@@ -1,0 +1,122 @@
+{
+ "Fusil_Zenith_Indigo": [
+  0.0,
+  -0.5975,
+  0.214
+ ],
+ "Fusil_Zenith_Laiton": [
+  -0.0724,
+  -1.47,
+  0.2052
+ ],
+ "Fusil_Zenith_Ivoire": [
+  0.0,
+  -0.61,
+  0.13
+ ],
+ "Fusil_Zenith_Metal": [
+  0.0,
+  -2.0221,
+  0.0956
+ ],
+ "Fusil_Zenith_Noyau": [
+  -0.0103,
+  -2.2288,
+  0.455
+ ],
+ "Fusil_Zenith_Rouage": [
+  0.0,
+  -1.15,
+  0.63
+ ],
+ "Fusil_Zenith_Cristal": [
+  0.0021,
+  -0.55,
+  0.93
+ ],
+ "Loup_Cristal_Metal": [
+  0.0,
+  -0.7062,
+  1.5968
+ ],
+ "Loup_Cristal_Indigo": [
+  0.0,
+  -0.7058,
+  2.184
+ ],
+ "Loup_Cristal_Cristal": [
+  0.0,
+  0.8208,
+  3.1524
+ ],
+ "Loup_Cristal_Noyau": [
+  0.0,
+  0.4687,
+  3.1916
+ ],
+ "Loup_Cristal_Ivoire": [
+  0.0,
+  -1.055,
+  1.1825
+ ],
+ "Scarabee_Horloge_Metal": [
+  0.0,
+  -0.2355,
+  1.2575
+ ],
+ "Scarabee_Horloge_Laiton": [
+  0.0,
+  -0.4428,
+  1.3724
+ ],
+ "Scarabee_Horloge_Indigo": [
+  0.0,
+  0.25,
+  1.62
+ ],
+ "Scarabee_Horloge_Ivoire": [
+  0.0,
+  0.1,
+  1.98
+ ],
+ "Scarabee_Horloge_Noyau": [
+  0.0,
+  -1.1457,
+  1.6
+ ],
+ "Scarabee_Horloge_Acier": [
+  0.0,
+  1.15,
+  2.05
+ ],
+ "Raie_Temps_Indigo": [
+  0.0,
+  0.0,
+  3.2117
+ ],
+ "Raie_Temps_Noyau": [
+  0.0,
+  -0.4404,
+  3.5875
+ ],
+ "Raie_Temps_Metal": [
+  0.0,
+  1.9703,
+  3.2008
+ ],
+ "Raie_Temps_Ivoire": [
+  0.0,
+  -2.0639,
+  3.2
+ ],
+ "Raie_Temps_Laiton": [
+  0.0043,
+  2.095,
+  3.5841
+ ],
+ "Raie_Temps_Cristal": [
+  0.0115,
+  4.59,
+  2.82
+ ]
+}

@@ -6,6 +6,8 @@
 #   Lueur.png      halo doux
 #   Poussiere.png  bouffée de poussière
 #   Vignette.png   bords d'écran (santé basse, dégâts, soin)
+#   CercleRunique.png  cercle magique du Rayon du Zénith (v0.4.12)
+#   Rayon.png      rayon de lumière vertical (v0.4.12)
 import os
 
 import bpy
@@ -89,6 +91,59 @@ def vignette():
     return np.ones_like(alpha), alpha
 
 
+def runic_circle():
+    # Cercle runique (Rayon du Zénith, v0.4.12) : anneaux, graduations, glyphes, étoile à 8
+    # branches. Fines lignes lumineuses, centre vide.
+    x, y = grid()
+    r = np.sqrt(x * x + y * y) * 2  # 0 au centre, 1 au bord
+    t = np.arctan2(y, x)
+
+    def line(center, width):
+        return np.exp(-((r - center) / width) ** 2)
+
+    a = line(0.95, 0.012) + line(0.88, 0.008) + line(0.62, 0.01) + line(0.56, 0.006) + line(0.22, 0.01)
+    # Graduations entre 0,88 et 0,95 (60 traits, un sur cinq plus long)
+    ticks = np.cos(t * 60) > 0.93
+    long_ticks = np.cos(t * 12) > 0.985
+    a += ticks * ((r > 0.885) & (r < 0.93)) * 0.9
+    a += long_ticks * ((r > 0.83) & (r < 0.94)) * 1.0
+    # Glyphes : 24 cases dans l'anneau 0,64-0,84, motifs pseudo-aléatoires
+    rng = np.random.default_rng(42)
+    sector = np.floor((t + np.pi) / (2 * np.pi) * 24).astype(int) % 24
+    local = ((t + np.pi) / (2 * np.pi) * 24) % 1
+    glyph = np.zeros_like(r)
+    band = (r > 0.66) & (r < 0.82)
+    for s in range(24):
+        kind = rng.integers(0, 4)
+        mask = band & (sector == s)
+        if kind == 0:  # trait radial au centre de la case
+            glyph += mask * (np.abs(local - 0.5) < 0.08)
+        elif kind == 1:  # arc
+            glyph += mask * (np.abs(r - 0.74) < 0.012) * (np.abs(local - 0.5) < 0.35)
+        elif kind == 2:  # deux traits
+            glyph += mask * ((np.abs(local - 0.3) < 0.06) | (np.abs(local - 0.7) < 0.06)) * (r < 0.78)
+        else:  # point
+            glyph += mask * (np.sqrt(((local - 0.5) * 0.3) ** 2 + (r - 0.74) ** 2) < 0.03)
+    a += np.clip(glyph, 0, 1) * 0.9
+    # Étoile à 8 branches (deux carrés tournés) entre 0,22 et 0,56
+    for rot in (0, np.pi / 4):
+        tt = t + rot
+        square = np.maximum(np.abs(np.cos(tt)), np.abs(np.sin(tt))) * r
+        a += np.exp(-((square - 0.42) / 0.008) ** 2) * (r < 0.6)
+    alpha = np.clip(a, 0, 1)
+    return np.ones_like(alpha), alpha
+
+
+def beam():
+    # Rayon vertical : cœur brillant, bords qui s'estompent (texture de Beam, étirée).
+    x, y = grid()
+    core = np.exp(-(x / 0.07) ** 2)
+    glow = np.exp(-(x / 0.22) ** 2) * 0.5
+    streaks = 0.88 + 0.12 * np.sin(y * 30)
+    alpha = np.clip((core + glow) * streaks, 0, 1)
+    return np.ones_like(alpha), alpha
+
+
 def save(name, value, alpha):
     image = bpy.data.images.get(name) or bpy.data.images.new(name, SIZE, SIZE, alpha=True)
     rgba = np.zeros((SIZE, SIZE, 4), dtype=np.float32)
@@ -113,6 +168,8 @@ def run(out_dir=None):
         save("Lueur", *glow()),
         save("Poussiere", *dust()),
         save("Vignette", *vignette()),
+        save("CercleRunique", *runic_circle()),
+        save("Rayon", *beam()),
     ]
 
 

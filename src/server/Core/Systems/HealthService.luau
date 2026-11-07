@@ -116,6 +116,14 @@ function HealthService.applyDamage(model: Model, amount: number, info: DamageInf
 	if target == nil then
 		return nil
 	end
+	-- Gardien (v0.8.0) : couronne exposée après une charge ratée, tirs à la tête ×2.
+	if
+		info.headshot
+		and ((model:GetAttribute("CrownExposedUntil") :: number?) or 0)
+			> workspace:GetServerTimeNow()
+	then
+		amount *= 2
+	end
 	-- Pas de Faille (relique, v0.7.0) : intouchable pendant le bond.
 	if ((model:GetAttribute("PhaseUntil") :: number?) or 0) > workspace:GetServerTimeNow() then
 		return nil

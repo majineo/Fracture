@@ -6,7 +6,7 @@
 -- Règle de lisibilité (GDD 07 §1) : chaque attaque est annoncée avant de partir
 -- (lame levée qui s'illumine pour la mêlée, trait rouge pour les tirs).
 
-export type Behavior = "Melee" | "Ranged"
+export type Behavior = "Melee" | "Ranged" | "Boss" -- Boss : piloté par son propre service
 
 export type EnemyDef = {
 	id: string,
@@ -70,6 +70,27 @@ local EnemyDefs: { [string]: EnemyDef } = {
 		aimLag = 0.3,
 		weaponModel = "weapon.heavy_crossbow",
 		outfit = "Arbaletrier_Equipement",
+	},
+	-- Le Gardien, le Roi Sans Heure (v0.8.0, GDD 07 §3) : piloté par GuardianService (Éclat),
+	-- cerveau dans Shared/Combat/GuardianBrain. Taille ×3, santé adaptée au nombre de joueurs.
+	["enemy.guardian"] = {
+		id = "enemy.guardian",
+		name = "Le Roi Sans Heure",
+		behavior = "Boss",
+		health = 1500,
+		armor = 0,
+		walkSpeed = 12,
+		chaseSpeed = 15,
+		aggroRange = 90,
+		leashRange = 140,
+		attackRange = 13,
+		windup = 0.9,
+		cooldown = 2.2,
+		damage = 35,
+		strikeRange = 15,
+		arcDegrees = 140,
+		weaponModel = "weapon.longsword",
+		outfit = "Guardian",
 	},
 }
 

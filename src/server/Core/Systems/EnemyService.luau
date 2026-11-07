@@ -569,7 +569,7 @@ function EnemyService.start()
 		accumulator = 0
 		local params = enemyFilter()
 		for _, enemy in enemies do
-			if enemy.alive and enemy.model.Parent then
+			if enemy.alive and enemy.model.Parent and enemy.def.behavior ~= "Boss" then
 				think(enemy, params)
 			end
 		end

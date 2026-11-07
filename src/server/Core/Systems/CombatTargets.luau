@@ -97,6 +97,14 @@ function CombatTargets.register(
 	return target
 end
 
+-- Remesure la zone de touche (modèle agrandi après l'inscription : le Gardien, v0.8.0).
+function CombatTargets.remeasure(model: Model)
+	local target = targets[model]
+	if target then
+		target.hitbox = measureHitbox(model, target.root)
+	end
+end
+
 function CombatTargets.unregister(model: Model)
 	targets[model] = nil
 end

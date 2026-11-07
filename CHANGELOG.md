@@ -5,6 +5,68 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.8.0] — 2026-11-08 — « Le Roi Sans Heure »
+
+### Description générale
+Le Gardien de la vertical slice : au début de la Faille finale, le Roi Sans Heure s'éveille dans
+la cour du Donjon. Trois phases, des attaques toutes annoncées, un point faible, et un trésor.
+
+### Nouvelles fonctionnalités
+- **Le Roi Sans Heure** : trois fois la taille d'un joueur, 1 500 PV (+50 % par joueur
+  supplémentaire présent), épée longue, couronne dorée (point faible).
+- **Phase 1 « Le Roi »** : coups d'épée en arc (35 dégâts) et charge en ligne droite (45 dégâts,
+  projette) ; une charge qui ne touche personne le laisse **étourdi 2,5 s, couronne exposée** :
+  tirs à la tête ×2.
+- **Phase 2 « La Couronne brisée »** (60 %) : invoque 3 hommes d'armes (une fois) ; onde de choc
+  temporelle (25 dégâts + ralentissement, 20 studs).
+- **Phase 3 « Le Temps arrêté »** (25 %) : gèle une zone sous chaque joueur de l'arène ; toutes
+  les préparations et recharges ×0,7.
+- **Arène** : la tuile du Donjon (il ne passe pas les portes) ; il ne vise que les joueurs entrés,
+  et retourne à son trône sinon.
+- **Lisibilité** : zone rouge au sol pendant chaque préparation (arc, bande de charge, cercle
+  d'onde), son d'alerte, barre de vie et phase en haut de l'écran, couronne en surbrillance et
+  « COURONNE EXPOSÉE » quand elle est vulnérable ; annonces (réveil, phases, invocation, chute).
+- **Trésor du Roi** à sa mort : une relique intacte, 3 Pierres de Faille, 4 Aciers anciens,
+  150 Grains.
+- Test dans Studio : attribut `QA_SummonGuardian`.
+
+### Modifications
+- Cerveau du Gardien en module pur testé (`Shared/Combat/GuardianBrain`) ; EnemyService ne
+  pilote pas les ennemis « Boss » ; `CombatTargets.remeasure` (zone de touche après agrandissement) ;
+  HealthService : tirs à la tête ×2 sur une couronne exposée.
+
+### Corrections de bugs
+- Pendant les tests : zone de touche du Roi mesurée avant l'agrandissement (tirs qui ne portaient
+  pas) ; Roi tombé du toit du donjon et bloqué contre l'enceinte (arène et trône déplacés dans la cour).
+
+### Vérifications (Studio)
+- 6 tests du cerveau (phases sans retour, coup annoncé, charge puis étourdi, invocation unique,
+  phase 3 plus rapide, sans cible) ; 112 tests au total.
+- Réveil : 17,5 studs, 1 500 PV, couronne ; charge → « Charging » → étourdi, couronne exposée ;
+  coups qui portent ; barre de vie affichée (capture).
+- Phase 2 : 3 gardes invoqués ; phase 3 : onde, coups, zone gelée sous le joueur.
+- Mort : « Trésor du Roi » posé, annonce reçue.
+
+### Problèmes connus
+- Corps R15 agrandi avec poses procédurales : le rig dédié et ses animations (GDD 07 §4) restent
+  à faire, ainsi que son armure Blender (couronne provisoire en pièces).
+- Équilibrage à jouer : dégâts, santé, fréquence des attaques ; non testé à plusieurs joueurs.
+- La Faille finale reste sur le toit du donjon, sans obstacle particulier.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Combat/GuardianBrain.luau`,
+  `src/server/Eclat/Systems/GuardianService.luau`, `src/client/Eclat/Controllers/GuardianHud.luau`,
+  `tests/specs/GuardianBrain.spec.luau`
+- **Modifiés** : `src/shared/Combat/EnemyDefs.luau`,
+  `src/server/Core/Systems/{EnemyService,HealthService,CombatTargets}.luau`, `tests/run.luau`,
+  `src/shared/Config.luau`, `CHANGELOG.md`, `docs/ROADMAP.md`, `docs/GDD/07-ennemis.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Tests à plusieurs joueurs (PvP, partage de l'arène) ; armure Blender du Roi ; Signature.
+
+---
+
 ## [v0.7.1] — 2026-11-08 — « Codex »
 
 ### Description générale

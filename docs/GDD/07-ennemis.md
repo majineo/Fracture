@@ -47,6 +47,8 @@ de sa forteresse. Il s'éveille au début de la Faille finale.
 | **3 — Le Temps arrêté** | 25 % → 0 % | Gèle des zones de l'arène, attaques plus rapides |
 
 - Santé adaptée au nombre de joueurs présents dans l'arène.
+- ✅ v0.8.0 : `Shared/Combat/GuardianBrain` (testé) + `GuardianService` ; corps R15 ×3, couronne
+  provisoire ; arène = tuile du Donjon ; 1 500 PV +50 % par joueur ; trésor à sa mort.
 - **Points faibles** : la couronne (dégâts ×2) exposée après une charge ratée.
 - Récompense : relique garantie, matériaux rares, trophée cosmétique (première victoire).
 - Les escouades rivales sont dans la même arène : c'est le moment idéal pour un Pacte… ou une trahison.

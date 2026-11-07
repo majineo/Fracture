@@ -42,6 +42,16 @@ déchirées, flèches figées en plein vol, cloches qui sonnent sans raison.
 | **Crypte** | Souterrain, butin rare | Intérieur |
 | **Bord d'Éclat** | Apparition des escouades, roche qui s'effrite | Faible |
 
+### Génération (✅ v0.5.0)
+- Plan pur `Shared/Eclat/EclatLayout` (graine → grille, testé) : Donjon au centre, Bords d'Éclat
+  au milieu de chaque côté (apparition des escouades), Remparts / Tour de guet aux coins, le reste
+  tiré dans des réserves fixes (les 8 types toujours présents, une seule Crypte).
+- Bords partagés : `Open` (pas de mur), `Gates` (mur à deux portes) ou `Rampart` (une porte et
+  un chemin de ronde à deux rampes) : toujours au moins deux passages. Le Donjon est toujours muré.
+- Construction : `Server/Place/Lib/TileKit` (greybox provisoire, ≈ 1 000 pièces pour 25 tuiles),
+  intérieur tourné d'un quart de tour aléatoire. Les clients recalculent le plan à partir de la
+  graine (attributs du workspace) : rien d'autre n'est envoyé.
+
 ### Effondrement
 Une tuile qui s'effondre se fissure (lueur et bruit d'alerte 30 s avant), puis se désagrège en
 morceaux qui tombent dans le Vide. Effet réalisé dans Roblox (pièces détachées, particules),

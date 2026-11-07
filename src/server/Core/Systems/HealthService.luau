@@ -174,6 +174,16 @@ function HealthService.applyDamage(model: Model, amount: number, info: DamageInf
 	return result
 end
 
+-- Mort immédiate, sans passer par « à terre » (chute dans le Vide, fin de l'Éclat — v0.5.0).
+-- Renvoie true si la cible vient de mourir.
+function HealthService.killNow(model: Model, info: DamageInfo): boolean
+	if CombatTargets.get(model) == nil or model:GetAttribute("Dead") == true then
+		return false
+	end
+	kill(model, info)
+	return true
+end
+
 -- Rend de la santé (jamais au-delà du maximum, jamais à terre ni mort). Renvoie le gain.
 function HealthService.heal(model: Model, amount: number): number
 	if amount ~= amount or amount <= 0 or CombatTargets.get(model) == nil then
@@ -215,6 +225,16 @@ function HealthService.init()
 	local function onCharacter(player: Player, character: Model)
 		character:WaitForChild("HumanoidRootPart", 10)
 		character:WaitForChild("Head", 10)
+		-- Le personnage peut être annoncé avant d'être placé dans le monde (constaté dans la
+		-- place Éclat, v0.5.0) : on attend qu'il y soit, tant qu'il reste le personnage actuel.
+		local waitedSince = os.clock()
+		while
+			character.Parent == nil
+			and player.Character == character
+			and os.clock() - waitedSince < 10
+		do
+			task.wait()
+		end
 		if character.Parent == nil then
 			return
 		end

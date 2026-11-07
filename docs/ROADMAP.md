@@ -20,7 +20,8 @@
 | v0.4.6 | Lames | Mêlée retravaillée : enchaînement de 3, aide à la visée, fente, coups animés par la trajectoire de l'arme, impacts | ✅ |
 | v0.4.7 | Noyaux II | Capacités du fusil, de l'arbalète et de l'épée longue | ✅ |
 | v0.4.11 | Mobilité | Élan (sol et air), course sur les murs, saut mural | ✅ |
-| v0.5.0 | Éclats | Génération procédurale à partir de tuiles, effondrement | 📋 |
+| v0.5.0 | Éclats | Génération procédurale à partir de tuiles (greybox), effondrement, chrono | ✅ |
+| v0.5.1 | Kit de forteresse | Modules de décor Blender (murs, escaliers, arches, toits) à la place de la greybox | 📋 |
 | v0.6.0 | Extraction | Inventaire, butin, extraction transactionnelle, Refuge minimal | 📋 |
 | v0.7.0 | Reliques | Utiliser ou ramener, Codex, Signature | 📋 |
 | v0.8.0 | Vertical slice | Première époque complète, Gardien, tests multijoueurs | 📋 |

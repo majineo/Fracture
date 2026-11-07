@@ -334,3 +334,18 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   retrait pour droits d'auteur, et identité sonore empruntée.
 - **Conséquence** : les sons sont choisis sans écoute (Claude ne peut pas entendre) ; l'utilisateur
   valide à l'oreille, et chaque son se remplace en changeant un identifiant dans `CombatSounds`.
+
+## D-046 — Éclats : plan déterministe partagé, greybox d'abord, côtés qui tombent
+- **Date** : 2026-11-07 · **Version** : v0.5.0 · **Statut** : ✅ Implémentée
+- **Plan partagé** : le plan et le calendrier sont des modules purs calculés à partir d'une graine
+  et de l'heure de début (attributs du workspace) ; serveur et clients obtiennent le même résultat
+  sans messages réseau. Générateur pseudo-aléatoire maison (xorshift32) pour être identique dans
+  Roblox et dans les tests Lune.
+- **Effondrement** : avec une grille 5 × 5, il n'y a que deux couronnes autour du Donjon. On fait
+  tomber la couronne extérieure **côté par côté** (4 tuiles toutes les 2 min, de 5 à 11 min) ; la
+  couronne du milieu et le Donjon restent pour la Faille finale, puis tout tombe à 16 min.
+- **Greybox d'abord** : les tuiles sont bâties en blocs simples pour valider la génération, les
+  passages et l'effondrement avant d'investir dans les modules Blender (v0.5.1). Exception assumée
+  à la règle « 3D dans Blender » : la greybox est un outil de conception de niveau, pas un asset.
+- **Densité d'Échoués** : Donjon gardé au complet, un poste par tuile du milieu, une tuile
+  extérieure sur deux (≈ 17 ennemis ; 37 au premier essai, trop pour « l'exploration »).

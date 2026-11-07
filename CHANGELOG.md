@@ -5,6 +5,86 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.5.0] — 2026-11-07 — « Éclats »
+
+### Description générale
+Premier vrai Éclat : la carte de la forteresse est générée à partir d'une graine (grille de
+5 × 5 tuiles), puis s'effondre côté par côté pendant la partie, jusqu'à la chute finale à 16 min.
+Les tuiles sont encore en blocs provisoires (greybox) : les modules de décor Blender suivront.
+
+### Nouvelles fonctionnalités
+- **Génération procédurale** (`Shared/Eclat/EclatLayout`, testée) : Donjon au centre, quatre Bords
+  d'Éclat d'apparition (un par côté), Remparts / Tours de guet aux coins, Cours d'armes, Villages,
+  Ponts-levis, Crypte. Chaque bord partagé offre toujours au moins deux passages (sans mur, mur à
+  deux portes, ou porte + chemin de ronde à deux rampes) ; le Donjon est toujours muré.
+- **8 types de tuiles** construits en greybox : donjon à toit praticable et tourelles, cour avec
+  couverts, remparts en L, tour de guet à rampes en spirale (24 studs), village (maisons, puits,
+  étal), douve avec pont-levis et planche étroite, mausolée creux de la Crypte, bord de roche.
+  Chaque tuile est un îlot de roche suspendu dans le Vide, avec des fragments figés qui flottent.
+- **Calendrier de partie** (`Shared/Eclat/CollapseSchedule`, testé) : exploration (0–5 min),
+  effondrement d'un côté de la couronne extérieure toutes les 2 min (5–11 min), Faille finale
+  (12–16 min), effondrement total à 16 min ; l'ordre des côtés dépend de la graine.
+- **Effondrement** : 30 s avant, fissures orange qui pulsent, poussière, grondement qui monte,
+  alerte « LE CÔTÉ … VA S'EFFONDRER » et bord d'écran orange si l'on est dessus ; puis la tuile se
+  désagrège pièce par pièce et tombe dans le Vide (secousse et grondement sourd).
+- **Mort dans le Vide** : tomber sous la carte tue (joueurs et Échoués) ; à 16 min, tous ceux qui
+  restent meurent, puis une nouvelle partie (nouvelle graine) commence 12 s plus tard.
+- **Chrono** en haut de l'écran : phase et prochaine chute (« Chute du côté est dans 1:23 »).
+- **Apparition par escouade** sur les Bords d'Éclat, face au centre ; réapparition sur la tuile
+  debout la plus proche si la sienne est tombée.
+- Échoués posés sur les tuiles selon leur type (arbalétriers sur les remparts, le toit du donjon,
+  le sommet des tours), aucun à côté d'une tuile d'apparition.
+- Test rapide dans Studio : attribut `EclatRestart` = « graine:échelle » (ex. « 42:0.1 »).
+
+### Modifications
+- `HealthService.killNow` (mort sans passer « à terre ») ; `EnemyService.models`.
+- Sons : grondement d'effondrement (ProSoundEffects) et impact sourd (APM Music).
+
+### Corrections de bugs
+- **Joueur sans santé après une réapparition dans l'Éclat** : le personnage est annoncé avant
+  d'être placé dans le monde, et HealthService l'ignorait (il devenait invulnérable). Il attend
+  maintenant que le personnage soit en place.
+- Téléportation vers la tuile d'apparition prise pour une triche par MovementGuard : délai de
+  grâce accordé avant de déplacer le joueur.
+
+### Vérifications (Studio)
+- Tests Lune : 8 nouveaux (déterminisme de la graine, Donjon et apparitions, 8 types présents,
+  deux passages par bord vus des deux côtés, conversions monde ↔ tuile, 4 vagues de 4 tuiles,
+  phases et alerte 30 s, durées réduites) ; 90 au total.
+- Place Éclat ouverte dans Studio : 25 tuiles, 8 types, ≈ 1 000 pièces ; vue du ciel (capture).
+- Partie accélérée (graine 42, échelle 0,1) : 4 tuiles en alerte à 28 s avec fissures et alerte
+  « LE CÔTÉ EST VA S'EFFONDRER » (capture), côté est tombé à 30 s (capture), chrono juste.
+- Mort dans le Vide : tuile du joueur tombée à 66 s, mort à 69 s, réapparition (santé 100) sur la
+  tuile debout la plus proche.
+- Fin de partie : tout le monde meurt à 16 min (96 s accélérées), nouvelle graine et nouvelle
+  partie, joueur replacé sur son Bord d'apparition.
+- Réapparitions répétées : toujours sur le Bord, santé intacte (aucun Échoué à portée).
+- Le `require` relatif (`./EclatLayout`) marche dans Roblox comme dans Lune.
+
+### Problèmes connus
+- Tuiles en greybox (blocs) : les vrais modules de décor Blender viennent en v0.5.1.
+- La Faille finale et le Gardien ne sont pas encore là (seulement un repère sur le donjon).
+- Pas encore d'inventaire, de butin ni d'extraction (v0.6.0) : mourir ne fait rien perdre.
+- Le ressenti des distances, des couverts et de l'escalade est à juger manette / clavier en main.
+- Sons choisis sans écoute.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Eclat/{EclatLayout,CollapseSchedule}.luau`,
+  `src/server/Eclat/Lib/TileKit.luau`, `src/server/Eclat/Systems/EclatService.luau`,
+  `src/client/Eclat/Controllers/EclatHud.luau`, `tests/specs/Eclat.spec.luau`
+- **Modifiés** : `src/server/Eclat/Systems/EnemySpawns.luau`,
+  `src/server/Core/Systems/{HealthService,EnemyService}.luau`,
+  `src/client/Core/Combat/CombatSounds.luau`, `tests/run.luau`, `src/shared/Config.luau`,
+  `CHANGELOG.md`, `docs/{ROADMAP,DECISIONS}.md`, `docs/GDD/{02-gameplay,06-environnements}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- v0.5.1 : kit de forteresse modélisé dans Blender (murs, portes, escaliers, toits) à la place de
+  la greybox.
+- v0.6.0 : inventaire, butin, extraction.
+
+---
+
 ## [v0.4.14] — 2026-11-07 — « Fracas »
 
 ### Description générale

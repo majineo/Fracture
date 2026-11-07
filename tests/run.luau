@@ -18,6 +18,7 @@ local specs = {
 	require("./specs/Parry.spec"),
 	require("./specs/EnemyBrain.spec"),
 	require("./specs/Ability.spec"),
+	require("./specs/Eclat.spec"),
 }
 
 for _, spec in specs do

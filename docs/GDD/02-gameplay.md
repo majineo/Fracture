@@ -27,7 +27,7 @@ le **Donjon**, où dort le Gardien.
 | Phase | Durée | Ce qui se passe |
 |---|---|---|
 | **Exploration** | 0 – 5 min | Pillage, Échoués faibles, coffres, premières reliques |
-| **Effondrement** | 5 – 12 min | Une couronne de tuiles extérieures tombe toutes les 2 min (alerte 30 s avant) |
+| **Effondrement** | 5 – 12 min | Un côté de la couronne extérieure (4 tuiles) tombe toutes les 2 min, alerte 30 s avant ; ordre des côtés tiré de la graine (✅ v0.5.0) |
 | **Faille finale** | 12 – 16 min | Le Gardien s'éveille, la Faille d'extraction finale s'ouvre près du Donjon |
 | **Fin** | 16 min | L'Éclat s'effondre entièrement : tout joueur encore présent meurt |
 

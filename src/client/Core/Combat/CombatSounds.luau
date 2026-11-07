@@ -64,6 +64,9 @@ local SOUNDS: { [string]: Entry } = table.freeze({
 	AbilityShadow = { id = "rbxassetid://88724017134214", volume = 0.7 }, -- « SuddenMovement »
 	AbilityReady = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.4 },
 	ShadowWarning = { id = "rbxasset://sounds/unsheath.wav", volume = 0.8 },
+	-- Effondrement de l'Éclat (v0.5.0)
+	CollapseRumble = { id = "rbxassetid://9113222959", volume = 0.7 }, -- « Avalanche Rumble » (ProSoundEffects)
+	CollapseHit = { id = "rbxassetid://1845133529", volume = 0.8, maxTime = 4 }, -- « Low Rumble Hit » (APM Music)
 	-- Mobilité et ambiance
 	Dash = { id = "rbxassetid://120777847710409", volume = 0.55 }, -- « momentum dash whoosh »
 	Heartbeat = { id = "rbxassetid://176554627", volume = 0.6 }, -- « Slow Heartbeat » (en boucle)

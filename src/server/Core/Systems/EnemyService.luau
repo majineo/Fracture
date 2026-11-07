@@ -515,6 +515,17 @@ function EnemyService.clear()
 	end
 end
 
+-- Ennemis vivants (chute dans le Vide de l'Éclat, v0.5.0).
+function EnemyService.models(): { Model }
+	local out = {}
+	for model, enemy in enemies do
+		if enemy.alive then
+			table.insert(out, model)
+		end
+	end
+	return out
+end
+
 function EnemyService.count(): number
 	local n = 0
 	for _ in enemies do

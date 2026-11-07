@@ -50,7 +50,12 @@ local function refresh()
 	if typeof(stash) == "table" and #stash > 0 then
 		for _, item in stash do
 			local def = ItemDefs.get(item.id)
-			table.insert(lines, `{item.qty} × {if def then def.name else item.id}`)
+			if def and def.relic then
+				local state = if item.qty >= 3 then "intacte — à stabiliser" else "abîmée"
+				table.insert(lines, `Relique {def.name} ({item.qty}/3, {state})`)
+			else
+				table.insert(lines, `{item.qty} × {if def then def.name else item.id}`)
+			end
 		end
 	else
 		table.insert(lines, "Le coffre est vide : rapporte du butin d'un Éclat.")

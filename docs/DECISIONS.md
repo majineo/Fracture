@@ -363,3 +363,16 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   auront chacun leur GUID quand ils existeront.
 - **Après l'extraction** : faute de places publiées, pas encore de téléportation au Refuge ; le
   joueur voit son bilan et peut repartir (v0.6.1).
+
+## D-048 — Reliques : objets uniques à charges, effets réutilisés, Codex en deux temps
+- **Date** : 2026-11-08 · **Version** : v0.7.0 · **Statut** : ✅ Implémentée (Codex : v0.7.1)
+- **Modèle** : une relique est un objet unique de l'inventaire de partie (jamais empilé), dont la
+  quantité est le nombre de charges (3 au départ). Au coffre, chaque relique garde son propre
+  GUID et ses charges : une relique intacte (3/3) pourra être stabilisée, une abîmée revendue.
+- **Effets** : les trois reliques réutilisent les effets serveur déjà validés des capacités
+  d'armes (téléportation surveillée, bulle de stase, ralentissement, étourdissement, effets
+  visuels) plutôt que d'en dupliquer la logique.
+- **Touches** : T (clavier) et Y (manette) — G est déjà le grappin ; sur mobile, on touche la
+  relique dans la barre d'inventaire.
+- **Signature** (jauge de repérage, GDD 02 §5) : reportée ; elle dépend de la boussole (à venir).
+

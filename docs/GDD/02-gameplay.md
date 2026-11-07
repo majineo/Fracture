@@ -63,6 +63,10 @@ utilisée l'abîme ; à 0 charge, elle disparaît. Ramenée **avec ses 3 charges
 stabilisée au Refuge et entre définitivement dans le **Codex** (voir 04-progression).
 Une relique partiellement utilisée se revend contre des Grains.
 
+✅ v0.7.0 : 1 à 3 autels par Éclat (sommet des tours, crypte, cours, villages ; tirés de la
+graine), reliques Pas de Faille, Stase et Onde de choc avec 3 charges (touche T / Y manette, ou
+toucher dans l'inventaire) ; ramenées au coffre avec leurs charges. Stabilisation : v0.7.1.
+
 ### Signature
 Jauge de 0 à 100 qui augmente avec le nombre de reliques portées et les combats bruyants
 (tirs, explosions).

@@ -624,6 +624,36 @@ end
 -- API --------------------------------------------------------------------------------------
 
 -- Remplit les noyaux des deux armes (outils de test Studio uniquement, voir DevTools).
+-- Effets réutilisés par les reliques de l'Éclat (v0.7.0).
+AbilityService.slow = slow
+AbilityService.fx = broadcastFx
+
+function AbilityService.teleport(player: Player, root: BasePart, cframe: CFrame)
+	teleport(player, root, cframe)
+end
+
+-- Bulle de stase posée à `position` (mêmes effets que le carreau de l'arbalète).
+function AbilityService.stasisAt(
+	position: Vector3,
+	radius: number,
+	duration: number,
+	slowFactor: number
+)
+	createBubble(
+		position,
+		{
+			id = "Stasis",
+			name = "Stase",
+			charge = 0,
+			windup = 0,
+			radius = radius,
+			duration = duration,
+			slow = slowFactor,
+			shotDamping = 0.3,
+		} :: any
+	)
+end
+
 function AbilityService.fill(player: Player)
 	for slot = 1, SLOTS do
 		local weaponId = player:GetAttribute(`Loadout{slot}`) :: string?

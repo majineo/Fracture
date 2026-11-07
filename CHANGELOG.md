@@ -5,6 +5,64 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.7.0] — 2026-11-08 — « Reliques »
+
+### Description générale
+La mécanique signature arrive : « utiliser ou ramener ». Des autels portent des reliques à trois
+charges ; chaque utilisation donne un pouvoir immédiat mais abîme la relique, alors qu'une relique
+ramenée intacte pourra entrer au Codex.
+
+### Nouvelles fonctionnalités
+- **Autels** : 1 à 3 par Éclat (sommet des tours de guet, crypte, cours, villages ; tirés de la
+  graine), avec une relique violette qui flotte et éclaire ; invite « Prendre la relique ».
+- **Pas de Faille** : bond de 15 studs (arrêté par les murs), intouchable pendant le bond (les
+  tirs le traversent).
+- **Stase** : bulle de 2 s devant soi qui ralentit fortement ennemis, joueurs et tirs.
+- **Onde de choc** : repousse et étourdit tout ce qui est à moins de 10 studs (15 dégâts, règles
+  PvP respectées).
+- **3 charges** par relique (touche **T**, **Y** à la manette, ou toucher la relique dans la
+  barre) ; message des charges restantes ; à 0, la relique se brise.
+- **Au coffre** : chaque relique extraite garde son identifiant et ses charges ; le coffre du
+  Refuge indique « intacte — à stabiliser » ou « abîmée ».
+
+### Modifications
+- Inventaire : objets uniques (jamais empilés) et `useCharge` ; tests ajoutés.
+- AbilityService expose ses effets (téléportation surveillée, bulle de stase, ralentissement,
+  effets visuels) ; HealthService ignore les dégâts pendant un bond de Pas de Faille.
+- LootService : conteneur « Autel » et `spawnContainer` ; remote `UseRelic` (limité).
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- 2 autels ; relique Onde de choc prise (3 charges), autel vidé, orbe retirée.
+- Onde de choc près d'un Échoué : 120 → 105 PV, étourdi ; Stase : bulle créée ; Pas de Faille :
+  bond de 15,1 studs, intouchable ; une charge retirée à chaque usage (3 → 2).
+- Extraction avec Stase (3/3) et Onde de choc (1/3) : deux enregistrements au coffre.
+- 100 tests Lune.
+
+### Problèmes connus
+- Stabilisation au Codex et capacités équipables : v0.7.1. Revente des reliques abîmées : plus tard.
+- Signature (repérage des porteurs de reliques) : reportée (boussole à faire).
+- Touches T / Y non essayées avec de vraies pressions (validé par le remote).
+- Autels et reliques en blocs provisoires.
+
+### Fichiers
+- **Ajoutés** : `src/server/Eclat/Systems/RelicService.luau`
+- **Modifiés** : `src/server/Core/Systems/{AbilityService,HealthService}.luau`,
+  `src/server/Eclat/Systems/{LootService,ExtractionService}.luau`,
+  `src/client/Eclat/Controllers/LootHud.luau`, `src/client/Refuge/Controllers/VaultUi.luau`,
+  `src/shared/Loot/{ItemDefs,RunInventory}.luau`, `src/shared/Net/Definitions.luau`,
+  `tests/specs/Loot.spec.luau`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/{ROADMAP,DECISIONS}.md`, `docs/GDD/02-gameplay.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- v0.7.1 : Codex (stabiliser une relique intacte au Refuge contre Grains et matériau d'époque),
+  2 capacités équipables emportées en partie.
+
+---
+
 ## [v0.6.3] — 2026-11-08 — « Bandages »
 
 ### Description générale

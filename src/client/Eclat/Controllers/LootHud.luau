@@ -43,6 +43,24 @@ local function useBandage()
 	Net.fire("UseConsumable", BANDAGE)
 end
 
+-- Relique : la première portée (touche T / Y manette), ou celle touchée dans la barre.
+local function useRelic(index: number?)
+	local slot = index
+	if slot == nil then
+		for i, stack in stacksShown do
+			local def = ItemDefs.get(stack.id)
+			if def and def.relic then
+				slot = i
+				break
+			end
+		end
+	end
+	if slot then
+		local camera = workspace.CurrentCamera
+		Net.fire("UseRelic", slot, camera and camera.CFrame.LookVector or nil)
+	end
+end
+
 local function rarityColor(id: string): Color3
 	local def = ItemDefs.get(id)
 	local rgb = ItemDefs.RARITY_COLORS[def and def.rarity or "Commun"]
@@ -115,6 +133,8 @@ local function buildInventory()
 			local def = stack and ItemDefs.get(stack.id)
 			if def and def.heal then
 				Net.fire("UseConsumable", stack.id)
+			elseif def and def.relic then
+				useRelic(i)
 			end
 		end)
 		slot.Parent = bar
@@ -182,6 +202,16 @@ local function onLoot(info: any)
 			toast("Santé déjà pleine", Color3.fromRGB(170, 170, 170))
 		elseif typeof(info.amount) == "number" then
 			toast(`Soigné +{math.floor(info.amount)}`, Color3.fromRGB(120, 230, 140))
+		end
+	elseif info.type == "RelicUsed" and typeof(info.id) == "string" then
+		local name = itemName(info.id)
+		if (info.left or 0) <= 0 then
+			toast(`{name} s'est brisée`, ORANGE)
+		else
+			toast(
+				`{name} — {info.left} charge(s) (intacte : 3, à ramener)`,
+				rarityColor(info.id)
+			)
 		end
 	elseif info.type == "Interrupted" then
 		toast("Soin interrompu", ORANGE)
@@ -446,6 +476,12 @@ function LootHud.start()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.H, Enum.KeyCode.DPadDown)
+	ContextActionService:BindAction("FractureRelic", function(_, state: Enum.UserInputState)
+		if state == Enum.UserInputState.Begin then
+			useRelic(nil)
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.T, Enum.KeyCode.ButtonY)
 end
 
 return LootHud

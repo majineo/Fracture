@@ -111,6 +111,9 @@ local function extract(player: Player)
 	for _, item in items do
 		if item.id == ItemDefs.GRAINS then
 			grains += item.qty
+		elseif (ItemDefs.get(item.id) :: any).unique then
+			-- Relique : un enregistrement à elle (GUID), avec ses charges restantes.
+			profile.stash[HttpService:GenerateGUID(false)] = { id = item.id, qty = item.qty }
 		else
 			-- Un seul enregistrement par type de matériau (GUID stable), quantités cumulées.
 			local merged = false

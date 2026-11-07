@@ -116,6 +116,10 @@ function HealthService.applyDamage(model: Model, amount: number, info: DamageInf
 	if target == nil then
 		return nil
 	end
+	-- Pas de Faille (relique, v0.7.0) : intouchable pendant le bond.
+	if ((model:GetAttribute("PhaseUntil") :: number?) or 0) > workspace:GetServerTimeNow() then
+		return nil
+	end
 	-- Garde du Temps (épée longue) : tout ce qui vient de face est bloqué.
 	if model:GetAttribute("TimeGuard") == true and info.origin then
 		local toOrigin = info.origin - target.root.Position

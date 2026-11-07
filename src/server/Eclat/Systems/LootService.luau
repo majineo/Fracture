@@ -62,6 +62,12 @@ local LOOK: { [string]: { size: Vector3, color: Color3, hold: number, label: str
 		hold = 1.2,
 		label = "Sac",
 	},
+	Autel = {
+		size = Vector3.new(3, 3.2, 3),
+		color = Color3.fromRGB(110, 106, 120),
+		hold = 2,
+		label = "Autel",
+	},
 	Butin = {
 		size = Vector3.new(1.4, 1.1, 1.4),
 		color = Color3.fromRGB(120, 110, 150),
@@ -138,11 +144,15 @@ local function container(
 	part.CFrame = cframe * CFrame.new(0, look.size.Y / 2, 0)
 	part.Material = if kind == "Sac" or kind == "Butin"
 		then Enum.Material.Fabric
+		elseif kind == "Autel" then Enum.Material.Slate
 		else Enum.Material.WoodPlanks
 	part.Color = look.color
 	part:SetAttribute("Loot", kind)
 	-- Modèle Blender du kit s'il est importé (v0.5.1) : la pièce devient la zone de fouille.
-	local kitName = if kind == "Butin" then "Kit_Sac" else `Kit_{kind}`
+	local kitName = if kind == "Butin"
+		then "Kit_Sac"
+		elseif kind == "Autel" then ""
+		else `Kit_{kind}`
 	local model = Kit.place(kitName, part.CFrame * CFrame.new(0, -look.size.Y / 2, 0), look.size)
 	if model then
 		part.Transparency = 1
@@ -158,7 +168,7 @@ local function container(
 		trim.Parent = part
 	end
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = "Fouiller"
+	prompt.ActionText = if kind == "Autel" then "Prendre la relique" else "Fouiller"
 	prompt.ObjectText = title or look.label
 	prompt.HoldDuration = look.hold
 	prompt.MaxActivationDistance = 9
@@ -193,6 +203,13 @@ local function container(
 			-- Vidé : la caisse reste (ouverte, plus sombre) ; un sac ou un butin disparaît.
 			if kind == "Sac" or kind == "Butin" then
 				part:Destroy()
+			elseif kind == "Autel" then
+				prompt.Enabled = false
+				part:SetAttribute("Opened", true)
+				local relic = part:FindFirstChild("Relique")
+				if relic then
+					relic:Destroy()
+				end
 			else
 				prompt.Enabled = false
 				part.Color = part.Color:Lerp(Color3.new(0, 0, 0), 0.45)
@@ -202,6 +219,16 @@ local function container(
 	end)
 	part.Parent = tileModelAt(part.Position)
 	return part
+end
+
+-- Pose un conteneur pour un autre système (autels des reliques, v0.7.0).
+function LootService.spawnContainer(
+	kind: string,
+	cframe: CFrame,
+	contents: { Stack },
+	title: string?
+): BasePart
+	return container(kind, cframe, contents, nil, title)
 end
 
 local function groundBelow(position: Vector3, ignore: { Instance }): Vector3

@@ -40,6 +40,7 @@ export type RemoteName =
 	| "RequestRedeploy"
 	| "Notice"
 	| "UseConsumable"
+	| "UseRelic"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -90,6 +91,9 @@ local Definitions: { [string]: RemoteDef } = {
 	-- Utiliser un consommable porté (v0.6.3) : (id de l'objet). Le serveur vérifie qu'il est
 	-- porté, que le joueur est en état, et gère la durée du soin (interrompu par les dégâts).
 	UseConsumable = { direction = "ToServer", rate = 1, burst = 2 },
+	-- Utiliser une charge de la relique portée dans un emplacement (v0.7.0) : (index 1 à 12) et,
+	-- pour Pas de Faille, la direction voulue (Vector3, vérifiée et aplatie par le serveur).
+	UseRelic = { direction = "ToServer", rate = 1.5, burst = 2 },
 	-- Message court à afficher au joueur (portail indisponible, etc.) : (texte).
 	Notice = { direction = "ToClient" },
 

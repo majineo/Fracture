@@ -29,7 +29,17 @@ function RunInventory.add(inv: Inventory, id: string, qty: number): number
 	end
 	qty = math.floor(qty)
 	local cap = maxStack(id)
+	local def = ItemDefs.get(id) :: ItemDefs.ItemDef
 	local added = 0
+	if def.unique then
+		-- Objet unique (relique) : un emplacement à lui, jamais fusionné avec un autre.
+		if #inv.stacks >= inv.capacity then
+			return 0
+		end
+		local n = math.min(cap, qty)
+		table.insert(inv.stacks, { id = id, qty = n })
+		return n
+	end
 	for _, stack in inv.stacks do
 		if stack.id == id and stack.qty < cap then
 			local n = math.min(cap - stack.qty, qty - added)
@@ -79,7 +89,13 @@ end
 function RunInventory.drain(inv: Inventory): { Stack }
 	local totals: { [string]: number } = {}
 	local order: { string } = {}
+	local uniques: { Stack } = {}
 	for _, stack in inv.stacks do
+		local def = ItemDefs.get(stack.id)
+		if def and def.unique then
+			table.insert(uniques, { id = stack.id, qty = stack.qty })
+			continue
+		end
 		if totals[stack.id] == nil then
 			totals[stack.id] = 0
 			table.insert(order, stack.id)
@@ -90,6 +106,9 @@ function RunInventory.drain(inv: Inventory): { Stack }
 	local out = {}
 	for _, id in order do
 		table.insert(out, { id = id, qty = totals[id] })
+	end
+	for _, stack in uniques do
+		table.insert(out, stack)
 	end
 	return out
 end
@@ -117,6 +136,25 @@ function RunInventory.takeFrom(inv: Inventory, contents: { Stack }): { Stack }
 		end
 	end
 	return taken
+end
+
+-- Utilise une charge de la relique de l'emplacement `index` (v0.7.0). Renvoie l'id de la relique
+-- et les charges restantes, ou nil si l'emplacement ne contient pas de relique. À 0, elle disparaît.
+function RunInventory.useCharge(inv: Inventory, index: number): (string?, number)
+	if typeof(index) ~= "number" or index ~= math.floor(index) then
+		return nil, 0
+	end
+	local stack = inv.stacks[index]
+	local def = stack and ItemDefs.get(stack.id)
+	if stack == nil or def == nil or not def.relic or stack.qty <= 0 then
+		return nil, 0
+	end
+	stack.qty -= 1
+	local left = stack.qty
+	if left <= 0 then
+		table.remove(inv.stacks, index)
+	end
+	return stack.id, left
 end
 
 -- Copie sérialisable (envoi au client).

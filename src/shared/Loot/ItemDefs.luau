@@ -15,6 +15,8 @@ export type ItemDef = {
 	value: number, -- valeur indicative en Grains (équilibrage, revente future)
 	heal: number?, -- consommable de soin : santé rendue (v0.6.3)
 	useTime: number?, -- durée d'utilisation (secondes), interrompue par les dégâts
+	unique: boolean?, -- jamais empilé (relique : la quantité est le nombre de charges)
+	relic: boolean?, -- relique de l'Éclat (v0.7.0)
 }
 
 local GRAINS = "currency.grains"
@@ -53,11 +55,41 @@ local defs: { [string]: ItemDef } = {
 		heal = 30,
 		useTime = 2.5,
 	},
+	-- Reliques (v0.7.0, GDD 04 §2) : 3 charges, chacune l'abîme ; intacte, elle se stabilise au
+	-- Refuge (Codex, à venir). Quantité = charges restantes.
+	["relic.pas_de_faille"] = {
+		id = "relic.pas_de_faille",
+		name = "Pas de Faille",
+		rarity = "Épique",
+		maxStack = 3,
+		value = 120,
+		unique = true,
+		relic = true,
+	},
+	["relic.stase"] = {
+		id = "relic.stase",
+		name = "Stase",
+		rarity = "Épique",
+		maxStack = 3,
+		value = 120,
+		unique = true,
+		relic = true,
+	},
+	["relic.onde_de_choc"] = {
+		id = "relic.onde_de_choc",
+		name = "Onde de choc",
+		rarity = "Épique",
+		maxStack = 3,
+		value = 120,
+		unique = true,
+		relic = true,
+	},
 }
 
 local ItemDefs = {}
 
 ItemDefs.GRAINS = GRAINS
+ItemDefs.RELICS = table.freeze({ "relic.pas_de_faille", "relic.stase", "relic.onde_de_choc" })
 ItemDefs.ALL = table.freeze(defs)
 
 function ItemDefs.get(id: string): ItemDef?

@@ -5,6 +5,83 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.4] — 2026-11-07 — « Échoués »
+
+### Description générale
+Les premiers ennemis : l'homme d'armes et l'arbalétrier figés, modélisés dans Blender et
+dirigés par le serveur, avec des attaques toujours annoncées. Et une nouvelle façon de tenir
+les armes : à deux mains, avec un port d'arme « soldat » en sprint.
+
+### Nouvelles fonctionnalités
+- **Homme d'armes figé** (120 PV) : poursuit, lève son épée rouillée qui rougeoie 0,6 s
+  (contour rouge, son d'avertissement), puis frappe (22). **Parable** : coup annulé et ennemi
+  étourdi 0,9 s. On peut aussi esquiver en sortant de sa portée.
+- **Arbalétrier figé** (80 PV) : garde ses distances, épaule 1,1 s avec un **trait rouge** vers
+  sa cible qui s'épaissit puis clignote, puis tire (28). Se cacher annule le tir ; bouger au bon
+  moment le fait rater (il vise où l'on était 0,3 s plus tôt).
+- « Sauts » temporels : de temps en temps, un Échoué se fige une fraction de seconde.
+- Mort : le corps se brise en éclats cyan (son de verre) ; barres de vie au-dessus des Échoués.
+- **Éclat** : 8 Échoués à leur poste (3 groupes) ; un poste est réoccupé 90 s après la mort.
+- **Tenue des armes refaite** (cinématique inverse, mesurée sur chaque avatar) :
+  - repos : fusil et arbalète à l'épaule canon vers le sol, pistolet à deux mains devant la
+    poitrine, lame en garde, épée longue en garde à deux mains ;
+  - **sprint : arme en travers de la poitrine, à deux mains** (port d'arme) ;
+  - visée ou juste après un tir : arme épaulée vers le viseur, pistolet bras tendus.
+  - Les Échoués utilisent le même système.
+- Modèles Blender : équipement de l'homme d'armes (13 pièces), de l'arbalétrier (11 pièces),
+  épée rouillée (4 pièces), intégrés dans `ServerStorage`.
+- 7 nouveaux tests (EnemyBrain) : 75 au total. Outils Studio : `spawnEnemy`, `clearEnemies`.
+
+### Modifications
+- Fusil à répétition : **crosse raccourcie** dans Blender (1,55 → 1,0 stud) pour que les bras
+  d'un avatar Roblox puissent le tenir. L'ancien modèle est archivé (`ServerStorage > ArchiveModels`).
+- Une frappe de mêlée sans joueur attaquant (Échoué, mannequin) ne touche que les joueurs.
+- Le décalage arme / main est partagé entre serveur et client (`Combat/WeaponGrip`).
+- Poses fixes de tenue d'arme supprimées (remplacées par la cinématique inverse).
+
+### Corrections de bugs
+- Armes tenues à bout de bras d'une seule main, pointées vers le ciel (signalé avec captures).
+- Quatre armes importées en double dans Studio : supprimées.
+
+### Vérifications (Studio)
+- Homme d'armes : repère et poursuit le joueur, annonce 0,58 s avant de frapper, 22 dégâts par
+  coup ; parade 0,15 s avant le coup → aucun dégât, ennemi étourdi.
+- Arbalétrier : visée avec trait rouge, arbalète épaulée à deux mains.
+- Mort : 3 balles de fusil (72 → 24 → 0), bris, corps retiré après 4 s.
+- Tenue mesurée : main gauche à la position voulue sur le pistolet ; à 0,15 stud de la cible sur
+  l'épée longue ; captures de chaque arme au repos, en sprint et en visée.
+- Sons vérifiés au chargement (pas à l'écoute).
+
+### Problèmes connus
+- Ressenti des Échoués et de la nouvelle tenue à valider à la main (clavier et tactile).
+- Réapparition à 90 s dans l'Éclat non testée en partie réelle (code relu, testé via `spawnEnemy`
+  au Refuge).
+- Fusil : la main gauche tient le fût juste devant la carcasse (bras Roblox trop courts pour
+  plus loin).
+- Les Échoués n'attaquent pas encore les autres escouades de façon délibérée, ne grimpent pas.
+- Postes des Échoués provisoires (sol de test de l'Éclat).
+
+### Fichiers
+- **Ajoutés** : `src/shared/Combat/{EnemyDefs,EnemyBrain,WeaponGrip}.luau`,
+  `src/server/Core/Systems/EnemyService.luau`, `src/server/Eclat/Systems/EnemySpawns.luau`,
+  `src/client/Core/Controllers/EnemyVisuals.luau`, `src/client/Core/Animation/{ArmIK,WeaponHold}.luau`,
+  `tests/specs/EnemyBrain.spec.luau`,
+  `assets/blender/enemies/{Homme_Armes_Equipement,Arbaletrier_Equipement,Epee_Rouillee}.fbx`,
+  `assets/blender/enemies/echoues.blend`
+- **Modifiés** : `src/server/Core/Systems/{WeaponService,DevTools}.luau`,
+  `src/server/Core/Lib/WeaponModels.luau`,
+  `src/client/Core/Controllers/{CharacterAnimation,CombatController,CombatHUD}.luau`,
+  `src/client/Core/Animation/Poses.luau`, `src/client/Core/Combat/{CombatSounds,WeaponFx}.luau`,
+  `assets/blender/weapons/{Fusil_Repetition.fbx,armes_de_base.blend}`, `src/shared/Config.luau`,
+  `tests/run.luau`, `CHANGELOG.md`, `docs/{ASSETS,DECISIONS,ROADMAP}.md`, `docs/GDD/07-ennemis.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Retours de test sur les Échoués et la tenue des armes, réglages.
+- v0.5.0 « Éclats » : génération procédurale à partir de tuiles (kit médiéval dans Blender).
+
+---
+
 ## [v0.4.3] — 2026-11-06 — « Arsenal »
 
 ### Description générale

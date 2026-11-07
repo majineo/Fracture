@@ -237,3 +237,27 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Date** : 2026-11-06 · **Version** : v0.4.3 · **Statut** : ✅ Implémentée
 - **Choix** : la règle « pas de PvP au Refuge » ne concerne que les attaques entre joueurs ;
   une attaque sans joueur attaquant (ennemi, mannequin de test) blesse partout.
+
+## D-035 — IA des Échoués : cerveau pur + annonces en attributs
+- **Date** : 2026-11-07 · **Version** : v0.4.4 · **Statut** : ✅ Implémentée
+- **Choix** : la décision (poursuivre, préparer, frapper, viser, tirer…) est un module pur
+  testé par Lune ; le serveur l'exécute 5 fois par seconde. Les attaques sont publiées en
+  attributs (`AttackAt`, `AimAt`) que les clients transforment en signaux visuels.
+- **Raison** : logique testable hors Studio, aucun nouveau remote, et les signaux sont
+  identiques pour tous les joueurs. La mêlée passe par la frappe générique des joueurs : la
+  parade fonctionne sans code spécial.
+
+## D-036 — Tenue des armes par cinématique inverse
+- **Date** : 2026-11-07 · **Version** : v0.4.4 · **Statut** : ✅ Implémentée
+- **Choix** : on place l'arme (garde, port d'arme en sprint, épaulée en visée), puis les deux
+  bras viennent la saisir par cinématique inverse, mesurée sur chaque avatar. Remplace les
+  poses fixes. Même système pour les joueurs et les Échoués.
+- **Conséquence** : les armes doivent respecter les proportions des bras Roblox (courts) :
+  crosse du fusil raccourcie dans Blender (1,55 → 1,0 stud). La main gauche tient le fût juste
+  devant la carcasse, pas loin vers l'avant.
+
+## D-037 — Réapparition des Échoués à leur poste
+- **Date** : 2026-11-07 · **Version** : v0.4.4 · **Statut** : ✅ Implémentée (réglage à valider en partie réelle)
+- **Choix** : dans l'Éclat, un Échoué tué revient à son poste 90 s plus tard (« le Temps le
+  recolle »), pour que l'Éclat reste dangereux toute la partie. Postes provisoires sur le sol
+  de test, à replacer avec la vraie carte (v0.5).

@@ -17,6 +17,9 @@ local SOUNDS = table.freeze({
 	-- v0.4.3
 	CrossbowShot = { id = "rbxasset://sounds/swordlunge.wav", volume = 0.6 }, -- détente + corde (provisoire)
 	Parry = { id = "rbxassetid://9116460378", volume = 0.55 }, -- « Manacles Metal Clangs » (ProSoundEffects)
+	-- v0.4.4 (Échoués)
+	EnemyWindup = { id = "rbxasset://sounds/unsheath.wav", volume = 0.6 }, -- lame levée : avertissement
+	EnemyShatter = { id = "rbxasset://sounds/glassbreak.wav", volume = 0.6 },
 })
 
 local CombatSounds = {}

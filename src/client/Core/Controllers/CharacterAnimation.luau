@@ -16,6 +16,7 @@ local JointRig = require(Client.Animation.JointRig)
 local MovementEffects = require(Client.Animation.MovementEffects)
 local PoseAnimator = require(Client.Animation.PoseAnimator)
 local Poses = require(Client.Animation.Poses)
+local WeaponHold = require(Client.Animation.WeaponHold)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local WeaponDefs = require(
 	ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Combat"):WaitForChild("WeaponDefs")
@@ -31,6 +32,11 @@ local REMOTE_DURATION = { Slide = 0.8, Mantle = 0.4, Grapple = 1.2 }
 local MANTLE_SPLIT = 0.45 -- avancement où l'on passe de « attraper » à « se hisser »
 local LAND_MIN_SPEED = 12
 local SPRINT_LEAN_FROM = 15
+local SPRINT_HOLD_FROM = 17 -- au-delà (studs/s), l'arme est tenue en port d'arme
+local AIM_AFTER_FIRE = 0.8 -- l'arme reste épaulée un instant après un tir
+local GRIP_SMOOTHING = 14 -- vitesse de transition entre deux tenues
+local ARMS_REMEASURE = 1.5 -- secondes (l'avatar peut changer de morphologie)
+local POCKET = Vector3.new(0.6, 0.55, -0.55) -- creux de l'épaule (voir WeaponHold)
 
 type Tracked = {
 	player: Player,
@@ -48,6 +54,13 @@ type Tracked = {
 	lastMode: string,
 	modeStartedAt: number,
 	latched: boolean,
+	rig: JointRig.Rig,
+	arms: WeaponHold.Arms?,
+	armsMeasuredAt: number,
+	grip: CFrame?, -- repère de poignée lissé (repère du torse)
+	gripWeapon: string?,
+	stock: number?, -- longueur de crosse mesurée sur le modèle tenu
+	stockWeapon: string?,
 }
 
 local CharacterAnimation = {}
@@ -66,9 +79,8 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	animator.addLayer("MantleVault", Poses.MantleVault, false, 20)
 	animator.addLayer("Grapple", Poses.Grapple, false, 14)
 	-- Combat : par-dessus le déplacement (on peut viser en glissant).
-	animator.addLayer("AimSupport", Poses.AimSupport, false, 16)
-	animator.addLayer("AimArm", { RightShoulder = CFrame.identity }, false, 22)
-	animator.addLayer("BladeGuard", Poses.BladeGuard, false, 12)
+	-- Tenue de l'arme : bras calculés par cinématique inverse (Animation/WeaponHold).
+	animator.addLayer("Hold", {}, false, 14)
 	animator.addLayer("Swing", { RightShoulder = CFrame.identity }, false, 40)
 	animator.addLayer("Parry", Poses.Parry, false, 30)
 	animator.addLayer("Downed", Poses.Downed, false, 8)
@@ -156,6 +168,11 @@ local function track(player: Player, character: Model)
 		lastMode = "Normal",
 		modeStartedAt = os.clock(),
 		latched = false,
+		rig = rig,
+		arms = WeaponHold.measureArms(rig),
+		armsMeasuredAt = os.clock(),
+		grip = nil,
+		gripWeapon = nil,
 	}
 
 	humanoid.Died:Connect(function()
@@ -182,6 +199,65 @@ local function aimArm(entry: Tracked, target: Vector3): CFrame?
 		return if angle > 1 then CFrame.Angles(math.pi, 0, 0) else CFrame.identity
 	end
 	return CFrame.fromAxisAngle(axis.Unit, angle)
+end
+
+-- Calcule la pose « Hold » : état (garde / course / visée), arme placée, mains par IK.
+local function updateHold(
+	entry: Tracked,
+	hold: string,
+	weapon: string,
+	isGun: boolean,
+	mode: string,
+	grounded: boolean,
+	horizontal: number,
+	dt: number
+): boolean
+	local now = os.clock()
+	if entry.arms == nil or now - entry.armsMeasuredAt > ARMS_REMEASURE then
+		entry.arms = WeaponHold.measureArms(entry.rig)
+		entry.armsMeasuredAt = now
+	end
+	local arms = entry.arms
+	local torso = entry.upperTorso
+	if arms == nil or torso == nil then
+		return false
+	end
+	local isLocal = entry.player == localPlayer
+	local lastFire = CombatController.getLastFire(if isLocal then nil else entry.player)
+	local aiming = isGun
+		and ((isLocal and CombatController.isAiming()) or now - lastFire < AIM_AFTER_FIRE)
+	local sprinting = mode == "Normal" and grounded and horizontal > SPRINT_HOLD_FROM
+	local state: WeaponHold.State = if aiming then "Aim" elseif sprinting then "Sprint" else "Ready"
+
+	local aimDirection: Vector3? = nil
+	if state == "Aim" then
+		local torsoFrame = torso.CFrame
+		local target = if isLocal then CombatController.getAimPoint() else nil
+		local world = if target then target - torsoFrame * POCKET else entry.root.CFrame.LookVector
+		aimDirection = torsoFrame:VectorToObjectSpace(world)
+	end
+	if entry.stockWeapon ~= weapon or entry.stock == nil then
+		-- Le modèle tenu peut arriver un peu après le changement d'arme : on remesure tant
+		-- qu'il manque.
+		local held = entry.character:FindFirstChild("HeldWeapon")
+		entry.stock = WeaponHold.measureStock(held and held:FindFirstChild(weapon))
+		entry.stockWeapon = weapon
+	end
+	local wanted = WeaponHold.targetGrip(arms, hold, weapon, state, aimDirection, entry.stock)
+	if wanted == nil then
+		return false
+	end
+	local grip = entry.grip
+	if grip == nil or entry.gripWeapon ~= weapon then
+		grip = wanted
+	else
+		grip = grip:Lerp(wanted, 1 - math.exp(-GRIP_SMOOTHING * dt))
+	end
+	entry.grip = grip
+	entry.gripWeapon = weapon
+	local pose = WeaponHold.solve(arms, hold, weapon, grip :: CFrame)
+	entry.animator.setPose("Hold", pose)
+	return true
 end
 
 local function updateEntry(entry: Tracked, dt: number)
@@ -282,34 +358,13 @@ local function updateEntry(entry: Tracked, dt: number)
 	local holdingGun = hold == "Pistol" or hold == "LongGun"
 	local holdingBlade = hold == "Blade" or hold == "Greatsword"
 
-	if holdingGun then
-		-- Bras droit vers le point visé (soi) ou droit devant (les autres joueurs).
-		local target = if isLocal
-			then CombatController.getAimPoint()
-			else root.Position + root.CFrame.LookVector * 60 + Vector3.new(0, 1, 0)
-		local arm = if target then aimArm(entry, target) else nil
-		animator.setPose("AimArm", { RightShoulder = arm or A(90, 0, 0) })
-		animator.setWeight("AimArm", 1)
-		local aiming = isLocal and CombatController.isAiming()
-		if hold == "LongGun" then
-			-- Une arme longue se tient toujours à deux mains.
-			animator.setPose("AimSupport", Poses.AimLongGun)
-			animator.setWeight("AimSupport", 1)
-		else
-			animator.setPose("AimSupport", Poses.AimSupport)
-			animator.setWeight("AimSupport", if aiming or not isLocal then 1 else 0.35)
-		end
-	else
-		animator.setWeight("AimArm", 0)
-		animator.setWeight("AimSupport", 0)
-	end
-
 	-- Parade : lame levée en travers pendant la fenêtre de parade.
 	local parryAt = if holdingBlade
 		then CombatController.getParry(if isLocal then nil else entry.player)
 		else -math.huge
 	local parryWindow = (def and def.parryWindow) or 0.2
-	animator.setWeight("Parry", if os.clock() - parryAt <= parryWindow + 0.1 then 1 else 0)
+	local parrying = os.clock() - parryAt <= parryWindow + 0.1
+	animator.setWeight("Parry", if parrying then 1 else 0)
 
 	local swing = if holdingBlade
 		then CombatController.getSwing(if isLocal then nil else entry.player)
@@ -334,11 +389,16 @@ local function updateEntry(entry: Tracked, dt: number)
 	if not swingActive then
 		animator.setWeight("Swing", 0)
 	end
-	animator.setPose(
-		"BladeGuard",
-		if hold == "Greatsword" then Poses.GreatswordGuard else Poses.BladeGuard
-	)
-	animator.setWeight("BladeGuard", if holdingBlade then 1 else 0)
+	-- Tenue de l'arme (deux mains sur l'arme, voir Animation/WeaponHold). Effacée pendant un
+	-- coup ou une parade, qui ont leurs propres poses.
+	local holding = false
+	if hold and weapon and WeaponHold.has(hold) and not swingActive and not parrying then
+		holding = updateHold(entry, hold, weapon, holdingGun, mode, grounded, horizontal, dt)
+	end
+	if not holding then
+		entry.grip = nil
+	end
+	animator.setWeight("Hold", if holding then 1 else 0)
 	animator.setWeight("Downed", if downed then 1 else 0)
 
 	entry.effects.setSliding(

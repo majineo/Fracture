@@ -390,9 +390,12 @@ function CombatHUD.start()
 			arrow.BackgroundTransparency = 1
 		end
 
-		-- Mannequins : barres de vie
+		-- Mannequins et Échoués : barres de vie
 		for _, model in workspace:GetChildren() do
-			if model:IsA("Model") and model:GetAttribute("CombatDummy") then
+			if
+				model:IsA("Model")
+				and (model:GetAttribute("CombatDummy") or model:GetAttribute("EnemyKind"))
+			then
 				overheadFor(model)
 			end
 		end

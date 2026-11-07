@@ -76,6 +76,9 @@ local lastSwing: { at: number, heavy: boolean }? = nil
 local remoteSwings: { [Player]: { at: number, heavy: boolean } } = {}
 local remoteParries: { [Player]: number } = {}
 local lastParry = -math.huge
+-- Dernier tir (soi et les autres) : l'arme reste épaulée un instant après un tir.
+local lastFire = -math.huge
+local remoteFires: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
 local parryCooldownUntil = 0
 local stunnedUntil = 0
 local aimPoint: Vector3? = nil
@@ -250,6 +253,7 @@ local function fireHitscan(def: any)
 		return
 	end
 	WeaponState.fire(state, def, now)
+	lastFire = now
 
 	local direction = applySpread((target - origin).Unit, CombatController.getSpread())
 	bloom = math.min(bloom + SHOT_BLOOM, 4)
@@ -507,6 +511,7 @@ local function onShotFx(info: any)
 		and typeof(info.origin) == "Vector3"
 		and typeof(info.finish) == "Vector3"
 	then
+		remoteFires[info.shooter] = os.clock()
 		WeaponFx.tracer(info.origin, info.finish)
 		WeaponFx.muzzleFlash(info.origin, (info.finish - info.origin).Unit)
 		local def = typeof(info.weapon) == "string" and WeaponDefs[info.weapon]
@@ -616,6 +621,14 @@ function CombatController.getAimPoint(): Vector3?
 	return aimPoint
 end
 
+-- Heure (os.clock) du dernier tir : soi (`other` nil) ou un autre tireur (joueur ou ennemi).
+function CombatController.getLastFire(other: Instance?): number
+	if other == nil or other == player then
+		return lastFire
+	end
+	return remoteFires[other] or -math.huge
+end
+
 -- Dernier coup de mêlée (soi : `player` nil ; autre joueur : son objet Player).
 function CombatController.getSwing(other: Player?): { at: number, heavy: boolean }?
 	if other == nil or other == player then
@@ -689,6 +702,7 @@ function CombatController.start()
 	end)
 	Players.PlayerRemoving:Connect(function(other)
 		remoteSwings[other] = nil
+		remoteFires[other] = nil
 	end)
 	-- Studio : point de test (la simulation de clics de Studio n'atteint pas le jeu).
 	if RunService:IsStudio() then

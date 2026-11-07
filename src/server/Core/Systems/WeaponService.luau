@@ -302,6 +302,10 @@ function WeaponService.meleeStrike(
 		if model == attackerModel or not HealthService.canDamage(attackerPlayer, model) then
 			continue
 		end
+		-- Un ennemi (ou un mannequin) ne frappe que les joueurs, pas ses semblables.
+		if attackerPlayer == nil and target.kind ~= "Player" then
+			continue
+		end
 		local position = CombatTargets.rewind(target, rewindTime).Position
 		local offset = position - root.Position
 		local horizontal = Vector3.new(offset.X, 0, offset.Z)

@@ -1,6 +1,7 @@
 # 07 — Ennemis (Échoués et Gardien)
 
-> Statut : 📋 Prévu. Tous les modèles sont **à créer**.
+> Statut : 🔧 En cours. ✅ Homme d'armes et arbalétrier figés (v0.4.4) · 📋 Chevalier brisé,
+> Gardien.
 
 ## 1. Principes
 
@@ -13,11 +14,26 @@
 
 | Échoué | Rôle | Santé | Comportement |
 |---|---|---|---|
-| **Homme d'armes figé** | Mêlée | 120 | S'approche, attaque en 2 coups annoncés ; peut être paré |
-| **Arbalétrier figé** | Distance | 80 | Reste en hauteur, tir lent visible (ligne rouge 1 s avant) |
+| **Homme d'armes figé** ✅ | Mêlée | 120 | Poursuit, lève son épée qui rougeoie 0,6 s puis frappe (22) ; paré = étourdi 0,9 s |
+| **Arbalétrier figé** ✅ | Distance | 80 | Garde ses distances (recule sous 16 studs), épaule 1,1 s avec un trait rouge vers sa cible, puis tire (28) ; se cacher annule le tir |
 | **Chevalier brisé** 💭 | Élite | 300 | Bouclier frontal, il faut le contourner |
 
 La vertical slice contient les deux premiers.
+
+### Fonctionnement (v0.4.4)
+
+- **Cerveau** : module pur `Combat/EnemyBrain` (testé) appelé 5 fois par seconde par le serveur
+  (`EnemyService`) : repos, retour au poste, poursuite, recul, préparation, frappe, visée, tir,
+  étourdi. Repérage avec ligne de vue (55 / 80 studs), abandon au-delà de 90 / 110 studs.
+- **Annonces** lues par les clients (`EnemyVisuals`) : attributs `AttackAt` (épée levée,
+  contour rouge, son d'avertissement) et `AimAt` (trait rouge qui s'épaissit puis clignote).
+- **Esquive** : le coup de mêlée part même si l'on recule (on esquive en sortant de la
+  portée) ; l'arbalétrier vise la position du joueur 0,3 s plus tôt (on esquive en bougeant).
+- **« Sauts » temporels** : toutes les 4 à 9 s, l'ennemi se fige 0,18 s (contour cyan).
+- **Mort** : le corps se brise en éclats cyan. Dans l'Éclat, chaque poste est réoccupé
+  90 s plus tard. Les Échoués n'attaquent que les joueurs (pas entre eux).
+- 📋 Prévu : attaquer les autres escouades (attirer un Échoué sur un rival), tir en hauteur,
+  vrais rigs animés.
 
 ## 3. Le Gardien : le Roi Sans Heure
 
@@ -37,7 +53,8 @@ de sa forteresse. Il s'éveille au début de la Faille finale.
 
 ## 4. Notes Blender
 
-- Échoués : **un seul rig humanoïde partagé** (compatible R15) pour les deux types ; seuls les
-  maillages et accessoires changent. Animations : marche, garde, 2 attaques, touché, mort.
+- Échoués ✅ (v0.4.4) : corps R15 standard de Roblox + **équipement modélisé dans Blender**
+  (une pièce par matériau, soudée à la partie du corps indiquée par son nom). Animations :
+  celles de Roblox + poses procédurales (garde, préparation, coup, visée, étourdi).
 - Gardien : rig dédié, environ 10 animations. C'est le modèle le plus difficile de la vertical
   slice : à faire **en dernier**, quand le pipeline est maîtrisé.

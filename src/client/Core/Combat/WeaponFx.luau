@@ -160,8 +160,40 @@ function WeaponFx.parrySparks(position: Vector3)
 	Debris:AddItem(a, 0.5)
 end
 
+-- Bris d'un Échoué : éclats cyan projetés et lueur qui s'éteint (le Temps le relâche).
+function WeaponFx.shatter(position: Vector3)
+	local a = Instance.new("Attachment")
+	a.WorldPosition = position
+	a.Parent = workspace.Terrain
+	local light = Instance.new("PointLight")
+	light.Color = BRISURE_CYAN
+	light.Range = 16
+	light.Brightness = 4
+	light.Parent = a
+	local shards = Instance.new("ParticleEmitter")
+	shards.Enabled = false
+	shards.Color = ColorSequence.new(BRISURE_CYAN, Color3.fromRGB(150, 160, 175))
+	shards.LightEmission = 0.6
+	shards.Lifetime = NumberRange.new(0.5, 1.1)
+	shards.Speed = NumberRange.new(8, 20)
+	shards.SpreadAngle = Vector2.new(180, 180)
+	shards.Acceleration = Vector3.new(0, -30, 0)
+	shards.Drag = 1.5
+	shards.Rotation = NumberRange.new(0, 360)
+	shards.RotSpeed = NumberRange.new(-300, 300)
+	shards.Shape = Enum.ParticleEmitterShape.Box
+	shards.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(1, 0),
+	})
+	shards.Parent = a
+	shards:Emit(45)
+	TweenService:Create(light, TweenInfo.new(0.8), { Brightness = 0 }):Play()
+	Debris:AddItem(a, 1.3)
+end
+
 -- Traînée de lame (coup de mêlée) le long d'un arc devant le personnage.
-function WeaponFx.swingArc(root: BasePart, heavy: boolean)
+function WeaponFx.swingArc(root: BasePart, heavy: boolean, color: Color3?)
 	local a0 = Instance.new("Attachment")
 	local a1 = Instance.new("Attachment")
 	a0.Parent = root
@@ -172,7 +204,7 @@ function WeaponFx.swingArc(root: BasePart, heavy: boolean)
 	trail.Lifetime = 0.15
 	trail.LightEmission = 0.8
 	trail.FaceCamera = true
-	trail.Color = ColorSequence.new(BRISURE_CYAN)
+	trail.Color = ColorSequence.new(color or BRISURE_CYAN)
 	trail.Transparency =
 		NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 1) })
 	trail.Parent = root

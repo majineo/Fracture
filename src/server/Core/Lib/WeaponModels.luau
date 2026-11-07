@@ -7,7 +7,10 @@
 -- le même nom que l'identifiant d'arme (ex. "weapon.fracture_pistol") et une pièce « Grip »
 -- (la poignée) : il sera utilisé à la place de la forme provisoire.
 
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerStorage = game:GetService("ServerStorage")
+
+local WeaponGrip = require(ReplicatedStorage.Shared.Combat.WeaponGrip)
 
 local METAL = Color3.fromRGB(45, 48, 56)
 local BRISURE_CYAN = Color3.fromRGB(80, 230, 255)
@@ -16,9 +19,6 @@ local BRASS = Color3.fromRGB(176, 128, 58)
 local LEATHER = Color3.fromRGB(70, 40, 24)
 
 local build: (id: string) -> Model?
-
--- Orientation de l'arme par rapport à la main (réglée par mesure en jeu, v0.4.1).
-local GRIP_ROTATION = CFrame.Angles(math.rad(-90), 0, 0)
 
 local WeaponModels = {}
 
@@ -140,6 +140,18 @@ local function placeholder(id: string): Model?
 		edge.Parent = model
 		weld(grip, edge, CFrame.new(0, 0, -2.0))
 		model.PrimaryPart = grip
+	elseif id == "enemy.rusty_sword" then
+		-- Épée des hommes d'armes figés : fer rouillé, sans éclat de Brisure.
+		local rust = Color3.fromRGB(122, 74, 48)
+		local grip = part("Grip", Vector3.new(0.18, 0.18, 0.6), LEATHER, Enum.Material.Fabric)
+		grip.Parent = model
+		local guard = part("Guard", Vector3.new(0.8, 0.14, 0.12), rust, Enum.Material.CorrodedMetal)
+		guard.Parent = model
+		weld(grip, guard, CFrame.new(0, 0, -0.35))
+		local blade = part("Blade", Vector3.new(0.08, 0.3, 2.5), rust, Enum.Material.CorrodedMetal)
+		blade.Parent = model
+		weld(grip, blade, CFrame.new(0, 0, -1.65))
+		model.PrimaryPart = grip
 	else
 		return nil
 	end
@@ -205,7 +217,7 @@ function WeaponModels.equip(character: Model, id: string?)
 	model.Parent = container
 	-- Poignée dans la paume, canon / lame dans le prolongement du bras (-Z de la poignée vers
 	-- l'avant), dessus de l'arme vers le haut.
-	model:PivotTo(hand.CFrame * CFrame.new(0, -0.15, -0.1) * GRIP_ROTATION)
+	model:PivotTo(hand.CFrame * WeaponGrip.HAND_TO_GRIP)
 	local w = Instance.new("WeldConstraint")
 	w.Part0 = hand
 	w.Part1 = model.PrimaryPart

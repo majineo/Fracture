@@ -117,34 +117,8 @@ Poses.Land = table.freeze({
 	LeftAnkle = A(25, 0, 0),
 } :: Pose)
 
--- Pistolet en main (bras droit orienté dynamiquement vers le point visé) : bras gauche en
--- soutien quand on vise.
-Poses.AimSupport = table.freeze({
-	-- Bras gauche vers l'avant et vers l'intérieur (+Z = vers le centre pour le bras gauche)
-	-- pour venir soutenir la main droite.
-	LeftShoulder = A(85, 0, 62),
-	LeftElbow = A(22, 0, 0),
-	RightElbow = A(5, 0, 0),
-} :: Pose)
-
--- Arme longue (fusil, arbalète) : main gauche loin devant, sous le canon.
-Poses.AimLongGun = table.freeze({
-	LeftShoulder = A(92, 0, 48),
-	LeftElbow = A(6, 0, 0),
-	RightElbow = A(10, 0, 0),
-} :: Pose)
-
--- Épée longue tenue à deux mains, pointe vers l'avant et un peu vers le haut.
--- Valeurs trouvées par recherche automatique sur un personnage figé (v0.4.3) : lame droit
--- devant et un peu relevée, main gauche à 0,14 stud de la poignée derrière la main droite.
-Poses.GreatswordGuard = table.freeze({
-	RightShoulder = A(50, 0, -40), -- main droite ramenée vers le centre du corps
-	RightElbow = A(40, 0, 0),
-	RightWrist = A(20, 10, 40), -- redresse la lame vers l'avant
-	LeftShoulder = A(52, 0, 80),
-	LeftElbow = A(0, 0, 0),
-	Waist = A(0, 18, 0),
-} :: Pose)
+-- (v0.4.4) La tenue des armes (garde, port d'arme, visée) est calculée par cinématique
+-- inverse : voir Animation/WeaponHold. Restent ici les poses de coups et de parade.
 
 -- Parade : lame levée en travers devant soi.
 Poses.Parry = table.freeze({
@@ -154,17 +128,6 @@ Poses.Parry = table.freeze({
 	LeftShoulder = A(60, 0, 30),
 	LeftElbow = A(50, 0, 0),
 	Waist = A(-6, 14, 0),
-} :: Pose)
-
--- Lame en main, en garde.
-Poses.BladeGuard = table.freeze({
-	-- Bras à 50° + coude 35° ≈ avant-bras horizontal : la lame pointe vers l'avant.
-	-- (v0.4.0 : 35° + 65° dépassait la verticale, la lame pointait vers l'arrière.)
-	RightShoulder = A(50, 0, 14),
-	RightElbow = A(35, 0, 0),
-	RightWrist = A(-10, 0, 0),
-	LeftShoulder = A(20, 0, -15),
-	LeftElbow = A(30, 0, 0),
 } :: Pose)
 
 -- À terre : allongé sur le ventre, appuyé sur les avant-bras (on rampe).
@@ -186,6 +149,35 @@ Poses.SprintLean = table.freeze({
 	Root = A(-7, 0, 0),
 	Waist = A(-9, 0, 0),
 	Neck = A(10, 0, 0),
+} :: Pose)
+
+-- Échoués (v0.4.4) -----------------------------------------------------------------------
+
+-- Homme d'armes qui prépare son coup : épée levée haut au-dessus de l'épaule (signal lisible).
+Poses.EnemyWindup = table.freeze({
+	RightShoulder = A(165, 0, 15),
+	RightElbow = A(35, 0, 0),
+	RightWrist = A(-30, 0, 0),
+	LeftShoulder = A(30, 0, -20),
+	Waist = A(-8, -20, 0),
+} :: Pose)
+
+-- Fin du coup : bras rabattu en diagonale devant le corps.
+Poses.EnemyStrike = table.freeze({
+	RightShoulder = A(35, 0, -45),
+	RightElbow = A(10, 0, 0),
+	LeftShoulder = A(-10, 0, -20),
+	Waist = A(12, 25, 0),
+} :: Pose)
+
+-- Étourdi (coup paré) : buste rejeté en arrière, bras ouverts.
+Poses.EnemyStunned = table.freeze({
+	Waist = A(-18, 0, 0),
+	Neck = A(-15, 0, 0),
+	RightShoulder = A(40, 0, 55),
+	RightElbow = A(30, 0, 0),
+	LeftShoulder = A(30, 0, -50),
+	LeftElbow = A(30, 0, 0),
 } :: Pose)
 
 return table.freeze(Poses)

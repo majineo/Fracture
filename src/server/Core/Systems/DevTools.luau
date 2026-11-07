@@ -86,10 +86,36 @@ local function setWeapon(player: Player, slot: unknown, id: unknown)
 	WeaponService.setWeapon(player, slot, id)
 end
 
+-- Fait apparaître un ennemi devant le joueur : ("spawnEnemy", id, distance?).
+local function spawnEnemy(player: Player, id: unknown, distance: unknown)
+	local EnemyDefs = require(ReplicatedStorage.Shared.Combat.EnemyDefs)
+	if not Guard.isKeyOf(id, EnemyDefs) then
+		return
+	end
+	local d = if Guard.isFiniteNumber(distance) then math.clamp(distance :: number, 3, 120) else 20
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart")
+	if root == nil or not root:IsA("BasePart") then
+		return
+	end
+	local position = root.Position + root.CFrame.LookVector * d
+	local EnemyService = require(script.Parent.EnemyService) :: any
+	local facing = Vector3.new(root.Position.X, position.Y, root.Position.Z)
+	EnemyService.spawn(id, CFrame.lookAt(position, facing))
+end
+
+-- Retire tous les ennemis : ("clearEnemies").
+local function clearEnemies(_player: Player)
+	local EnemyService = require(script.Parent.EnemyService) :: any
+	EnemyService.clear()
+end
+
 local COMMANDS: { [string]: (Player, ...unknown) -> () } = {
 	teleport = teleport,
 	dummyAttack = dummyAttack,
 	setWeapon = setWeapon,
+	spawnEnemy = spawnEnemy,
+	clearEnemies = clearEnemies,
 }
 
 function DevTools.init()

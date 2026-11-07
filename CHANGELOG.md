@@ -5,6 +5,67 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.5] — 2026-11-07 — « Noyaux »
+
+### Description générale
+Premières capacités spéciales des armes : chaque arme a un noyau de Temps qui se charge en
+combattant. Le pistolet permet de revenir en arrière, la lame courte d'apparaître dans le dos
+d'un ennemi. Les trois autres armes suivront après les retours de test.
+
+### Nouvelles fonctionnalités
+- **Noyau** : jauge au-dessus des munitions (PC) ou dans le bouton « Capa. » (mobile), remplie
+  par les dégâts infligés avec l'arme (100 points). Son et pulsation quand il est plein.
+  Touche **Q** (PC), bouton **Capa.** (mobile), **LB** (manette).
+- **Retour** (pistolet) : après 0,25 s d'annonce (lueur cyan), retour à la position d'il y a
+  2 s, avec la santé d'alors (+35 au maximum, jamais moins). Traînée cyan entre les deux points.
+- **Pas de l'ombre** (lame courte) : l'ennemi le plus proche du viseur à moins de 12 studs est
+  entouré en violet ; Q → après 0,3 s, réapparition dans son dos, tourné vers lui ; le premier
+  coup dans les 1,5 s fait ×1,5. La victime voit « DERRIÈRE TOI ! », entend un son et peut parer.
+  Impossible à travers un mur ou contre un joueur au Refuge.
+- **Riposte** (lame courte, passif) : après une parade réussie, le coup suivant fait ×2.
+- **Recharge sur élimination** (pistolet, passif) : chargeur plein en éliminant ou mettant à
+  terre une cible.
+- 6 nouveaux tests (Ability) : 81 au total. Outil Studio : `fillAbility`.
+
+### Modifications
+- Le noyau se vide à la mort, comme le reste (D-002).
+- `HealthService.heal` : seul moyen de rendre de la santé (jamais à terre ni mort).
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Retour : 34 studs parcourus, retour de 29,8 studs (position 2 s plus tôt) ; santé 55 → 90
+  (plafond +35) ; noyau vidé.
+- Pas de l'ombre : cible choisie, marquée pendant l'annonce, réapparition exactement 2,6 studs
+  dans le dos de l'homme d'armes ; coup suivant 45 au lieu de 30.
+- Riposte : deux parades réussies, coups suivants de 60 au lieu de 30.
+- Recharge sur élimination : 7 tirs, mannequin brisé, chargeur affiché 12 / 12.
+- Sons chargés (pas écoutés), aucune erreur en console.
+
+### Problèmes connus
+- Ressenti à valider à la main : durées d'annonce, distance du Retour, 100 points de charge.
+- Sons choisis sans écoute (Creator Store, gratuits).
+- Pas de l'ombre contre un vrai joueur non testé (avertissement vérifié seulement dans le code).
+- Les noyaux se chargent aussi sur les mannequins du Refuge (pratique pour s'entraîner).
+
+### Fichiers
+- **Ajoutés** : `src/shared/Combat/Ability.luau`, `src/server/Core/Systems/AbilityService.luau`,
+  `src/client/Core/Controllers/AbilityController.luau`, `tests/specs/Ability.spec.luau`
+- **Modifiés** : `src/shared/Combat/WeaponDefs.luau`, `src/shared/Net/Definitions.luau`,
+  `src/server/Core/Systems/{WeaponService,HealthService,DevTools}.luau`,
+  `src/client/Core/Controllers/MobileControls.luau`, `src/client/Core/Combat/{CombatSounds,WeaponFx}.luau`,
+  `src/shared/Config.luau`, `tests/run.luau`, `README.md`, `CHANGELOG.md`,
+  `docs/{DECISIONS,ROADMAP}.md`, `docs/GDD/03-combat.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Retours de test, réglages des deux capacités.
+- v0.4.6 « Noyaux II » : salve et balle de rebond (fusil), carreau de stase (arbalète), onde
+  de fracture et Garde du Temps (épée longue).
+
+---
+
 ## [v0.4.4] — 2026-11-07 — « Échoués »
 
 ### Description générale

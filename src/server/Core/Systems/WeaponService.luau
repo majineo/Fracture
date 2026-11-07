@@ -18,6 +18,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage.Shared
+local Ability = require(Shared.Combat.Ability)
 local CombatConfig = require(Shared.Combat.CombatConfig)
 local Damage = require(Shared.Combat.Damage)
 local HitMath = require(Shared.Combat.HitMath)
@@ -47,6 +48,8 @@ type Loadout = {
 local WeaponService = {}
 
 local loadouts: { [Player]: Loadout } = {}
+-- Bonus du prochain coup de mêlée (Riposte, Pas de l'ombre) : multiplicateur et échéance.
+local hitBonuses: { [Player]: { multiplier: number, expires: number } } = {}
 
 local function rootOf(model: Model?): BasePart?
 	local root = model and model:FindFirstChild("HumanoidRootPart")
@@ -222,6 +225,15 @@ local function applyHit(
 	})
 	if result then
 		notifyHit(shooter, hit.target, result, hit.headshot, origin)
+		-- Trait « recharge sur élimination » (pistolet) : chargeur plein immédiatement.
+		local loadout = loadouts[shooter]
+		if loadout and def.passive == "ReloadOnKill" and (result.killed or result.downed) then
+			local state = stateFor(loadout, def.id)
+			WeaponState.cancelReload(state)
+			state.ammo = def.magazine
+			sendState(shooter, def, state)
+			Net.fire("CombatEvent", shooter, { type = "Passive", passive = "ReloadOnKill" })
+		end
 	end
 end
 
@@ -330,7 +342,30 @@ function WeaponService.meleeStrike(
 	end
 	if tryParry(best.target, root.Position) then
 		stunAttacker(attackerPlayer, attackerModel)
+		-- Trait « Riposte » (lame courte) : le coup suivant du défenseur fait ×2.
+		local defender = best.target.player
+		local defenderLoadout = defender and loadouts[defender]
+		local defenderWeapon = defenderLoadout and defenderLoadout.weapons[defenderLoadout.equipped]
+		local defenderDef = defenderWeapon and WeaponDefs[defenderWeapon]
+		if defender and defenderDef and defenderDef.passive == "Riposte" then
+			WeaponService.grantNextHitBonus(
+				defender,
+				Ability.RIPOSTE_MULTIPLIER,
+				Ability.RIPOSTE_WINDOW
+			)
+			Net.fire("CombatEvent", defender, { type = "Passive", passive = "Riposte" })
+		end
 		return "Parried"
+	end
+	-- Bonus en attente (Riposte, attaque dans le dos) : consommé par ce coup.
+	if attackerPlayer then
+		local bonus = hitBonuses[attackerPlayer]
+		if bonus then
+			hitBonuses[attackerPlayer] = nil
+			if os.clock() <= bonus.expires then
+				extra = (extra or 1) * bonus.multiplier
+			end
+		end
 	end
 	local amount =
 		Damage.compute(def, best.distance, false, CombatConfig.HEADSHOT_MULTIPLIER, extra)
@@ -373,6 +408,27 @@ function WeaponService.setWeapon(player: Player, slot: number, id: string): bool
 	end
 	sendLoadout(player)
 	return true
+end
+
+-- Le prochain coup de mêlée du joueur (s'il touche dans `duration` secondes) fait ×multiplier.
+function WeaponService.grantNextHitBonus(player: Player, multiplier: number, duration: number)
+	hitBonuses[player] = { multiplier = multiplier, expires = os.clock() + duration }
+end
+
+-- Arme en main (définition) et son emplacement, ou nil mains nues.
+function WeaponService.getEquipped(player: Player): (WeaponDefs.WeaponDef?, number)
+	local loadout = loadouts[player]
+	if loadout == nil or loadout.equipped == 0 then
+		return nil, 0
+	end
+	local id = loadout.weapons[loadout.equipped]
+	return if id then WeaponDefs[id] else nil, loadout.equipped
+end
+
+-- Le joueur peut-il agir (vivant, debout, pas étourdi par une parade) ?
+function WeaponService.canUseAbility(player: Player): boolean
+	local loadout = loadouts[player]
+	return loadout ~= nil and canAct(player) and not Parry.isStunned(loadout.parry, os.clock())
 end
 
 function WeaponService.getLoadout(player: Player): { string }?
@@ -554,6 +610,7 @@ function WeaponService.init()
 	Players.PlayerAdded:Connect(watch)
 	Players.PlayerRemoving:Connect(function(player)
 		loadouts[player] = nil
+		hitBonuses[player] = nil
 	end)
 end
 

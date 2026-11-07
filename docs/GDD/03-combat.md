@@ -15,7 +15,8 @@
 | Grappin | G (vise le curseur) | Bouton Grappin (vise le centre de l'écran) | R3 |
 | Glissade | C pendant le sprint | Bouton accroupi pendant le sprint | B |
 | Saut / escalade | Espace | Bouton saut | A |
-| Capacité 1 / 2 | Q / E | Deux boutons | LB / RB |
+| Capacité de l'arme (✅ v0.4.5) | Q | Bouton « Capa. » | LB |
+| Capacités du Codex 1 / 2 (📋) | à définir | Deux boutons | à définir |
 | Arme 1 / 2 (même touche = ranger) | 1 / 2 | Bouton Arme (fait défiler) | Croix ◀ / ▶ |
 | Recharger | R | Bouton | X |
 | Interagir | F | Bouton contextuel | Y |
@@ -92,6 +93,23 @@ Choix des armes à l'armurerie du Refuge (provisoire).
 - La mêlée bat la distance à moins de 6 studs ; la distance gagne au-delà.
 
 ## 6. Capacités
+
+### 6.1 Capacités des armes (🔧 v0.4.5, D-038)
+
+Chaque arme a une **capacité active** et un **trait passif**. La capacité s'utilise quand le
+**noyau** de l'arme est plein ; il se remplit en infligeant des dégâts avec cette arme (100 points)
+et se vide à la mort. Toute capacité est annoncée (lueur, son, courte préparation). 📋 Plus tard :
+débloquées par la maîtrise de l'arme (permanente).
+
+| Arme | Capacité active | Trait passif | Statut |
+|---|---|---|---|
+| Pistolet | **Retour** : après 0,25 s, retour à sa position d'il y a 2 s, avec la santé d'alors (+35 au plus, jamais moins) | Chargeur plein après une élimination / mise à terre | ✅ v0.4.5 |
+| Lame courte | **Pas de l'ombre** : ennemi visé à moins de 12 studs, réapparition dans son dos après 0,3 s ; premier coup ×1,5. La victime est prévenue (« DERRIÈRE TOI ! ») et peut parer | **Riposte** : après une parade réussie, coup suivant ×2 (1,5 s) | ✅ v0.4.5 |
+| Fusil à répétition | **Salve au levier** (3 balles en 0,6 s) **et** **balle de rebond** (ricoche une fois) | Souffle : +25 % après 1 s de visée immobile | 📋 |
+| Arbalète lourde | **Carreau de stase** : bulle de 4 studs, ralentit tout de 50 % (projectiles compris) 3 s | Perforation | 📋 |
+| Épée longue | **Onde de fracture** (coup au sol, onde de 8 studs, parable) ; **Garde du Temps** en maintenant la parade (bloque tout de face, vide le noyau) | Allonge | 📋 |
+
+### 6.2 Capacités du Codex
 
 Deux capacités du Codex sont équipées par partie (voir 04-progression). Les reliques
 non stabilisées ramassées en partie occupent un emplacement temporaire séparé.

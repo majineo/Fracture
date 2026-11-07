@@ -110,7 +110,14 @@ local function clearEnemies(_player: Player)
 	EnemyService.clear()
 end
 
+-- Remplit les noyaux des deux armes : ("fillAbility").
+local function fillAbility(player: Player)
+	local AbilityService = require(script.Parent.AbilityService) :: any
+	AbilityService.fill(player)
+end
+
 local COMMANDS: { [string]: (Player, ...unknown) -> () } = {
+	fillAbility = fillAbility,
 	teleport = teleport,
 	dummyAttack = dummyAttack,
 	setWeapon = setWeapon,

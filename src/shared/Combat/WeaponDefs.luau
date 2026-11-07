@@ -39,6 +39,9 @@ export type WeaponDef = {
 	heavyChargeTime: number?,
 	parryWindow: number?, -- durée de la parade (secondes)
 	swingTime: number?, -- durée visuelle d'un coup simple
+	-- Capacités (v0.4.5, Combat/Ability)
+	ability: string?, -- capacité active (touche Q / bouton « Capacité »)
+	passive: string?, -- trait passif
 }
 
 local WeaponDefs: { [string]: WeaponDef } = {
@@ -61,6 +64,8 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		spreadAim = 0.35,
 		recoil = 1.6,
 		sound = "PistolShot",
+		ability = "Rewind",
+		passive = "ReloadOnKill",
 	},
 	["weapon.short_blade"] = {
 		id = "weapon.short_blade",
@@ -85,6 +90,8 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		heavyChargeTime = 0.6,
 		parryWindow = 0.22,
 		swingTime = 0.2,
+		ability = "ShadowStep",
+		passive = "Riposte",
 	},
 
 	-- Armes de l'Arsenal (v0.4.3) --------------------------------------------------------

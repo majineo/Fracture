@@ -261,3 +261,15 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Choix** : dans l'Éclat, un Échoué tué revient à son poste 90 s plus tard (« le Temps le
   recolle »), pour que l'Éclat reste dangereux toute la partie. Postes provisoires sur le sol
   de test, à replacer avec la vraie carte (v0.5).
+
+## D-038 — Capacités des armes : une par arme, noyau chargé en combattant
+- **Date** : 2026-11-07 · **Version** : v0.4.5 · **Statut** : 🔧 En cours (2 armes sur 5)
+- **Choix** (validé par l'utilisateur) : chaque arme a une capacité active (touche Q, bouton
+  « Capa. », LB) et un trait passif. La capacité demande un noyau plein, rempli par les dégâts
+  infligés avec l'arme (100 points), vidé à la mort. Liste des capacités : GDD 03 §6.1. Le fusil
+  aura deux capacités, l'épée longue aussi (la seconde en maintenant la parade).
+- **Règles** : toute capacité est annoncée et contrable ; le Pas de l'ombre prévient sa victime
+  (« DERRIÈRE TOI ! », lueur), qui peut se retourner et parer. Pas d'étourdissement à distance.
+- **Rythme** : deux capacités d'abord (Retour, Pas de l'ombre) pour régler le ressenti, puis les
+  trois autres armes. 📋 Déblocage par la maîtrise d'arme quand elle existera.
+- **Commandes** : la manette Y reste « Interagir » ; les capacités du Codex auront d'autres touches.

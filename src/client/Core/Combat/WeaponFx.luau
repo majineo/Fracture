@@ -192,6 +192,61 @@ function WeaponFx.shatter(position: Vector3)
 	Debris:AddItem(a, 1.3)
 end
 
+-- Capacité de déplacement (Retour, Pas de l'ombre) : bouffée au départ et à l'arrivée, trait
+-- lumineux qui s'efface entre les deux.
+function WeaponFx.abilityTrail(origin: Vector3, finish: Vector3, color: Color3)
+	local ends: { Attachment } = {}
+	for _, position in { origin, finish } do
+		local a = Instance.new("Attachment")
+		a.WorldPosition = position
+		a.Parent = workspace.Terrain
+		local puff = Instance.new("ParticleEmitter")
+		puff.Enabled = false
+		puff.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
+		puff.LightEmission = 0.8
+		puff.Lifetime = NumberRange.new(0.3, 0.6)
+		puff.Speed = NumberRange.new(3, 9)
+		puff.SpreadAngle = Vector2.new(180, 180)
+		puff.Drag = 3
+		puff.Shape = Enum.ParticleEmitterShape.Cylinder
+		puff.ShapeStyle = Enum.ParticleEmitterShapeStyle.Volume
+		puff.Size = NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.6),
+			NumberSequenceKeypoint.new(1, 0),
+		})
+		puff.Transparency = NumberSequence.new(0.2, 1)
+		puff.Parent = a
+		puff:Emit(30)
+		local light = Instance.new("PointLight")
+		light.Color = color
+		light.Range = 10
+		light.Brightness = 3
+		light.Parent = a
+		TweenService:Create(light, TweenInfo.new(0.5), { Brightness = 0 }):Play()
+		Debris:AddItem(a, 1)
+		table.insert(ends, a)
+	end
+	local beam = Instance.new("Beam")
+	beam.Attachment0 = ends[1]
+	beam.Attachment1 = ends[2]
+	beam.Color = ColorSequence.new(color)
+	beam.LightEmission = 1
+	beam.FaceCamera = true
+	beam.Width0 = 0.5
+	beam.Width1 = 0.15
+	beam.Segments = 1
+	beam.Parent = ends[1]
+	local start = os.clock()
+	local connection
+	connection = game:GetService("RunService").Heartbeat:Connect(function()
+		local t = math.clamp((os.clock() - start) / 0.45, 0, 1)
+		beam.Transparency = NumberSequence.new(0.2 + 0.8 * t)
+		if t >= 1 or beam.Parent == nil then
+			connection:Disconnect()
+		end
+	end)
+end
+
 -- Traînée de lame (coup de mêlée) le long d'un arc devant le personnage.
 function WeaponFx.swingArc(root: BasePart, heavy: boolean, color: Color3?)
 	local a0 = Instance.new("Attachment")

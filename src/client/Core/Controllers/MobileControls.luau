@@ -16,6 +16,7 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
+local AbilityController = require(script.Parent.AbilityController)
 local CombatController = require(script.Parent.CombatController)
 local MovementController = require(script.Parent.MovementController)
 
@@ -172,8 +173,27 @@ function MobileControls.start()
 		onPress = MovementController.touchGrapple,
 	})
 
+	-- Capacité de l'arme (v0.4.5) : le contour se remplit avec le noyau.
+	local ability = makeButton(anchor, {
+		name = "Ability",
+		text = "Capa.",
+		position = UDim2.fromScale(0.95, 0.04),
+		size = 0.2,
+		onPress = AbilityController.use,
+	})
+	local abilityStroke = ability:FindFirstChildOfClass("UIStroke") :: UIStroke
+
 	RunService.RenderStepped:Connect(function()
 		gui.Enabled = shouldShow()
+		if gui.Enabled then
+			local charge, abilityName = AbilityController.getState()
+			ability.Visible = abilityName ~= nil
+			local ready = charge >= 1
+			ability.Text = if ready then "PRÊT" else `{math.floor(charge * 100)}%`
+			abilityStroke.Thickness = if ready then 4 else 2
+			abilityStroke.Transparency = if ready then 0 else 0.8 - 0.6 * charge
+			ability.TextColor3 = if ready then CYAN else Color3.new(1, 1, 1)
+		end
 		if not gui.Enabled then
 			return
 		end

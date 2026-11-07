@@ -20,6 +20,11 @@ local SOUNDS = table.freeze({
 	-- v0.4.4 (Échoués)
 	EnemyWindup = { id = "rbxasset://sounds/unsheath.wav", volume = 0.6 }, -- lame levée : avertissement
 	EnemyShatter = { id = "rbxasset://sounds/glassbreak.wav", volume = 0.6 },
+	-- v0.4.5 (capacités) — Creator Store, gratuits, choisis sans écoute
+	AbilityRewind = { id = "rbxassetid://134583958662340", volume = 0.6 }, -- « Potion Summon »
+	AbilityShadow = { id = "rbxassetid://88724017134214", volume = 0.7 }, -- « SuddenMovement »
+	AbilityReady = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.4 },
+	ShadowWarning = { id = "rbxasset://sounds/unsheath.wav", volume = 0.8 },
 })
 
 local CombatSounds = {}

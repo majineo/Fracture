@@ -154,6 +154,23 @@ function HealthService.applyDamage(model: Model, amount: number, info: DamageInf
 	return result
 end
 
+-- Rend de la santé (jamais au-delà du maximum, jamais à terre ni mort). Renvoie le gain.
+function HealthService.heal(model: Model, amount: number): number
+	if amount ~= amount or amount <= 0 or CombatTargets.get(model) == nil then
+		return 0
+	end
+	if not isAlive(model) or model:GetAttribute("Downed") == true then
+		return 0
+	end
+	local health = (model:GetAttribute("Health") :: number?) or 0
+	local maxHealth = (model:GetAttribute("MaxHealth") :: number?) or CombatConfig.MAX_HEALTH
+	local healed = math.min(maxHealth, health + amount) - health
+	if healed > 0 then
+		model:SetAttribute("Health", health + healed)
+	end
+	return healed
+end
+
 -- Remet une cible en pleine forme (mannequins, réanimation plus tard).
 function HealthService.restore(model: Model)
 	local maxHealth = (model:GetAttribute("MaxHealth") :: number?) or CombatConfig.MAX_HEALTH

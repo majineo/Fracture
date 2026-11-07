@@ -9,12 +9,14 @@
 -- elle quand elle s'effondre (« le sac reste jusqu'à l'effondrement de sa tuile », GDD 02 §4).
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayout"))
 local RunInventory = require(Shared:WaitForChild("Loot"):WaitForChild("RunInventory"))
 local LootTables = require(Shared.Loot:WaitForChild("LootTables"))
+local ItemDefs = require(Shared.Loot:WaitForChild("ItemDefs"))
 
 local Core = script.Parent.Parent.Parent
 local Net = require(Core.Lib.Net)
@@ -252,7 +254,89 @@ local function onKilled(model: Model)
 	end
 end
 
+-- Consommables (v0.6.3) : soin après un temps d'utilisation, annulé si l'on est touché.
+local using: { [Player]: number } = {} -- jeton de l'utilisation en cours
+
+local function useConsumable(player: Player, id: unknown)
+	if typeof(id) ~= "string" then
+		return
+	end
+	local def = ItemDefs.get(id)
+	if def == nil or def.heal == nil or using[player] ~= nil then
+		return
+	end
+	local character = player.Character
+	if character == nil or not alive(player) then
+		return
+	end
+	local health = (character:GetAttribute("Health") :: number?) or 0
+	local maxHealth = (character:GetAttribute("MaxHealth") :: number?) or 100
+	if health >= maxHealth then
+		Net.fire("LootEvent", player, { type = "Healed", amount = 0, full = true })
+		return
+	end
+	if RunInventory.count(LootService.inventory(player), id) <= 0 then
+		return
+	end
+	local duration = def.useTime or 0
+	local token = os.clock()
+	using[player] = token
+	character:SetAttribute("UsingItem", id)
+	character:SetAttribute("UseEnds", workspace:GetServerTimeNow() + duration)
+	local hurt = false
+	local conn = HealthService.Damaged:Connect(function(model: Model)
+		if model == character then
+			hurt = true
+		end
+	end)
+	local start = os.clock()
+	while
+		os.clock() - start < duration
+		and not hurt
+		and alive(player)
+		and player.Character == character
+	do
+		task.wait(0.1)
+	end
+	conn:Disconnect()
+	using[player] = nil
+	if character.Parent then
+		character:SetAttribute("UsingItem", nil)
+		character:SetAttribute("UseEnds", nil)
+	end
+	if hurt or not alive(player) or player.Character ~= character then
+		Net.fire("LootEvent", player, { type = "Interrupted", id = id })
+		return
+	end
+	-- L'objet n'est retiré qu'une fois le soin réussi (et s'il est toujours porté).
+	if RunInventory.remove(LootService.inventory(player), id, 1) == 1 then
+		local healed = HealthService.heal(character, def.heal :: number)
+		LootService.push(player)
+		Net.fire("LootEvent", player, { type = "Healed", amount = healed })
+	end
+end
+
 function LootService.init()
+	Net.on("UseConsumable", function(player: Player, id: unknown)
+		task.spawn(useConsumable, player, id)
+	end)
+	-- Test dans Studio uniquement : workspace:SetAttribute("QA_GiveItem", "cons.bandage:2")
+	-- donne l'objet au premier joueur.
+	if RunService:IsStudio() then
+		workspace:GetAttributeChangedSignal("QA_GiveItem"):Connect(function()
+			local value = workspace:GetAttribute("QA_GiveItem")
+			local player = Players:GetPlayers()[1]
+			if typeof(value) ~= "string" or player == nil then
+				return
+			end
+			local id, qty = string.match(value, "^([%w%._]+):(%d+)")
+			if id and qty then
+				RunInventory.add(LootService.inventory(player), id, tonumber(qty) :: number)
+				LootService.push(player)
+			end
+			workspace:SetAttribute("QA_GiveItem", nil)
+		end)
+	end
 	EclatService.Built:Connect(function(layout: any)
 		-- Nouvelle partie : inventaires vidés (ce qui n'a pas été extrait est perdu).
 		for player, inv in inventories do
@@ -264,6 +348,7 @@ function LootService.init()
 	HealthService.Killed:Connect(onKilled)
 	Players.PlayerRemoving:Connect(function(player)
 		inventories[player] = nil
+		using[player] = nil
 	end)
 	-- Inventaire envoyé à chaque apparition (le client a eu le temps de se brancher).
 	local function watch(player: Player)

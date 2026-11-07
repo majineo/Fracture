@@ -5,6 +5,45 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.6.3] — 2026-11-08 — « Bandages »
+
+### Description générale
+Les Bandages trouvés dans l'Éclat servent enfin : on se soigne en quelques secondes, à condition
+de ne pas se faire toucher pendant ce temps.
+
+### Nouvelles fonctionnalités
+- **Bandage** : +30 santé après 2,5 s ; touche **H** (clavier), **croix bas** (manette), ou
+  toucher le bandage dans la barre d'inventaire (mobile). Jauge verte pendant le soin.
+- Interrompu par le moindre dégât (le bandage est gardé) ; refusé si la santé est pleine, si l'on
+  est à terre ou mort, ou si un soin est déjà en cours.
+
+### Modifications
+- Remote `UseConsumable` (vers le serveur, limité) ; objets : champs `heal` et `useTime`.
+- Cases de l'inventaire touchables (consommables).
+- Test dans Studio : attribut `QA_GiveItem` = « id:quantité » (donne un objet au premier joueur).
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Santé 50, 2 bandages : soin → 80, 1 bandage restant, jauge affichée pendant le soin.
+- Soin commencé au contact d'un homme d'armes : « Soin interrompu », bandage gardé.
+- 99 tests Lune.
+
+### Problèmes connus
+- Touches H et croix bas non essayées avec de vraies pressions (validé par le remote).
+
+### Fichiers
+- **Modifiés** : `src/server/Eclat/Systems/LootService.luau`,
+  `src/client/Eclat/Controllers/LootHud.luau`, `src/shared/Loot/ItemDefs.luau`,
+  `src/shared/Net/Definitions.luau`, `src/shared/Config.luau`, `CHANGELOG.md`
+- **Ajoutés / Supprimés** : —
+
+### Prochaines étapes
+- v0.7.0 : reliques (utiliser ou ramener), autels.
+
+---
+
 ## [v0.6.2] — 2026-11-08 — « Kit de forteresse »
 
 ### Description générale

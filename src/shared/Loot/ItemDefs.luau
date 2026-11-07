@@ -13,6 +13,8 @@ export type ItemDef = {
 	rarity: Rarity,
 	maxStack: number,
 	value: number, -- valeur indicative en Grains (équilibrage, revente future)
+	heal: number?, -- consommable de soin : santé rendue (v0.6.3)
+	useTime: number?, -- durée d'utilisation (secondes), interrompue par les dégâts
 }
 
 local GRAINS = "currency.grains"
@@ -48,6 +50,8 @@ local defs: { [string]: ItemDef } = {
 		rarity = "Commun",
 		maxStack = 5,
 		value = 8,
+		heal = 30,
+		useTime = 2.5,
 	},
 }
 

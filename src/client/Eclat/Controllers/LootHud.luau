@@ -6,6 +6,7 @@
 -- Le client ne décide de rien : il affiche ce que le serveur envoie (InventoryState, LootEvent,
 -- ExtractionResult) et les attributs répliqués (zones, progression).
 
+local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -34,6 +35,13 @@ local progressFrame: Frame
 local progressFill: Frame
 local progressText: TextLabel
 local result: Frame
+local stacksShown: { any } = {}
+
+local BANDAGE = "cons.bandage"
+
+local function useBandage()
+	Net.fire("UseConsumable", BANDAGE)
+end
 
 local function rarityColor(id: string): Color3
 	local def = ItemDefs.get(id)
@@ -96,6 +104,19 @@ local function buildInventory()
 		qty.Size = UDim2.new(1, -4, 0, 14)
 		qty.Position = UDim2.new(0, 2, 1, -16)
 		qty.TextXAlignment = Enum.TextXAlignment.Right
+		local tap = Instance.new("TextButton")
+		tap.Name = "Toucher"
+		tap.Size = UDim2.fromScale(1, 1)
+		tap.BackgroundTransparency = 1
+		tap.Text = ""
+		tap.Parent = slot
+		tap.Activated:Connect(function()
+			local stack = stacksShown[i]
+			local def = stack and ItemDefs.get(stack.id)
+			if def and def.heal then
+				Net.fire("UseConsumable", stack.id)
+			end
+		end)
 		slot.Parent = bar
 		slots[i] = slot
 	end
@@ -105,6 +126,7 @@ local function showInventory(state: any)
 	if typeof(state) ~= "table" or typeof(state.stacks) ~= "table" then
 		return
 	end
+	stacksShown = state.stacks
 	for i, slot in slots do
 		local stack = state.stacks[i]
 		local name = slot:FindFirstChild("Nom") :: TextLabel
@@ -155,6 +177,14 @@ local function onLoot(info: any)
 		elseif info.empty then
 			toast("Vide", Color3.fromRGB(170, 170, 170))
 		end
+	elseif info.type == "Healed" then
+		if info.full then
+			toast("Santé déjà pleine", Color3.fromRGB(170, 170, 170))
+		elseif typeof(info.amount) == "number" then
+			toast(`Soigné +{math.floor(info.amount)}`, Color3.fromRGB(120, 230, 140))
+		end
+	elseif info.type == "Interrupted" then
+		toast("Soin interrompu", ORANGE)
 	elseif info.type == "Lost" and typeof(info.items) == "table" and #info.items > 0 then
 		toast("Butin perdu — il reste dans votre sac", ORANGE)
 	end
@@ -335,6 +365,22 @@ local function update()
 			part.Transparency = 1
 		end
 	end
+	-- Jauge de soin (bandage en cours).
+	local useEnds = character and character.Parent and character:GetAttribute("UseEnds")
+	if typeof(useEnds) == "number" and not result.Visible then
+		local left = useEnds - workspace:GetServerTimeNow()
+		local def = ItemDefs.get(BANDAGE)
+		local total = (def and def.useTime) or 2.5
+		progressFrame.Visible = true
+		progressFill.BackgroundColor3 = Color3.fromRGB(120, 230, 140)
+		progressFill.Size = UDim2.fromScale(math.clamp(1 - left / total, 0, 1), 1)
+		progressText.TextColor3 = Color3.fromRGB(120, 230, 140)
+		progressText.Text =
+			string.format("BANDAGE — %.1f s (un coup l'interrompt)", math.max(0, left))
+		return
+	end
+	progressFill.BackgroundColor3 = CYAN
+	progressText.TextColor3 = CYAN
 	-- Jauge d'extraction.
 	local p = character and character.Parent and character:GetAttribute("ExtractProgress")
 	if typeof(p) == "number" and p > 0 and not result.Visible then
@@ -393,6 +439,13 @@ function LootHud.start()
 		end
 	end)
 	RunService.RenderStepped:Connect(update)
+	-- Bandage : H (clavier), croix bas (manette) ; sur mobile, toucher l'objet dans la barre.
+	ContextActionService:BindAction("FractureBandage", function(_, state: Enum.UserInputState)
+		if state == Enum.UserInputState.Begin then
+			useBandage()
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.H, Enum.KeyCode.DPadDown)
 end
 
 return LootHud

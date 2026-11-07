@@ -39,6 +39,7 @@ export type RemoteName =
 	| "ExtractionResult"
 	| "RequestRedeploy"
 	| "Notice"
+	| "UseConsumable"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -86,6 +87,9 @@ local Definitions: { [string]: RemoteDef } = {
 	-- Le joueur extrait demande à repartir dans l'Éclat (aucun argument).
 	RequestRedeploy = { direction = "ToServer", rate = 0.5, burst = 2 },
 
+	-- Utiliser un consommable porté (v0.6.3) : (id de l'objet). Le serveur vérifie qu'il est
+	-- porté, que le joueur est en état, et gère la durée du soin (interrompu par les dégâts).
+	UseConsumable = { direction = "ToServer", rate = 1, burst = 2 },
 	-- Message court à afficher au joueur (portail indisponible, etc.) : (texte).
 	Notice = { direction = "ToClient" },
 

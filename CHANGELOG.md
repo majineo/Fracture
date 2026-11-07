@@ -5,6 +5,63 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.7.1] — 2026-11-08 — « Codex »
+
+### Description générale
+Ramener une relique intacte paie enfin : au Refuge, on la stabilise dans le Codex, et elle devient
+une capacité permanente, emportée dans chaque Éclat sans risque de la perdre.
+
+### Nouvelles fonctionnalités
+- **Stabiliser** (coffre du Refuge) : relique intacte (3/3) + 60 Grains + 1 Acier ancien → la
+  capacité entre au Codex (niveau 1, puis 2 et 3 en stabilisant de nouveau la même relique).
+- **Équiper** 2 capacités du Codex (boutons Équiper / Retirer).
+- **Dans l'Éclat** : chaque capacité équipée a 2 utilisations par vie (3 dès le niveau 2) ;
+  touches **V** et **B** (R1 / Select à la manette) ou toucher les pastilles au-dessus de
+  l'inventaire ; rechargées à chaque réapparition.
+- Fenêtre du coffre refaite : liste défilante, sections Codex et Coffre, boutons, messages.
+
+### Modifications
+- **Profil en version 2** : champ `equipped` (migration v1 → v2 testée, rien n'est perdu).
+- Règles du Codex en module pur testé (`Shared/Loot/Codex`).
+- Remotes `StabilizeRelic`, `EquipCodex`, `UseCodex` (limités) ; l'instantané du profil contient
+  les GUID du coffre et les capacités équipées.
+- Test dans Studio : attribut `QA_SeedCodex` (remplit le coffre au Refuge, équipe dans l'Éclat).
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Tests Lune : 6 nouveaux (stabiliser, refus sans rien payer, niveau maximal, équiper 2 au plus,
+  utilisations par niveau, migration du profil v1 → v2) ; 106 au total.
+- Refuge : coffre rempli (Stase intacte, Onde de choc abîmée, 2 Aciers anciens, 150 Grains) ;
+  Stase stabilisée (90 Grains et 1 Acier restants, relique retirée, Codex niveau 1) puis équipée ;
+  Onde de choc non stabilisée : équipement refusé avec message (capture de la fenêtre).
+- Éclat : pastilles « [V] Stase · 3 » et « [B] Onde de choc · 2 » ; V crée la bulle et retire une
+  utilisation, bloqué à 0 ; utilisations rendues à la réapparition.
+- Corrigé pendant le test : utilisations non rendues à la réapparition (personnage annoncé avant
+  d'être dans le monde, même piège qu'en v0.5.0).
+
+### Problèmes connus
+- Variantes de niveau 3 (écho, mur, saut) pas encore faites : le niveau 3 donne 3 utilisations.
+- Touches V / B et boutons manette non essayés avec de vraies pressions.
+- Revente des reliques abîmées : plus tard.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Loot/Codex.luau`, `src/server/Refuge/Systems/CodexService.luau`,
+  `tests/specs/Codex.spec.luau`
+- **Modifiés** : `src/server/Core/Lib/ProfileSchema.luau`,
+  `src/server/Core/Systems/ProfileReplication.luau`, `src/server/Eclat/Systems/RelicService.luau`,
+  `src/client/Refuge/Controllers/VaultUi.luau`, `src/client/Eclat/Controllers/LootHud.luau`,
+  `src/shared/{Types,Config}.luau`, `src/shared/Net/Definitions.luau`,
+  `tests/{run.luau,specs/ProfileSchema.spec.luau}`, `CHANGELOG.md`, `docs/ROADMAP.md`,
+  `docs/GDD/04-progression.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Variantes de niveau 3 ; Signature et boussole ; Gardien du Donjon.
+
+---
+
 ## [v0.7.0] — 2026-11-08 — « Reliques »
 
 ### Description générale

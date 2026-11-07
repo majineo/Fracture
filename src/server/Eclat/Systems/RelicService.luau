@@ -8,18 +8,21 @@
 -- bond) ; le serveur vérifie la relique, l'état du joueur, la recharge, puis applique l'effet.
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayout"))
 local ItemDefs = require(Shared:WaitForChild("Loot"):WaitForChild("ItemDefs"))
 local RunInventory = require(Shared.Loot:WaitForChild("RunInventory"))
+local Codex = require(Shared.Loot:WaitForChild("Codex"))
 
 local Core = script.Parent.Parent.Parent
 local Net = require(Core.Lib.Net)
 local AbilityService = require(Core.Systems.AbilityService)
 local CombatTargets = require(Core.Systems.CombatTargets)
 local HealthService = require(Core.Systems.HealthService)
+local PlayerData = require(Core.Systems.PlayerData)
 local EclatService = require(script.Parent.EclatService)
 local LootService = require(script.Parent.LootService)
 
@@ -204,7 +207,99 @@ local function useRelic(player: Player, index: unknown, direction: unknown)
 	Net.fire("LootEvent", player, { type = "RelicUsed", id = id, left = left })
 end
 
+-- Capacités du Codex (v0.7.1) : à chaque apparition, les capacités équipées reçoivent leurs
+-- utilisations (attributs « Codex1 », « Codex1Uses »… sur le personnage, lus par l'interface).
+local function grantCodex(player: Player, character: Model)
+	local data = PlayerData.get(player)
+	for slot = 1, Codex.MAX_EQUIPPED do
+		local id = data and data.equipped[slot]
+		local level = id and data and data.codex[id] or 0
+		if id and level > 0 and POWERS[id] then
+			character:SetAttribute(`Codex{slot}`, id)
+			character:SetAttribute(`Codex{slot}Uses`, Codex.usesFor(level))
+		else
+			character:SetAttribute(`Codex{slot}`, nil)
+			character:SetAttribute(`Codex{slot}Uses`, nil)
+		end
+	end
+end
+
+local function useCodex(player: Player, slot: unknown, direction: unknown)
+	if slot ~= 1 and slot ~= 2 then
+		return
+	end
+	local now = os.clock()
+	if now - (lastUse[player] or 0) < COOLDOWN then
+		return
+	end
+	local character = player.Character
+	local root = character and rootOf(character)
+	if
+		character == nil
+		or root == nil
+		or character:GetAttribute("Dead") == true
+		or character:GetAttribute("Downed") == true
+	then
+		return
+	end
+	local id = character:GetAttribute(`Codex{slot}`)
+	local uses = character:GetAttribute(`Codex{slot}Uses`)
+	local power = typeof(id) == "string" and POWERS[id] or nil
+	if power == nil or typeof(uses) ~= "number" or uses <= 0 then
+		return
+	end
+	lastUse[player] = now
+	if power(player, character, root, direction) then
+		character:SetAttribute(`Codex{slot}Uses`, uses - 1)
+	end
+end
+
 function RelicService.init()
+	Net.on("UseCodex", useCodex)
+	-- Test dans Studio uniquement : équipe Stase (niv. 2) et Onde de choc (niv. 1) au premier joueur.
+	if RunService:IsStudio() then
+		workspace:GetAttributeChangedSignal("QA_SeedCodex"):Connect(function()
+			local player = Players:GetPlayers()[1]
+			local data = player and PlayerData.get(player)
+			if workspace:GetAttribute("QA_SeedCodex") ~= true or data == nil then
+				return
+			end
+			data.codex["relic.stase"] = 2
+			data.codex["relic.onde_de_choc"] = 1
+			data.equipped = { "relic.stase", "relic.onde_de_choc" }
+			if player.Character then
+				grantCodex(player, player.Character)
+			end
+			workspace:SetAttribute("QA_SeedCodex", nil)
+		end)
+	end
+	local function watch(player: Player)
+		player.CharacterAdded:Connect(function(character)
+			-- Le profil peut arriver un peu après le personnage.
+			for _ = 1, 20 do
+				if PlayerData.get(player) then
+					break
+				end
+				task.wait(0.5)
+			end
+			-- Le personnage peut être annoncé avant d'être placé dans le monde (voir HealthService).
+			local since = os.clock()
+			while
+				character.Parent == nil
+				and player.Character == character
+				and os.clock() - since < 10
+			do
+				task.wait()
+			end
+			if character.Parent then
+				grantCodex(player, character)
+			end
+		end)
+	end
+	for _, player in Players:GetPlayers() do
+		watch(player)
+	end
+	Players.PlayerAdded:Connect(watch)
 	EclatService.Built:Connect(function(layout: any)
 		-- Après les caisses de LootService (même signal) : on attend la fin de la construction.
 		task.defer(placeAltars, layout)

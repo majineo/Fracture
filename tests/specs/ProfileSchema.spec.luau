@@ -45,6 +45,30 @@ return function(T)
 		T.equal(stored.codex, nil)
 	end)
 
+	T.test(
+		"migration v1 → v2 : capacités équipées ajoutées, Codex et coffre gardés",
+		function()
+			local v1 = {
+				version = 1,
+				createdAt = 10,
+				rank = { level = 3, xp = 40 },
+				grains = 120,
+				codex = { ["relic.stase"] = 2 },
+				mastery = {},
+				stash = { abc = { id = "mat.iron", qty = 4 } },
+				stats = { extractions = 2, deaths = 1, sessions = 5 },
+			}
+			local data, err = ProfileSchema.migrate(v1)
+			T.equal(err, nil)
+			T.equal(data.version, 2)
+			T.equal(#data.equipped, 0)
+			T.equal(data.codex["relic.stase"], 2)
+			T.equal(data.stash.abc.qty, 4)
+			T.equal(data.grains, 120)
+			T.truthy(ProfileSchema.validate(data), "toujours stockable")
+		end
+	)
+
 	T.test("migrate refuse des données d'une version future", function()
 		local data, reason = ProfileSchema.migrate({ version = ProfileSchema.CURRENT_VERSION + 1 })
 		T.equal(data, nil)

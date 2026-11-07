@@ -89,6 +89,50 @@ local function text(parent: Instance, value: string, size: number, color: Color3
 	return l
 end
 
+-- Capacités du Codex (v0.7.1) : 2 pastilles au-dessus de l'inventaire.
+local codexButtons: { TextButton } = {}
+
+local function useCodex(slot: number)
+	local camera = workspace.CurrentCamera
+	Net.fire("UseCodex", slot, camera and camera.CFrame.LookVector or nil)
+end
+
+local function buildCodex()
+	for slot = 1, 2 do
+		local b = Instance.new("TextButton")
+		b.Name = `Codex{slot}`
+		b.AnchorPoint = Vector2.new(0.5, 1)
+		b.Position = UDim2.new(0.5, (slot - 1.5) * 190, 1, -152)
+		b.Size = UDim2.fromOffset(180, 30)
+		b.BackgroundColor3 = Color3.fromRGB(40, 24, 60)
+		b.BackgroundTransparency = 0.25
+		b.Font = Enum.Font.GothamBold
+		b.TextSize = 13
+		b.TextColor3 = Color3.fromRGB(200, 150, 255)
+		b.Visible = false
+		corner(b, 6)
+		b.Parent = gui
+		b.Activated:Connect(function()
+			useCodex(slot)
+		end)
+		codexButtons[slot] = b
+	end
+end
+
+local function updateCodex(character: Model?)
+	for slot, b in codexButtons do
+		local id = character and character:GetAttribute(`Codex{slot}`)
+		local uses = character and character:GetAttribute(`Codex{slot}Uses`)
+		if typeof(id) == "string" and typeof(uses) == "number" then
+			b.Visible = true
+			b.Text = `[{if slot == 1 then "V" else "B"}] {itemName(id)} · {uses}`
+			b.TextTransparency = if uses > 0 then 0 else 0.6
+		else
+			b.Visible = false
+		end
+	end
+end
+
 local function buildInventory()
 	local bar = Instance.new("Frame")
 	bar.Name = "Inventaire"
@@ -362,6 +406,7 @@ local function update()
 	local elapsed = if typeof(start) == "number" then workspace:GetServerTimeNow() - start else 0
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart")
+	updateCodex(if character and character.Parent then character else nil)
 	for part, m in markers do
 		if part.Parent == nil then
 			removeMarker(part)
@@ -456,6 +501,7 @@ function LootHud.start()
 	list.Parent = toastList
 	buildProgress()
 	buildResult()
+	buildCodex()
 	Net.on("InventoryState", showInventory)
 	Net.on("LootEvent", onLoot)
 	Net.on("ExtractionResult", onResult)
@@ -482,6 +528,22 @@ function LootHud.start()
 		end
 		return Enum.ContextActionResult.Pass
 	end, false, Enum.KeyCode.T, Enum.KeyCode.ButtonY)
+	for slot, keys in
+		{ { Enum.KeyCode.V, Enum.KeyCode.ButtonR1 }, { Enum.KeyCode.B, Enum.KeyCode.ButtonSelect } }
+	do
+		ContextActionService:BindAction(
+			`FractureCodex{slot}`,
+			function(_, state: Enum.UserInputState)
+				if state == Enum.UserInputState.Begin then
+					useCodex(slot)
+				end
+				return Enum.ContextActionResult.Pass
+			end,
+			false,
+			keys[1],
+			keys[2]
+		)
+	end
 end
 
 return LootHud

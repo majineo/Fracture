@@ -26,6 +26,7 @@
 | v0.6.0 | Extraction | Inventaire de partie, caisses et coffres, sac à la mort, points d'extraction et Faille finale, versement au coffre | ✅ |
 | v0.6.1 | Refuge | Coffre consultable, portail, voyages Éclat ↔ Refuge (actifs après publication) | ✅ (voyages non testés) |
 | v0.7.0 | Reliques | Autels, 3 reliques à 3 charges (utiliser ou ramener), reliques au coffre | ✅ |
-| v0.7.1 | Codex | Stabiliser une relique intacte au Refuge, 2 capacités équipables, Signature | 📋 |
+| v0.7.1 | Codex | Stabiliser une relique intacte au Refuge, 2 capacités équipées utilisables dans l'Éclat | ✅ |
+| v0.7.2 | Signature | Jauge de repérage, boussole | 📋 |
 | v0.8.0 | Vertical slice | Première époque complète, Gardien, tests multijoueurs | 📋 |
 | v1.0.0 | Sortie | Première version publique jouable | 📋 |

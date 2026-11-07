@@ -24,6 +24,11 @@ D-007 et D-012 : seuls l'équipement emporté et le butin se perdent.
 - Chaque capacité a **3 niveaux** : stabiliser plusieurs fois la même relique débloque une
   variante (pas seulement plus de dégâts).
 
+✅ v0.7.1 (`Shared/Loot/Codex`, testé) : stabilisation au coffre du Refuge contre **60 Grains +
+1 Acier ancien** (relique intacte consommée, niveau +1, 3 au plus) ; 2 capacités équipées ;
+dans l'Éclat, **2 utilisations par vie** (3 dès le niveau 2), touches V et B (R1 / Select à la
+manette, ou toucher la pastille). Les variantes de niveau 3 restent à faire.
+
 ### Reliques de la vertical slice
 
 | Relique | Effet | Variante niveau 3 |

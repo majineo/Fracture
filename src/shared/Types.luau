@@ -14,7 +14,8 @@ export type ProfileSnapshot = {
 	mastery: { [string]: number },
 	stashCount: number,
 	-- v0.6.1 : contenu du coffre (vue publique du joueur lui-même) et statistiques.
-	stash: { { id: string, qty: number } },
+	stash: { { id: string, qty: number, guid: string } },
+	equipped: { string },
 	extractions: number,
 	deaths: number,
 }

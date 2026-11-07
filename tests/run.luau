@@ -20,6 +20,7 @@ local specs = {
 	require("./specs/Ability.spec"),
 	require("./specs/Eclat.spec"),
 	require("./specs/Loot.spec"),
+	require("./specs/Codex.spec"),
 }
 
 for _, spec in specs do

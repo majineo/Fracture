@@ -20,12 +20,13 @@ export type ProfileData = {
 	rank: { level: number, xp: number },
 	grains: number,
 	codex: { [string]: number }, -- relique -> niveau (permanent)
+	equipped: { string }, -- capacités du Codex emportées en partie (2 au plus, v0.7.1)
 	mastery: { [string]: number }, -- catégorie d'arme -> XP (permanent)
 	stash: { [string]: ItemRecord }, -- GUID -> objet (coffre du Refuge, en sécurité)
 	stats: { extractions: number, deaths: number, sessions: number },
 }
 
-local CURRENT_VERSION = 1
+local CURRENT_VERSION = 2
 
 local ProfileSchema = {}
 
@@ -50,6 +51,7 @@ local TEMPLATE = {
 	rank = { level = 1, xp = 0 },
 	grains = 0,
 	codex = {},
+	equipped = {},
 	mastery = {},
 	stash = {},
 	stats = { extractions = 0, deaths = 0, sessions = 0 },
@@ -65,7 +67,13 @@ end
 -- Migrations : MIGRATIONS[n] transforme des données version n en version n + 1.
 -- Exemple pour une future v2 :
 --   [1] = function(data) data.loadout = {} return data end,
-local MIGRATIONS: { [number]: (any) -> any } = {}
+local MIGRATIONS: { [number]: (any) -> any } = {
+	-- v1 → v2 (jeu v0.7.1) : capacités du Codex équipées.
+	[1] = function(data)
+		data.equipped = {}
+		return data
+	end,
+}
 
 -- Ajoute les champs manquants du modèle sans toucher aux valeurs existantes.
 -- Les tables vides du modèle (codex, stash…) sont des dictionnaires libres : on ne les

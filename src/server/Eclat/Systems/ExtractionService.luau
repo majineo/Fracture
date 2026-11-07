@@ -23,6 +23,7 @@ local Net = require(Core.Lib.Net)
 local HealthService = require(Core.Systems.HealthService)
 local PlayerData = require(Core.Systems.PlayerData)
 local ProfileReplication = require(Core.Systems.ProfileReplication)
+local Travel = require(Core.Systems.Travel)
 local EclatService = require(script.Parent.EclatService)
 local LootService = require(script.Parent.LootService)
 
@@ -147,6 +148,10 @@ local function extract(player: Player)
 		-- Détruire le personnage ne vide pas Player.Character : on le fait nous-mêmes.
 		player.Character = nil
 		character:Destroy()
+	end
+	-- Jeu publié : retour au Refuge après la lecture du bilan (sinon, bouton « Repartir »).
+	if Travel.available("Refuge") then
+		task.delay(4, Travel.go, player, "Refuge")
 	end
 end
 

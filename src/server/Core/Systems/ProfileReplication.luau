@@ -12,9 +12,14 @@ local ProfileReplication = {}
 
 local function snapshotOf(data: any): Types.ProfileSnapshot
 	local stashCount = 0
-	for _ in data.stash do
+	local stash = {}
+	for _, record in data.stash do
 		stashCount += 1
+		table.insert(stash, { id = record.id, qty = record.qty })
 	end
+	table.sort(stash, function(a, b)
+		return a.id < b.id
+	end)
 	return {
 		rank = data.rank.level,
 		xp = data.rank.xp,
@@ -22,6 +27,9 @@ local function snapshotOf(data: any): Types.ProfileSnapshot
 		codex = table.clone(data.codex),
 		mastery = table.clone(data.mastery),
 		stashCount = stashCount,
+		stash = stash,
+		extractions = data.stats.extractions,
+		deaths = data.stats.deaths,
 	}
 end
 

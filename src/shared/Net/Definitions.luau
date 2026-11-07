@@ -38,6 +38,7 @@ export type RemoteName =
 	| "LootEvent"
 	| "ExtractionResult"
 	| "RequestRedeploy"
+	| "Notice"
 
 local Definitions: { [string]: RemoteDef } = {
 	-- Le client signale qu'il est prêt à recevoir son état (demande un instantané du profil).
@@ -84,6 +85,9 @@ local Definitions: { [string]: RemoteDef } = {
 	ExtractionResult = { direction = "ToClient" },
 	-- Le joueur extrait demande à repartir dans l'Éclat (aucun argument).
 	RequestRedeploy = { direction = "ToServer", rate = 0.5, burst = 2 },
+
+	-- Message court à afficher au joueur (portail indisponible, etc.) : (texte).
+	Notice = { direction = "ToClient" },
 
 	-- Commandes de test. Écoutées UNIQUEMENT dans Studio (voir Server > Systems > DevTools) :
 	-- en jeu publié, ce remote existe mais personne ne l'écoute.

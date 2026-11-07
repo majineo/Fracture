@@ -13,6 +13,10 @@ export type ProfileSnapshot = {
 	codex: { [string]: number },
 	mastery: { [string]: number },
 	stashCount: number,
+	-- v0.6.1 : contenu du coffre (vue publique du joueur lui-même) et statistiques.
+	stash: { { id: string, qty: number } },
+	extractions: number,
+	deaths: number,
 }
 
 return nil

@@ -5,6 +5,54 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.6.1] — 2026-11-08 — « Refuge »
+
+### Description générale
+Le Refuge accueille le butin rapporté : un coffre affiche ce que l'on possède, et un portail mène
+vers l'Éclat. Le voyage entre les places est prêt côté code, et s'activera dès que les places
+seront publiées.
+
+### Nouvelles fonctionnalités
+- **Coffre du Refuge** (à l'est de l'apparition) : invite « Ouvrir », fenêtre avec les Grains, le
+  contenu du coffre et les statistiques (extractions, morts). Lecture seule.
+- **Portail vers l'Éclat** (au sud) : arche lumineuse, invite « Partir ».
+- **Voyages** (`Server/Systems/Travel`) : Refuge → Éclat par le portail, Éclat → Refuge 4 s
+  après une extraction (le temps de lire le bilan), avec réessais. Le profil suit grâce au verrou
+  de session.
+
+### Modifications
+- L'instantané du profil envoyé au joueur contient le contenu de son coffre et ses statistiques.
+- `Config.PLACE_IDS` (identifiants des places, à remplir après publication) ; remote `Notice`.
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Refuge : coffre ouvert par son invite, fenêtre affichée avec Grains, contenu et statistiques ;
+  portail : message de repli reçu (places non publiées).
+- 99 tests Lune ; constructions Refuge et Éclat.
+
+### Problèmes connus
+- **Téléportations non testées** : impossibles dans Studio et tant que `Config.PLACE_IDS` vaut 0.
+  À vérifier après la première publication (Refuge et Éclat dans la même expérience).
+- Dans Studio, les données sont en mémoire : le coffre est vide à chaque nouveau test.
+- Coffre et portail en blocs provisoires.
+
+### Fichiers
+- **Ajoutés** : `src/server/Core/Systems/Travel.luau`, `src/server/Refuge/Systems/Hall.luau`,
+  `src/client/Refuge/Controllers/VaultUi.luau`
+- **Modifiés** : `src/server/Core/Systems/ProfileReplication.luau`,
+  `src/server/Eclat/Systems/ExtractionService.luau`, `src/shared/{Config,Types}.luau`,
+  `src/shared/Net/Definitions.luau`, `CHANGELOG.md`, `docs/ROADMAP.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Publier les deux places (décision et action de l'utilisateur), renseigner `Config.PLACE_IDS`,
+  tester le voyage.
+- v0.5.1 : kit de forteresse dans Blender.
+
+---
+
 ## [v0.6.0] — 2026-11-07 — « Extraction »
 
 ### Description générale

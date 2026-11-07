@@ -60,8 +60,8 @@ jeu utilise des textures intégrées à Roblox (`Combat/VfxTextures`).
 | `Lueur.png` | halo doux (noyau chargé, traînées de capacité) | ✅ rbxassetid://113971661677731 |
 | `Poussiere.png` | bouffée de poussière (course, glissade, réception) | ✅ rbxassetid://128543269635465 |
 | `Vignette.png` | bords d'écran (dégâts, santé basse, soin) | ✅ rbxassetid://135127213697813 |
-| `CercleRunique.png` | cercle magique (Rayon du Zénith, lunette) — v0.4.12 | 📦 À importer |
-| `Rayon.png` | rayon de lumière vertical (Rayon du Zénith) — v0.4.12 | 📦 À importer |
+| `CercleRunique.png` | cercle magique (Rayon du Zénith, lunette) — v0.4.12 | ✅ rbxassetid://114876894159248 |
+| `Rayon.png` | rayon de lumière vertical (Rayon du Zénith) — v0.4.12 | ✅ rbxassetid://78828733565010 |
 
 Import : Studio → **Gestionnaire d'assets** (Affichage → Gestionnaire d'assets) → **Importer
 en lot** → choisir les 5 PNG. Claude récupère ensuite les identifiants et les inscrit dans

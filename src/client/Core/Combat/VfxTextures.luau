@@ -10,8 +10,8 @@ local IMPORTED = {
 	Glow = "rbxassetid://113971661677731", -- halo doux (auras, noyau chargé)
 	Dust = "rbxassetid://128543269635465", -- bouffée de poussière (pas de course, réception)
 	Vignette = "rbxassetid://135127213697813", -- bords d'écran (santé basse, dégâts, soin)
-	Runes = "", -- cercle runique (Rayon du Zénith, v0.4.12)
-	Beam = "", -- rayon de lumière vertical (v0.4.12)
+	Runes = "rbxassetid://114876894159248", -- cercle runique (Rayon du Zénith, v0.4.12)
+	Beam = "rbxassetid://78828733565010", -- rayon de lumière vertical (v0.4.12)
 }
 
 local FALLBACK = {

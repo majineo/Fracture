@@ -5,6 +5,43 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.13] — 2026-11-07 — « Zénith — textures »
+
+### Description générale
+Les deux textures Blender du Fusil du Zénith (cercle runique et rayon) sont importées et
+branchées : le Rayon du Zénith et la lunette ont enfin leur vrai rendu.
+
+### Nouvelles fonctionnalités
+- —
+
+### Modifications
+- Cercles runiques du Rayon du Zénith, onde d'impact et réticule de la lunette : vraie texture
+  `CercleRunique` (au lieu de la texture de secours).
+- Rayon descendant du ciel : vraie texture `Rayon`.
+
+### Corrections de bugs
+- —
+
+### Vérifications (Studio)
+- Les deux images se chargent (`ContentProvider` : Success).
+- Rayon du Zénith lancé sur le mannequin : 5 cercles runiques et rayon visibles (capture).
+- Lunette (clic droit maintenu, vraie souris) : champ de vision 22°, réticule runique doré (capture).
+
+### Problèmes connus
+- Son de tir du sniper provisoire (son du pistolet, plus grave).
+- Les bêtes n'ont ni squelette ni animations : ce sont des modèles de test.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/client/Core/Combat/VfxTextures.luau`, `src/shared/Config.luau`,
+  `CHANGELOG.md`, `docs/ASSETS.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Son de tir du sniper ; selon les retours, squelette et animations des bêtes.
+
+---
+
 ## [v0.4.12] — 2026-11-07 — « Zénith »
 
 ### Description générale

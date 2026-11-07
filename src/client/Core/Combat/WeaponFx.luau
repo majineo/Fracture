@@ -5,6 +5,7 @@
 
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
+local VfxTextures = require(script.Parent.VfxTextures)
 
 local TRACER_COLOR = Color3.fromRGB(255, 225, 160)
 local BRISURE_CYAN = Color3.fromRGB(80, 230, 255)
@@ -48,6 +49,8 @@ function WeaponFx.muzzleFlash(origin: Vector3, direction: Vector3)
 	light.Brightness = 4
 	light.Parent = a
 	local sparks = Instance.new("ParticleEmitter")
+	sparks.Texture = VfxTextures.get("Spark")
+	sparks.Orientation = Enum.ParticleOrientation.VelocityParallel
 	sparks.Enabled = false
 	sparks.Color = ColorSequence.new(TRACER_COLOR)
 	sparks.LightEmission = 1
@@ -70,6 +73,7 @@ function WeaponFx.impact(position: Vector3, normal: Vector3, color: Color3)
 	a.WorldCFrame = CFrame.lookAt(position, position + normal)
 	a.Parent = workspace.Terrain
 	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = VfxTextures.get("Dust")
 	dust.Enabled = false
 	dust.Color = ColorSequence.new(color:Lerp(Color3.new(1, 1, 1), 0.3))
 	dust.LightInfluence = 1
@@ -142,6 +146,8 @@ function WeaponFx.parrySparks(position: Vector3)
 	light.Brightness = 5
 	light.Parent = a
 	local sparks = Instance.new("ParticleEmitter")
+	sparks.Texture = VfxTextures.get("Spark")
+	sparks.Orientation = Enum.ParticleOrientation.VelocityParallel
 	sparks.Enabled = false
 	sparks.Color = ColorSequence.new(BRISURE_CYAN, Color3.new(1, 1, 1))
 	sparks.LightEmission = 1
@@ -171,6 +177,7 @@ function WeaponFx.shatter(position: Vector3)
 	light.Brightness = 4
 	light.Parent = a
 	local shards = Instance.new("ParticleEmitter")
+	shards.Texture = VfxTextures.get("Shard")
 	shards.Enabled = false
 	shards.Color = ColorSequence.new(BRISURE_CYAN, Color3.fromRGB(150, 160, 175))
 	shards.LightEmission = 0.6
@@ -201,6 +208,7 @@ function WeaponFx.abilityTrail(origin: Vector3, finish: Vector3, color: Color3)
 		a.WorldPosition = position
 		a.Parent = workspace.Terrain
 		local puff = Instance.new("ParticleEmitter")
+		puff.Texture = VfxTextures.get("Glow")
 		puff.Enabled = false
 		puff.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
 		puff.LightEmission = 0.8
@@ -263,6 +271,7 @@ function WeaponFx.groundWave(origin: Vector3, finish: Vector3)
 			a.WorldPosition = at + Vector3.new(0, 0.1, 0)
 			a.Parent = workspace.Terrain
 			local shards = Instance.new("ParticleEmitter")
+			shards.Texture = VfxTextures.get("Shard")
 			shards.Enabled = false
 			shards.Color = ColorSequence.new(BRISURE_CYAN, Color3.new(1, 1, 1))
 			shards.LightEmission = 0.7
@@ -278,6 +287,7 @@ function WeaponFx.groundWave(origin: Vector3, finish: Vector3)
 			shards.Parent = a
 			shards:Emit(12)
 			local dust = Instance.new("ParticleEmitter")
+			dust.Texture = VfxTextures.get("Dust")
 			dust.Enabled = false
 			dust.Color = ColorSequence.new(
 				if ground then ground.Instance.Color else Color3.new(0.6, 0.6, 0.6)
@@ -348,6 +358,8 @@ function WeaponFx.meleeImpact(position: Vector3, heavy: boolean)
 	a.WorldPosition = position
 	a.Parent = workspace.Terrain
 	local sparks = Instance.new("ParticleEmitter")
+	sparks.Texture = VfxTextures.get("Spark")
+	sparks.Orientation = Enum.ParticleOrientation.VelocityParallel
 	sparks.Enabled = false
 	sparks.Color = ColorSequence.new(Color3.new(1, 1, 1), BRISURE_CYAN)
 	sparks.LightEmission = 1

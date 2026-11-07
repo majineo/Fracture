@@ -54,6 +54,7 @@ type Visual = {
 	stutterUntil: number,
 	lastStutter: number?,
 	dead: boolean,
+	lastHealth: number?,
 }
 
 local EnemyVisuals = {}
@@ -94,6 +95,11 @@ local function attach(model: Model)
 		a.addLayer("Windup", Poses.EnemyWindup, false, 12)
 		a.addLayer("Strike", Poses.EnemyStrike, false, 30)
 		a.addLayer("Stunned", Poses.EnemyStunned, false, 16)
+		-- Recul quand il est touché (v0.4.9, additif).
+		a.addLayer("Flinch", {
+			Waist = CFrame.Angles(math.rad(16), math.rad(8), 0),
+			Neck = CFrame.Angles(math.rad(12), 0, 0),
+		}, true, 22)
 		animator = a
 		arms = WeaponHold.measureArms(rig)
 	end
@@ -319,6 +325,12 @@ local function update(visual: Visual, dt: number)
 	-- Poses.
 	local animator = visual.animator
 	if animator then
+		local health = model:GetAttribute("Health") :: number?
+		if health and visual.lastHealth and health < visual.lastHealth - 0.5 then
+			animator.impulse("Flinch", 18)
+		end
+		visual.lastHealth = health
+		animator.setWeight("Flinch", 0)
 		local stunned = ((model:GetAttribute("StunnedUntil") :: number?) or 0) > t
 		local striking = clock < visual.strikeUntil
 		animator.setWeight("Stunned", if stunned then 1 else 0)

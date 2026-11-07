@@ -20,7 +20,7 @@ Jouable pour l'instant : se déplacer sur le parcours de test du Refuge.
 | Action | PC | Mobile | Manette |
 |---|---|---|---|
 | Sprint | Maj (maintenir) | Bouton Sprint | L3 |
-| Glisser (en courant) | C ou Ctrl | Bouton Glisser | B |
+| Glisser (en courant) | C ou Ctrl (C seulement dans Studio) | Bouton Glisser | B |
 | Escalader | Saut face à un rebord | Saut | A |
 | Grappin | G (vise le curseur) | Bouton Grappin (centre de l'écran) | R3 |
 | Pistolet / lame (même touche = ranger) | 1 / 2 | Bouton Arme | Croix ◀ / ▶ |

@@ -45,6 +45,24 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 20 | Sons de déplacement (glissade, grappin, réception) | Audio | 📦 Provisoires | Sons gratuits du Creator Store choisis sans écoute : à valider (`Animation/SoundConfig.luau`) |
 
 
+## Textures d'effets (v0.4.9)
+
+Générées dans Blender par `assets/blender/vfx/generate_sprites.py` (numpy, 256 × 256, blanc
+sur fond transparent : Roblox teinte les particules). Tant qu'elles ne sont pas importées, le
+jeu utilise des textures intégrées à Roblox (`Combat/VfxTextures`).
+
+| Fichier | Rôle | Statut |
+|---|---|---|
+| `Eclat.png` | éclat de Temps (bris, matérialisation, ambiance, onde) | 📦 À importer |
+| `Etincelle.png` | étincelle étirée, orientée selon la vitesse (impacts, parade) | 📦 À importer |
+| `Lueur.png` | halo doux (noyau chargé, traînées de capacité) | 📦 À importer |
+| `Poussiere.png` | bouffée de poussière (course, glissade, réception) | 📦 À importer |
+| `Vignette.png` | bords d'écran (dégâts, santé basse, soin) | 📦 À importer |
+
+Import : Studio → **Gestionnaire d'assets** (Affichage → Gestionnaire d'assets) → **Importer
+en lot** → choisir les 5 PNG. Claude récupère ensuite les identifiants et les inscrit dans
+`src/client/Core/Combat/VfxTextures.luau`.
+
 ## Maillages importés sur Roblox
 
 Les modèles intégrés vivent dans la place de travail (`ServerStorage > WeaponModels`) :

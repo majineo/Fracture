@@ -291,3 +291,17 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   deux capacités partagent le noyau de l'arme. Aucun bouton supplémentaire sur mobile.
 - **Ajustement** : « Souffle » (fusil) se déclenche après 1 s d'immobilité, jugée par le serveur,
   au lieu de « 1 s de visée immobile » (le serveur ne sait pas si l'on vise).
+
+## D-041 — Studio : pas de Ctrl pour glisser pendant les tests
+- **Date** : 2026-11-07 · **Version** : v0.4.9 · **Statut** : ✅ Implémentée
+- **Constat** : dans la fenêtre de test de Studio, Ctrl + A (tout sélectionner) et Ctrl + D
+  (dupliquer) se déclenchaient en glissant (Ctrl) tout en se déplaçant : personnages, mannequins
+  et décor étaient copiés côté client (signalé comme un « problème de duplication »).
+- **Choix** : dans Studio, la glissade est sur C (et B) uniquement ; le jeu publié garde Ctrl.
+
+## D-042 — Effets de ressenti centralisés, textures d'effets faites dans Blender
+- **Date** : 2026-11-07 · **Version** : v0.4.9 · **Statut** : ✅ Implémentée
+- **Choix** : les effets qui ne changent pas les règles (flash d'impact, bris, santé basse,
+  matérialisation, noyau chargé, poussière, ambiance) vivent dans un contrôleur client
+  (`GameFeel`) qui ne lit que des attributs répliqués. Les textures de particules sont générées
+  dans Blender (script reproductible) ; des textures Roblox intégrées servent en attendant l'import.

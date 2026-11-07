@@ -263,14 +263,27 @@ local function bindInputs()
 		Enum.KeyCode.LeftShift,
 		Enum.KeyCode.ButtonL3
 	)
-	ContextActionService:BindAction(
-		ACTION_SLIDE,
-		handleSlide,
-		false,
-		Enum.KeyCode.C,
-		Enum.KeyCode.LeftControl,
-		Enum.KeyCode.ButtonB
-	)
+	-- Glissade : C, Ctrl, B. Dans Studio, Ctrl est retiré : Ctrl + A / Ctrl + D (en se
+	-- déplaçant) y déclenchent « tout sélectionner » et « dupliquer » dans la fenêtre de test,
+	-- ce qui copiait personnages et décor (v0.4.9). Le jeu publié garde Ctrl.
+	if RunService:IsStudio() then
+		ContextActionService:BindAction(
+			ACTION_SLIDE,
+			handleSlide,
+			false,
+			Enum.KeyCode.C,
+			Enum.KeyCode.ButtonB
+		)
+	else
+		ContextActionService:BindAction(
+			ACTION_SLIDE,
+			handleSlide,
+			false,
+			Enum.KeyCode.C,
+			Enum.KeyCode.LeftControl,
+			Enum.KeyCode.ButtonB
+		)
+	end
 	ContextActionService:BindAction(
 		ACTION_GRAPPLE,
 		handleGrapple,

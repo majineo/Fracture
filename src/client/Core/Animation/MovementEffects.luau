@@ -11,6 +11,7 @@
 -- Réception : anneau de poussière proportionnel à la hauteur de chute.
 
 local SoundConfig = require(script.Parent.SoundConfig)
+local VfxTextures = require(script.Parent.Parent.Combat.VfxTextures)
 
 export type Effects = {
 	setSliding: (enabled: boolean, groundColor: Color3?) -> (),
@@ -38,6 +39,7 @@ end
 
 local function makeDust(): ParticleEmitter
 	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = VfxTextures.get("Dust")
 	emitter.Name = "SlideDust"
 	emitter.Enabled = false
 	emitter.Color = ColorSequence.new(DEFAULT_DUST)
@@ -67,6 +69,7 @@ end
 
 local function makeDebris(): ParticleEmitter
 	local emitter = Instance.new("ParticleEmitter")
+	emitter.Texture = VfxTextures.get("Dust")
 	emitter.Name = "SlideDebris"
 	emitter.Enabled = false
 	emitter.Color = ColorSequence.new(DEFAULT_DUST)

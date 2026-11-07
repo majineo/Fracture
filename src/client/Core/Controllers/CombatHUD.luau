@@ -15,6 +15,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local CombatConfig = require(Shared:WaitForChild("Combat"):WaitForChild("CombatConfig")) :: any
 local WeaponDefs = require(Shared.Combat:WaitForChild("WeaponDefs")) :: any
 local CombatController = require(script.Parent.CombatController)
+local ScreenVignette = require(script.Parent.Parent.Combat.ScreenVignette)
 
 local WHITE = Color3.new(1, 1, 1)
 local CYAN = Color3.fromRGB(80, 230, 255)
@@ -164,6 +165,15 @@ function CombatHUD.start()
 		TextXAlignment = Enum.TextXAlignment.Right,
 		Font = Enum.Font.GothamBlack,
 	})
+	-- Compteur qui « saute » à chaque tir (v0.4.9).
+	local ammoScale = Instance.new("UIScale")
+	ammoScale.Parent = ammoText
+	CombatController.Fired:Connect(function()
+		ammoScale.Scale = 1.18
+		game:GetService("TweenService")
+			:Create(ammoScale, TweenInfo.new(0.16, Enum.EasingStyle.Quad), { Scale = 1 })
+			:Play()
+	end)
 	local weaponName = label("Weapon", ammoPanel, {
 		Position = UDim2.fromScale(0, 0.62),
 		Size = UDim2.fromScale(1, 0.38),
@@ -187,16 +197,8 @@ function CombatHUD.start()
 	local healthFill = bar("Health", vitals, UDim2.fromScale(0, 1), HEALTH_COLOR)
 
 	-- Bords rouges quand on est touché + flèche de direction.
-	local vignetteFrame = frame("DamageVignette", gui, {
-		Size = UDim2.fromScale(1, 1),
-		BackgroundTransparency = 1,
-	})
-	local vignette = Instance.new("UIStroke")
-	vignette.Thickness = 28
-	vignette.Color = RED
-	vignette.Transparency = 1
-	vignette.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-	vignette.Parent = vignetteFrame
+	-- (v0.4.9) L'ancienne bordure était dessinée hors de l'écran : voir Combat/ScreenVignette.
+	local vignette = ScreenVignette.new(gui, RED, 0.14)
 	local indicator = frame("DamageDirection", gui, {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
@@ -378,7 +380,7 @@ function CombatHUD.start()
 
 		-- Dégâts reçus
 		damageFade = math.max(0, damageFade - dt * 1.8)
-		vignette.Transparency = 1 - damageFade * 0.55
+		vignette.set(damageFade * 0.55)
 		local camera = workspace.CurrentCamera
 		local root = character and character:FindFirstChild("HumanoidRootPart")
 		if damageFrom and camera and root and root:IsA("BasePart") and damageFade > 0 then

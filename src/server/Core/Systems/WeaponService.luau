@@ -567,9 +567,9 @@ local function performShot(
 		local normal = world.Normal
 		local bounced = (dir - 2 * dir:Dot(normal) * normal).Unit
 		local from = world.Position + normal * 0.05
-		local range = math.max(0, def.range - world.Distance)
-		local second = workspace:Raycast(from, bounced * range, params)
-		local secondMax = if second then second.Distance else range
+		local remaining = math.max(0, range - world.Distance)
+		local second = workspace:Raycast(from, bounced * remaining, params)
+		local secondMax = if second then second.Distance else remaining
 		local secondHits = traceTargets(player, from, bounced, secondMax, t)
 		local stop = secondMax
 		local first = secondHits[1]
@@ -693,6 +693,12 @@ local function onReload(player: Player)
 	local def, state = equippedDef(player)
 	if def and state and canAct(player) and WeaponState.reload(state, def, os.clock()) then
 		sendState(player, def, state)
+		-- Publié pour l'animation de rechargement (visible par tous).
+		local character = player.Character
+		if character then
+			character:SetAttribute("ReloadWeapon", def.id)
+			character:SetAttribute("ReloadEnd", workspace:GetServerTimeNow() + def.reloadTime)
+		end
 	end
 end
 

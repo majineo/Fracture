@@ -28,6 +28,9 @@ local SOUNDS = table.freeze({
 	-- v0.4.6 (lames) — Creator Store, gratuits, choisis sans écoute
 	MeleeHit = { id = "rbxassetid://138293953015099", volume = 0.6 }, -- « SFX_Hit_Sword_Medium_01 »
 	MeleeHitHeavy = { id = "rbxassetid://84636875169658", volume = 0.7 }, -- « Heavy Sword Hit 1 »
+	-- v0.4.9 (effets)
+	Heartbeat = { id = "rbxassetid://176554627", volume = 0.6 }, -- « Slow Heartbeat » (en boucle)
+	Equip = { id = "rbxasset://sounds/unsheath.wav", volume = 0.35 },
 })
 
 local CombatSounds = {}

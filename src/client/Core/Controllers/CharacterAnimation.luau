@@ -62,11 +62,19 @@ type Tracked = {
 	gripWeapon: string?,
 	stock: number?, -- longueur de crosse mesurée sur le modèle tenu
 	stockWeapon: string?,
+	lastHealth: number?, -- pour le recul quand on est touché
 }
 
 local CharacterAnimation = {}
 
 local tracked: { [Model]: Tracked } = {}
+
+-- Recul du buste quand on est touché (additif).
+local FLINCH_POSE = {
+	Waist = CFrame.Angles(math.rad(14), math.rad(6), 0),
+	Neck = CFrame.Angles(math.rad(10), 0, 0),
+}
+local FLINCH_IMPULSE = 16
 
 local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	local animator = PoseAnimator.new(rig)
@@ -84,6 +92,7 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	animator.addLayer("Hold", {}, false, 14)
 	-- Rotation du buste qui accompagne les coups de lame (additive).
 	animator.addLayer("Twist", { Waist = CFrame.identity }, true, 30)
+	animator.addLayer("Flinch", FLINCH_POSE, true, 22)
 	animator.addLayer("Downed", Poses.Downed, false, 8)
 	return animator
 end
@@ -91,6 +100,11 @@ end
 -- Arme déplacée par un coup / une parade / une charge (Animation/MeleeMotion).
 type MeleeOverride = { grip: CFrame, direct: boolean, blend: number? }
 local SWING_HOLD = 0.1 -- la fin du coup reste affichée un instant avant le retour en garde
+-- Dégainer (v0.4.9) : l'arme part de la hanche droite, canon / lame vers le bas.
+local HOLSTER = CFrame.new(0.95, -1.1, -0.25) * CFrame.Angles(math.rad(-75), 0, 0)
+-- Rechargement : arme ramenée vers la poitrine et basculée.
+local RELOAD_OFFSET = Vector3.new(-0.25, -0.3, 0.45)
+local RELOAD_TILT = CFrame.Angles(math.rad(38), 0, math.rad(-35))
 
 local function untrack(character: Model)
 	local entry = tracked[character]
@@ -240,9 +254,29 @@ local function updateHold(
 		end
 		wanted = wanted:Lerp(motion.grip, motion.blend or 1)
 	end
+	-- Rechargement (armes à feu, v0.4.9) : l'arme bascule vers la poitrine, les mains suivent.
+	if isGun then
+		local reloadEnd = entry.character:GetAttribute("ReloadEnd") :: number?
+		local def = WeaponDefs[weapon]
+		if
+			reloadEnd
+			and def
+			and entry.character:GetAttribute("ReloadWeapon") == weapon
+			and reloadEnd > workspace:GetServerTimeNow()
+		then
+			local remaining = reloadEnd - workspace:GetServerTimeNow()
+			local progress = 1 - math.clamp(remaining / math.max(def.reloadTime, 0.1), 0, 1)
+			local amount = math.sin(math.pi * progress)
+			local tilted = CFrame.new(wanted.Position + RELOAD_OFFSET)
+				* wanted.Rotation
+				* RELOAD_TILT
+			wanted = wanted:Lerp(tilted, amount)
+		end
+	end
 	local grip = entry.grip
 	if grip == nil or entry.gripWeapon ~= weapon then
-		grip = wanted
+		-- Arme qu'on dégaine : elle part de la hanche et monte en position (lissage).
+		grip = if grip == nil then HOLSTER else wanted
 	else
 		grip = grip:Lerp(wanted, 1 - math.exp(-GRIP_SMOOTHING * dt))
 	end
@@ -255,6 +289,13 @@ end
 
 local function updateEntry(entry: Tracked, dt: number)
 	local isLocal = entry.player == localPlayer
+	-- Touché : le buste recule un instant (impulsion sur le ressort de la couche « Flinch »).
+	local health = entry.character:GetAttribute("Health") :: number?
+	if health and entry.lastHealth and health < entry.lastHealth - 0.5 then
+		entry.animator.impulse("Flinch", FLINCH_IMPULSE)
+	end
+	entry.lastHealth = health
+	entry.animator.setWeight("Flinch", 0)
 	local mode: string = if isLocal
 		then MovementController.getMode()
 		else (entry.character:GetAttribute("MoveMode") :: string?) or "Normal"

@@ -5,6 +5,69 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.4.9] — 2026-11-07 — « Éclat »
+
+### Description générale
+Le jeu devient plus vivant à l'œil : réactions aux coups, animations d'armes, effets de santé,
+ambiance. Et la « duplication » signalée est expliquée et corrigée.
+
+### Nouvelles fonctionnalités
+- **Coups reçus** : flash blanc sur toute cible touchée ; le buste recule (joueurs et Échoués).
+- **Éliminations** : bandeau « ÉLIMINÉ » (ou « À TERRE ») pour le tireur ; mannequins et joueurs
+  éliminés se brisent en éclats, comme les Échoués.
+- **Armes** :
+  - **dégainer** : l'arme part de la hanche et monte en position, et se **matérialise** en
+    particules cyan (avec un son) ;
+  - **rechargement animé** : l'arme bascule vers la poitrine, les mains suivent ; visible par tous ;
+  - **noyau chargé** : le cœur cyan de l'arme en main brille et scintille, visible par tous.
+- **Santé** : sous 35 %, bords rouges qui battent, image désaturée, battements de cœur ; un soin
+  (Retour) donne un flash cyan.
+- **Mouvement et ambiance** : bouffées de poussière sous les pieds en courant ; éclats de Temps
+  qui flottent dans l'air autour du joueur.
+- **Interface** : le compteur de munitions « saute » à chaque tir.
+- **Textures d'effets faites dans Blender** (éclat, étincelle, lueur, poussière, vignette), prêtes
+  à importer ; textures Roblox intégrées en attendant.
+
+### Modifications
+- Les étincelles sont orientées dans le sens de leur trajectoire.
+- Les bords rouges des dégâts utilisent la nouvelle vignette en dégradé.
+
+### Corrections de bugs
+- **Duplication** (captures de l'utilisateur) : dans Studio, glisser avec Ctrl en se déplaçant
+  déclenchait Ctrl + A puis Ctrl + D (tout sélectionner, dupliquer) dans la fenêtre de test :
+  personnages, mannequins, armurerie copiés côté client, entourés en bleu (sélection). Dans
+  Studio, la glissade passe sur C ; le jeu publié garde Ctrl (D-041). La place enregistrée ne
+  contenait aucun doublon.
+- Les bords rouges des dégâts étaient dessinés hors de l'écran (invisibles).
+
+### Vérifications (Studio)
+- Duplication : copies présentes seulement côté client (×3), une seule côté serveur, 18 objets
+  sélectionnés dans Studio ; place enregistrée vérifiée sans doublon.
+- Dégainer : 5 émetteurs de matérialisation ; flash du mannequin touché ; bandeau « ÉLIMINÉ » ;
+  lueur du noyau chargé ; rechargement publié (2,1 s) ; ambiance présente.
+- Santé 25 : saturation −0,55, battements de cœur, bords rouges en dégradé (capture).
+- Aucune erreur en console.
+
+### Problèmes connus
+- Les 5 textures Blender restent à importer (textures Roblox par défaut en attendant).
+- Ressenti à valider (intensité des effets, son de battements choisi sans écoute).
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Controllers/GameFeel.luau`,
+  `src/client/Core/Combat/{VfxTextures,ScreenVignette}.luau`,
+  `assets/blender/vfx/{generate_sprites.py,Eclat.png,Etincelle.png,Lueur.png,Poussiere.png,Vignette.png}`
+- **Modifiés** : `src/client/Core/Controllers/{MovementController,CharacterAnimation,EnemyVisuals,CombatHUD}.luau`,
+  `src/client/Core/Combat/{WeaponFx,CombatSounds}.luau`, `src/client/Core/Animation/MovementEffects.luau`,
+  `src/server/Core/Systems/WeaponService.luau`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/{ASSETS,DECISIONS}.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Import des textures d'effets, réglages selon les retours.
+- v0.5.0 « Éclats » : génération procédurale à partir de tuiles.
+
+---
+
 ## [v0.4.8] — 2026-11-07 — « Correctif arbalète »
 
 ### Description générale

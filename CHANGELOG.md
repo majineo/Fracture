@@ -5,6 +5,47 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.8.1] — 2026-11-08 — « Armure du Roi »
+
+### Description générale
+L'armure du Roi Sans Heure est modélisée dans Blender ; le jeu la porte automatiquement dès
+qu'elle est importée, à la place de la couronne provisoire.
+
+### Nouvelles fonctionnalités
+- **Armure du Roi** (`assets/blender/enemies/build_roi.py`, 1 264 triangles, 17 pièces) :
+  couronne dorée à fleurons sertie de cristaux, plastron d'acier à arête dorée, col, cape royale
+  indigo, épaulières bordées de laiton, ceinture et tassettes, jambières et genouillères.
+- Pose automatique : pièces soudées à la partie du corps de leur nom, agrandies ×3 avec le Roi,
+  couleurs et matériaux d'après le suffixe ; la couronne importée reste le point faible
+  (surbrillance quand elle est exposée).
+
+### Modifications
+- `docs/ASSETS.md` : procédure d'import de l'armure.
+
+### Corrections de bugs
+- —
+
+### Vérifications
+- Blender : deux rendus (épaulières reprises : bordures couchées, dômes lissés).
+- Studio, avec une armure de test aux bons noms : soudée à la tête, agrandie ×3, métal doré,
+  pas de couronne provisoire.
+- 112 tests Lune.
+
+### Problèmes connus
+- **Armure pas encore importée** (import FBX par l'utilisateur) : couronne provisoire jusque-là.
+
+### Fichiers
+- **Ajoutés** : `assets/blender/enemies/{build_roi.py,Roi_Equipement.fbx}`
+- **Modifiés** : `src/server/Eclat/Systems/GuardianService.luau`,
+  `src/client/Eclat/Controllers/GuardianHud.luau`, `src/shared/Config.luau`, `CHANGELOG.md`,
+  `docs/ASSETS.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Importer le kit de forteresse et l'armure ; tests à plusieurs joueurs ; Signature.
+
+---
+
 ## [v0.8.0] — 2026-11-08 — « Le Roi Sans Heure »
 
 ### Description générale

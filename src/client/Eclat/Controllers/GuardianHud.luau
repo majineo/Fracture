@@ -187,7 +187,7 @@ local function update()
 	local exposed = ((model:GetAttribute("CrownExposedUntil") :: number?) or 0)
 		> workspace:GetServerTimeNow()
 	crownLabel.Visible = exposed
-	local crown = model:FindFirstChild("Couronne")
+	local crown = model:FindFirstChild("Couronne") or model:FindFirstChild("Head__Laiton", true)
 	highlight.Adornee = crown or model:FindFirstChild("Head")
 	highlight.Enabled = exposed
 end

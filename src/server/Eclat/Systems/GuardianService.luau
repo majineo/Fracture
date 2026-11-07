@@ -332,8 +332,28 @@ local function awaken()
 	end
 	-- Couronne (point faible) : provisoire tant que l'équipement Blender « Guardian » n'est pas
 	-- importé dans ServerStorage > EnemyOutfits.
+	local outfit = model:FindFirstChild("Outfit")
+	if outfit then
+		-- Armure Blender importée : couleurs et matériaux d'après le suffixe des pièces.
+		local looks: { [string]: { Enum.Material | Color3 } } = {
+			Laiton = { Enum.Material.Metal, Color3.fromRGB(214, 172, 74) },
+			Acier = { Enum.Material.Metal, Color3.fromRGB(176, 182, 190) },
+			Metal = { Enum.Material.Metal, Color3.fromRGB(46, 48, 56) },
+			Indigo = { Enum.Material.Fabric, Color3.fromRGB(52, 58, 150) },
+			Cristal = { Enum.Material.Neon, Color3.fromRGB(170, 95, 255) },
+			Cuir = { Enum.Material.Leather, Color3.fromRGB(110, 70, 44) },
+		}
+		for _, part in outfit:GetDescendants() do
+			local suffix = part:IsA("BasePart") and string.match(part.Name, "__(%a+)$")
+			local look = suffix and looks[suffix]
+			if look then
+				(part :: BasePart).Material = look[1] :: Enum.Material
+				(part :: BasePart).Color = look[2] :: Color3
+			end
+		end
+	end
 	local head = model:FindFirstChild("Head")
-	if head and head:IsA("BasePart") and model:FindFirstChild("Couronne", true) == nil then
+	if head and head:IsA("BasePart") and outfit == nil then
 		local crown = Instance.new("Model")
 		crown.Name = "Couronne"
 		for i = 0, 5 do

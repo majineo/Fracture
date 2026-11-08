@@ -22,6 +22,7 @@ local specs = {
 	require("./specs/Loot.spec"),
 	require("./specs/Codex.spec"),
 	require("./specs/GuardianBrain.spec"),
+	require("./specs/Arsenal.spec"),
 }
 
 for _, spec in specs do

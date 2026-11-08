@@ -5,6 +5,63 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.10.0] — 2026-11-08 — « Arsenal de la Fracture »
+
+### Description générale
+Quatre nouvelles armes steampunk / arcanes modélisées dans Blender, chacune avec une capacité
+inédite, disponibles à l'Arsenal du Refuge.
+
+### Nouvelles fonctionnalités
+- **Tromblon à vapeur** (arme à feu) : 8 plombs par tir (88 dégâts au contact, presque rien
+  au-delà de 30 studs), 2 coups. Capacité **Souffle de vapeur** : cône de 11 studs qui blesse,
+  repousse et étourdit ; le tireur est projeté en arrière (propulsion, utile en l'air).
+- **Mitrailleuse à manivelle** (arme à feu) : **tir automatique** (9 balles/s, chargeur de 45),
+  bloc de 6 canons qui tourne. Capacité **Surchauffe** : cadence ×1,8 et munitions gratuites
+  pendant 4 s.
+- **Marteau-piston** (mêlée) : coups lents et lourds, attaque chargée ×2,2. Capacité
+  **Frappe sismique** : onde circulaire de 10 studs qui soulève, blesse (45 au centre) et étourdit.
+- **Faux du Temps** (mêlée) : grande allonge, coups larges (140°). Capacité **Moisson** :
+  tourbillon à 360° (32 dégâts par cible) qui rend 40 % des dégâts en santé (45 au plus).
+- Effets : cône de vapeur, onde au sol avec anneau lumineux, sons de tir dédiés.
+- Arsenal du Refuge : 10 présentoirs.
+
+### Modifications
+- Plombs tirés par le serveur ; tir continu côté client ; projection des joueurs par le serveur.
+- `WeaponState.canFire` accepte un multiplicateur de cadence.
+- `assets/roblox/WeaponModels.rbxm` mis à jour (les 4 armes dans la place Éclat).
+
+### Corrections de bugs
+- Alerte de l'analyseur de code (Selene) dans l'animation de roulade de la v0.9.0
+  (`Vector3.yAxis`, valide en jeu mais inconnu de Selene).
+
+### Vérifications
+- Studio (Refuge) : 10 présentoirs ; mitrailleuse : 9 balles en 1 s en maintenant le clic ;
+  Surchauffe : 1,5 s de tir sans perdre de munition ; Frappe sismique : 2 ennemis
+  120 → 80 et 82, étourdis ; Souffle : 2 ennemis touchés et étourdis, tireur projeté ; Moisson
+  (vraie touche) : les deux ennemis touchés.
+- 117 tests Lune (5 nouveaux : gerbe de plombs, Surchauffe, cohérence des nouvelles armes).
+
+### Problèmes connus
+- Sons de tir du tromblon, de la mitrailleuse et du souffle choisis sans écoute.
+- Tenue du marteau et de la faux : posture de l'épée longue ; à valider à l'écran.
+- Équilibrage à affiner après des parties réelles.
+
+### Fichiers
+- **Ajoutés** : `assets/blender/weapons/{build_arsenal.py,arsenal.blend,Tromblon_Vapeur.fbx,Mitrailleuse_Manivelle.fbx,Marteau_Piston.fbx,Faux_Temps.fbx}`,
+  `tests/specs/Arsenal.spec.luau`
+- **Modifiés** : `src/shared/Combat/{WeaponDefs,Ability,WeaponState,HitMath}.luau`,
+  `src/server/Core/Systems/{WeaponService,AbilityService}.luau`,
+  `src/server/Refuge/Systems/Armory.luau`,
+  `src/client/Core/Controllers/{CombatController,AbilityController,CharacterAnimation}.luau`,
+  `src/client/Core/Combat/{WeaponFx,CombatSounds}.luau`, `assets/roblox/WeaponModels.rbxm`,
+  `tests/run.luau`, `src/shared/Config.luau`, `docs/{ASSETS,DECISIONS}.md`, `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Ville steampunk / arcane modélisée dans Blender ; carte de l'Éclat plus grande et fermée.
+
+---
+
 ## [v0.9.0] — 2026-11-08 — « Laiton et voltige »
 
 ### Description générale

@@ -31,6 +31,9 @@ export type WeaponDef = {
 	spreadAim: number, -- dispersion en degrés, en visée
 	recoil: number, -- recul de caméra (degrés)
 	pierce: number?, -- cibles supplémentaires traversées (perforation)
+	pellets: number?, -- plombs par tir (tromblon, v0.10.0) : `damage` est PAR plomb
+	pelletSpread: number?, -- rayon de la gerbe (degrés)
+	automatic: boolean?, -- tir continu tant que la détente est maintenue (v0.10.0)
 	sound: string, -- nom du son de tir / de coup (Combat/CombatSounds)
 	soundPitch: number?,
 	-- Sons (v0.4.14) : noms de Combat/CombatSounds. Absents = sons génériques.
@@ -216,6 +219,118 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		ability = "FractureWave",
 		ability2 = "TimeGuard",
 	},
+}
+
+-- Arsenal de la Fracture (v0.10.0) ------------------------------------------------------
+-- Tromblon à vapeur : gerbe de plombs dévastatrice de près, inutile de loin. Sa capacité
+-- repousse tout devant soi… et propulse son porteur en arrière (mobilité en l'air).
+WeaponDefs["weapon.steam_blunderbuss"] = {
+	id = "weapon.steam_blunderbuss",
+	name = "Tromblon à vapeur",
+	kind = "Hitscan",
+	slot = "Firearm",
+	hold = "LongGun",
+	damage = 11, -- par plomb (8 plombs : 88 au contact)
+	falloffStart = 8,
+	falloffEnd = 30,
+	minDamageRatio = 0.2,
+	range = 60,
+	fireRate = 1.1,
+	magazine = 2,
+	reloadTime = 2.2,
+	spreadHip = 1.5,
+	spreadAim = 1,
+	recoil = 6,
+	pellets = 8,
+	pelletSpread = 5.5,
+	sound = "BlunderbussShot",
+	drawSound = "DrawRifle",
+	reloadSound = "RifleReload",
+	ability = "SteamBlast",
+}
+-- Mitrailleuse à manivelle : tir continu, faibles dégâts par balle, gros chargeur. Capacité :
+-- Surchauffe (cadence ×1,8 sans consommer de munitions pendant 4 s).
+WeaponDefs["weapon.crank_gatling"] = {
+	id = "weapon.crank_gatling",
+	name = "Mitrailleuse à manivelle",
+	kind = "Hitscan",
+	slot = "Firearm",
+	hold = "LongGun",
+	damage = 12,
+	falloffStart = 30,
+	falloffEnd = 110,
+	minDamageRatio = 0.5,
+	range = 220,
+	fireRate = 9,
+	magazine = 45,
+	reloadTime = 3.2,
+	spreadHip = 4,
+	spreadAim = 1.4,
+	recoil = 0.55,
+	automatic = true,
+	sound = "GatlingShot",
+	soundPitch = 1.05,
+	drawSound = "DrawRifle",
+	reloadSound = "RifleReload",
+	ability = "Overdrive",
+}
+-- Marteau-piston : lent et lourd, gros coups chargés. Capacité : Frappe sismique (onde
+-- circulaire qui soulève et étourdit).
+WeaponDefs["weapon.piston_hammer"] = {
+	id = "weapon.piston_hammer",
+	name = "Marteau-piston",
+	kind = "Melee",
+	slot = "Melee",
+	hold = "Greatsword",
+	damage = 50,
+	falloffStart = 0,
+	falloffEnd = 0,
+	minDamageRatio = 1,
+	range = 7.5,
+	fireRate = 1.1,
+	magazine = 0,
+	reloadTime = 0,
+	spreadHip = 0,
+	spreadAim = 0,
+	recoil = 0,
+	sound = "HeavySwing",
+	soundPitch = 0.75,
+	drawSound = "DrawSword",
+	arcDegrees = 80,
+	heavyMultiplier = 2.2,
+	heavyChargeTime = 0.9,
+	parryWindow = 0.25,
+	swingTime = 0.34,
+	ability = "Quake",
+}
+-- Faux du Temps : grande allonge et coups larges. Capacité : Moisson (tourbillon à 360° qui
+-- rend une partie des dégâts en santé).
+WeaponDefs["weapon.time_scythe"] = {
+	id = "weapon.time_scythe",
+	name = "Faux du Temps",
+	kind = "Melee",
+	slot = "Melee",
+	hold = "Greatsword",
+	damage = 36,
+	falloffStart = 0,
+	falloffEnd = 0,
+	minDamageRatio = 1,
+	range = 9.5,
+	fireRate = 1.6,
+	magazine = 0,
+	reloadTime = 0,
+	spreadHip = 0,
+	spreadAim = 0,
+	recoil = 0,
+	sound = "HeavySwing",
+	soundPitch = 1.15,
+	drawSound = "DrawSword",
+	arcDegrees = 140,
+	heavyMultiplier = 1.8,
+	heavyChargeTime = 0.7,
+	parryWindow = 0.22,
+	swingTime = 0.28,
+	ability = "Reap",
 }
 
 for _, def in WeaponDefs do

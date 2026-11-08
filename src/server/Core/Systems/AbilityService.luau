@@ -411,6 +411,195 @@ local function castFractureWave(
 	end)
 end
 
+-- Arsenal de la Fracture (v0.10.0) -------------------------------------------------------
+
+-- Projette une cible. Les Échoués (simulés par le serveur) sont poussés directement ; un joueur
+-- simule son propre personnage : on lui demande d'appliquer la poussée, et la garde de
+-- mouvement la tolère un instant.
+local function knock(model: Model, velocity: Vector3)
+	local root = rootOf(model)
+	if root == nil then
+		return
+	end
+	local victim = Players:GetPlayerFromCharacter(model)
+	if victim then
+		local horizontal = Vector3.new(velocity.X, 0, velocity.Z).Magnitude
+		MovementGuard.allow(victim, 1.2, horizontal + 10, math.max(velocity.Y, 0) * 0.6 + 10)
+		Net.fire("CombatEvent", victim, { type = "Knockback", velocity = velocity })
+	else
+		root.AssemblyLinearVelocity = velocity
+	end
+end
+
+-- Effet commun : dégâts, puis étourdissement (Échoués) ou ralentissement (joueurs).
+local function strike(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	model: Model,
+	target: any,
+	amount: number,
+	origin: Vector3
+): boolean
+	if not WeaponService.dealDamage(player, def, model, amount, origin) then
+		return false
+	end
+	if target.kind == "Player" then
+		slow(model, adef.slow or 0.5, adef.slowDuration or 1)
+	elseif adef.stun then
+		model:SetAttribute("StunnedUntil", workspace:GetServerTimeNow() + adef.stun)
+	end
+	return true
+end
+
+-- Souffle de vapeur (tromblon) : cône devant soi qui blesse et repousse ; le lanceur part en
+-- arrière (une propulsion utile en l'air).
+local function castSteamBlast(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	core: Ability.Core,
+	character: Model,
+	root: BasePart,
+	aim: unknown
+)
+	task.delay(adef.windup, function()
+		casting[player] = nil
+		setCast(character, nil)
+		if not stillValid(player, character) then
+			Ability.refund(core, adef)
+			publish(player)
+			return
+		end
+		-- Direction : celle de la caméra du client si elle est plausible, sinon le regard.
+		local look = root.CFrame.LookVector
+		if Guard.isFiniteVector3(aim) and (aim :: Vector3).Magnitude > 0.5 then
+			look = (aim :: Vector3).Unit
+		end
+		local origin = root.Position
+		local length = adef.length or 11
+		local cosLimit = math.cos(math.rad(adef.angle or 55))
+		local params = worldParams(character)
+		for model, target in CombatTargets.all() do
+			if model ~= character and HealthService.canDamage(player, model) then
+				local offset = target.root.Position - origin
+				local distance = offset.Magnitude
+				if
+					distance <= length + 1
+					and distance > 0.1
+					and offset.Unit:Dot(look) >= cosLimit
+					and not workspace:Raycast(origin, offset, params)
+				then
+					if strike(player, def, adef, model, target, adef.damage or 22, origin) then
+						local flat = Vector3.new(offset.X, 0, offset.Z)
+						flat = if flat.Magnitude > 0.1
+							then flat.Unit
+							else Vector3.new(look.X, 0, look.Z).Unit
+						knock(model, flat * (adef.push or 55) + Vector3.new(0, adef.lift or 22, 0))
+					end
+				end
+			end
+		end
+		-- Recul du lanceur (propulsion) : à l'opposé du souffle, un peu vers le haut.
+		local push = -look * (adef.selfPush or 46)
+		knock(character, Vector3.new(push.X, math.max(push.Y, 0) + 12, push.Z))
+		broadcastFx({
+			shooter = player,
+			kind = "SteamBlast",
+			origin = origin,
+			finish = origin + look * length,
+		})
+	end)
+end
+
+-- Frappe sismique (marteau-piston) : onde circulaire autour du lanceur.
+local function castQuake(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	core: Ability.Core,
+	character: Model,
+	root: BasePart
+)
+	task.delay(adef.windup, function()
+		casting[player] = nil
+		setCast(character, nil)
+		if not stillValid(player, character) then
+			Ability.refund(core, adef)
+			publish(player)
+			return
+		end
+		local origin = root.Position
+		local radius = adef.radius or 10
+		local params = worldParams(character)
+		for model, target in CombatTargets.all() do
+			if model ~= character and HealthService.canDamage(player, model) then
+				local offset = target.root.Position - origin
+				local flat = Vector3.new(offset.X, 0, offset.Z)
+				if
+					flat.Magnitude <= radius + 1
+					and math.abs(offset.Y) <= 6
+					and not workspace:Raycast(origin, offset, params)
+				then
+					local falloff = 1 - 0.5 * math.clamp(flat.Magnitude / radius, 0, 1)
+					local amount = (adef.damage or 45) * falloff
+					if strike(player, def, adef, model, target, amount, origin) then
+						local out = if flat.Magnitude > 0.1 then flat.Unit else Vector3.zero
+						knock(model, out * 18 + Vector3.new(0, adef.lift or 38, 0))
+					end
+				end
+			end
+		end
+		broadcastFx({ shooter = player, kind = "Quake", origin = origin, finish = origin })
+	end)
+end
+
+-- Moisson (faux) : tourbillon à 360° ; une part des dégâts revient en santé au lanceur.
+local function castReap(
+	player: Player,
+	def: any,
+	adef: Ability.AbilityDef,
+	core: Ability.Core,
+	character: Model,
+	root: BasePart
+)
+	task.delay(adef.windup, function()
+		casting[player] = nil
+		setCast(character, nil)
+		if not stillValid(player, character) then
+			Ability.refund(core, adef)
+			publish(player)
+			return
+		end
+		local origin = root.Position
+		local radius = adef.radius or 10
+		local params = worldParams(character)
+		local dealt = 0
+		for model, target in CombatTargets.all() do
+			if model ~= character and HealthService.canDamage(player, model) then
+				local offset = target.root.Position - origin
+				if
+					offset.Magnitude <= radius + 1
+					and math.abs(offset.Y) <= 5
+					and not workspace:Raycast(origin, offset, params)
+					and not WeaponService.tryParryFrom(model, origin)
+				then
+					if WeaponService.dealDamage(player, def, model, adef.damage or 32, origin) then
+						dealt += adef.damage or 32
+					end
+				end
+			end
+		end
+		if dealt > 0 then
+			HealthService.heal(
+				character,
+				math.min(dealt * (adef.lifesteal or 0.4), adef.healMax or 45)
+			)
+		end
+		broadcastFx({ shooter = player, kind = "Reap", origin = origin, finish = origin })
+	end)
+end
+
 -- Rayon du Zénith (Fusil du Zénith) --------------------------------------------------------
 
 local strikeFolder: Folder? = nil
@@ -582,6 +771,20 @@ local function onUseAbility(player: Player, kind: unknown, a: unknown, b: unknow
 		castZenith(player, def, adef, character, impact)
 		return
 	end
+	if adef.id == "Overdrive" then
+		Ability.consume(core, adef, now)
+		local duration = adef.duration or 4
+		local multiplier = adef.rateMultiplier or 1.8
+		WeaponService.grantOverdrive(player, multiplier, duration)
+		character:SetAttribute("OverdriveUntil", workspace:GetServerTimeNow() + duration)
+		Net.fire("CombatEvent", player, {
+			type = "Overdrive",
+			duration = duration,
+			multiplier = multiplier,
+		})
+		publish(player)
+		return
+	end
 	if adef.id == "Volley" then
 		Ability.consume(core, adef, now)
 		local shots = adef.shots or 3
@@ -613,6 +816,12 @@ local function onUseAbility(player: Player, kind: unknown, a: unknown, b: unknow
 		castRewind(player, adef, core, character, root)
 	elseif adef.id == "FractureWave" then
 		castFractureWave(player, def, adef, core, character, root)
+	elseif adef.id == "SteamBlast" then
+		castSteamBlast(player, def, adef, core, character, root, a)
+	elseif adef.id == "Quake" then
+		castQuake(player, def, adef, core, character, root)
+	elseif adef.id == "Reap" then
+		castReap(player, def, adef, core, character, root)
 	elseif shadowTarget then
 		castShadowStep(player, adef, core, character, root, shadowTarget)
 	else

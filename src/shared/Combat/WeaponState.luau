@@ -37,7 +37,14 @@ end
 
 -- Le tir est-il permis maintenant ? `tolerance` (secondes) absorbe la gigue réseau côté
 -- serveur : un client honnête qui tire à cadence max ne doit jamais être refusé.
-function WeaponState.canFire(state: State, def: Def, now: number, tolerance: number?): boolean
+-- `rateMultiplier` : cadence accélérée (Surchauffe de la mitrailleuse, v0.10.0).
+function WeaponState.canFire(
+	state: State,
+	def: Def,
+	now: number,
+	tolerance: number?,
+	rateMultiplier: number?
+): boolean
 	settle(state, def, now)
 	if state.reloadEndsAt ~= nil then
 		return false
@@ -45,7 +52,7 @@ function WeaponState.canFire(state: State, def: Def, now: number, tolerance: num
 	if def.magazine > 0 and state.ammo <= 0 then
 		return false
 	end
-	local interval = 1 / def.fireRate
+	local interval = 1 / (def.fireRate * math.max(rateMultiplier or 1, 0.1))
 	-- Marge infime contre les erreurs d'arrondi (10,2 - 10 = 0,19999…).
 	return now - state.lastShot >= interval - (tolerance or 0) - 1e-6
 end

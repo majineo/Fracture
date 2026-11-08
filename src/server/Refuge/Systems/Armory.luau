@@ -23,8 +23,12 @@ local ORDER = {
 	"weapon.repeating_rifle",
 	"weapon.zenith_rifle",
 	"weapon.heavy_crossbow",
+	"weapon.steam_blunderbuss",
+	"weapon.crank_gatling",
 	"weapon.short_blade",
 	"weapon.longsword",
+	"weapon.piston_hammer",
+	"weapon.time_scythe",
 }
 
 local Armory = {}

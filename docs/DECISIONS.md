@@ -393,6 +393,19 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-051 — Arsenal de la Fracture : quatre armes, quatre styles
+- **Date** : 2026-11-08 · **Version** : v0.10.0 · **Statut** : ✅ Implémentée
+- **Principe** : chaque nouvelle arme apporte une mécanique, pas seulement d'autres chiffres :
+  plombs (tromblon), tir continu (mitrailleuse), onde circulaire (marteau), tourbillon qui soigne
+  (faux). Les capacités réutilisent le cadre existant (noyau chargé par les dégâts, annonce,
+  serveur seul juge).
+- **Plombs** : le client n'envoie qu'une direction ; la gerbe est tirée par le serveur (graine
+  serveur, module pur `HitMath.pelletOffsets` testé). Le client affiche sa propre gerbe aléatoire.
+- **Projection d'un joueur** (souffle, onde) : le client simule son personnage ; le serveur lui
+  envoie la poussée (CombatEvent « Knockback ») et prévient la garde de mouvement.
+- **Surchauffe** : la cadence accélérée et la munition gratuite sont appliquées par le serveur
+  (WeaponState.canFire accepte un multiplicateur de cadence) ; le client prédit la même chose.
+
 ## D-050 — Roulade et salto
 - **Date** : 2026-11-08 · **Version** : v0.9.0 · **Statut** : ✅ Implémentée
 - **Roulade** : même touche que la glissade (C) : on glisse si l'on court, on roule si l'on marche.

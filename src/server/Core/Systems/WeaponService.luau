@@ -62,6 +62,9 @@ local loadouts: { [Player]: Loadout } = {}
 local hitBonuses: { [Player]: { multiplier: number, expires: number } } = {}
 -- Salve au levier (fusil) : tirs autorisés sans attendre la cadence.
 local volleys: { [Player]: { remaining: number, expires: number } } = {}
+-- Surchauffe (mitrailleuse, v0.10.0) : cadence accélérée, munitions non consommées.
+local overdrives: { [Player]: { multiplier: number, expires: number } } = {}
+local pelletSeed = 0
 -- Modificateur de dégâts des tirs (Souffle, bulle de stase), fourni par AbilityService.
 local damageModifier: ((Player, WeaponDefs.WeaponDef, Vector3, Vector3, boolean) -> number)? = nil
 
@@ -434,6 +437,11 @@ function WeaponService.setWeapon(player: Player, slot: number, id: string): bool
 	return true
 end
 
+-- Surchauffe : cadence ×`multiplier` et munitions gratuites pendant `duration` secondes.
+function WeaponService.grantOverdrive(player: Player, multiplier: number, duration: number)
+	overdrives[player] = { multiplier = multiplier, expires = os.clock() + duration }
+end
+
 -- Salve au levier : les `shots` prochains tirs ignorent la cadence pendant `window` secondes.
 function WeaponService.grantVolley(player: Player, shots: number, window: number)
 	volleys[player] = { remaining = shots, expires = os.clock() + window }
@@ -623,6 +631,8 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 		return
 	end
 	local now = os.clock()
+	local overdrive = overdrives[player]
+	local boosted = overdrive ~= nil and now <= overdrive.expires and def.automatic == true
 	-- Salve au levier : la cadence est ignorée pour les tirs de la salve (munitions requises).
 	local volley = volleys[player]
 	if volley and volley.remaining > 0 and now <= volley.expires then
@@ -630,12 +640,41 @@ local function onFire(player: Player, origin: unknown, direction: unknown, clien
 			return
 		end
 		volley.remaining -= 1
-	elseif not WeaponState.canFire(state, def, now, FIRE_TOLERANCE) then
+	elseif
+		not WeaponState.canFire(
+			state,
+			def,
+			now,
+			FIRE_TOLERANCE,
+			if boosted and overdrive then overdrive.multiplier else 1
+		)
+	then
 		sendState(player, def, state) -- resynchronise un client qui s'est trompé
 		return
 	end
 	WeaponState.fire(state, def, now)
-	local points = performShot(player, def, o, dir, viewTime(player, clientTime :: number), false)
+	if boosted then
+		state.ammo += 1 -- Surchauffe : la balle ne coûte rien
+	end
+	local t = viewTime(player, clientTime :: number)
+	if def.pellets and def.pellets > 1 then
+		-- Tromblon : la gerbe est tirée PAR LE SERVEUR autour de la visée du client.
+		pelletSeed = (pelletSeed + 7919) % 2147483647
+		local frame = CFrame.lookAt(Vector3.zero, dir)
+		for _, offset in HitMath.pelletOffsets(def.pellets, def.pelletSpread or 5, pelletSeed + 1) do
+			local pelletDir = (frame * CFrame.Angles(math.rad(offset[2]), math.rad(offset[1]), 0)).LookVector
+			local points = performShot(player, def, o, pelletDir, t, false)
+			broadcastFx(player, {
+				shooter = player,
+				kind = "Shot",
+				weapon = def.id,
+				origin = points[1],
+				finish = points[#points],
+			})
+		end
+		return
+	end
+	local points = performShot(player, def, o, dir, t, false)
 	broadcastFx(player, {
 		shooter = player,
 		kind = "Shot",
@@ -819,6 +858,7 @@ function WeaponService.init()
 		loadouts[player] = nil
 		hitBonuses[player] = nil
 		volleys[player] = nil
+		overdrives[player] = nil
 	end)
 end
 

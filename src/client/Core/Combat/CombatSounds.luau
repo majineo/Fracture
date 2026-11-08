@@ -20,6 +20,10 @@ local SOUNDS: { [string]: Entry } = table.freeze({
 	RifleShot = { id = "rbxassetid://6975483207", volume = 0.55 }, -- « Rifle Gunshot .50 Beowulf » (Siydge)
 	SniperShot = { id = "rbxassetid://7700083911", volume = 0.7, maxTime = 2.4 }, -- « Bolt Action Fire » (libre)
 	CrossbowShot = { id = "rbxassetid://9113166206", volume = 0.65, maxTime = 1.1 }, -- « Arrow Out » (ProSoundEffects)
+	-- Arsenal de la Fracture (v0.10.0) — choisis sans écoute, à valider
+	BlunderbussShot = { id = "rbxassetid://108253314996214", volume = 0.7, maxTime = 1.6 }, -- « ImpactForge_Shotgun_02 »
+	GatlingShot = { id = "rbxassetid://4930059960", volume = 0.4, maxTime = 0.5 }, -- « G_SHOOT_SWM66_1 »
+	SteamBlast = { id = "rbxassetid://117580991143452", volume = 0.7, maxTime = 1.5 }, -- « air »
 	-- Mécanismes après le tir
 	RifleLever = { id = "rbxassetid://6129190959", volume = 0.45 }, -- « Lever Action bolt sound »
 	SniperBoltBack = { id = "rbxassetid://93265832279166", volume = 0.5 }, -- « Pull Action Bolt Back »

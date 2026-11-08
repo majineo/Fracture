@@ -391,7 +391,7 @@ local function updateEntry(entry: Tracked, dt: number)
 		local localDir = if flat.Magnitude > 2
 			then root.CFrame:VectorToObjectSpace(flat.Unit)
 			else Vector3.new(0, 0, -1)
-		local axis = Vector3.yAxis:Cross(Vector3.new(localDir.X, 0, localDir.Z).Unit)
+		local axis = Vector3.new(0, 1, 0):Cross(Vector3.new(localDir.X, 0, localDir.Z).Unit)
 		animator.setPose("Roll", {
 			Root = CFrame.new(0, -1.3 * tuck, 0) * CFrame.fromAxisAngle(axis, math.pi * 2 * eased),
 			Waist = CFrame.Angles(math.rad(-35 * tuck), 0, 0),

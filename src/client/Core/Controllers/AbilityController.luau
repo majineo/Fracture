@@ -226,6 +226,10 @@ function AbilityController.use(kind: string?)
 			return
 		end
 		Net.fire("UseAbility", chosen.id, aim)
+	elseif chosen.id == "SteamBlast" then
+		-- Direction de la caméra (le serveur la borne) : on peut souffler vers le sol en l'air.
+		local camera = workspace.CurrentCamera
+		Net.fire("UseAbility", chosen.id, if camera then camera.CFrame.LookVector else nil)
 	elseif chosen.id == "Ricochet" or chosen.id == "Stasis" then
 		-- Tir spécial : même origine et même visée qu'un tir normal (le serveur vérifie).
 		local origin = CombatController.getMuzzle()
@@ -340,6 +344,27 @@ local function onCombatEvent(info: any)
 		elseif info.passive == "ScopeFocus" then
 			showMessage("CONCENTRATION — TÊTE ×2", Color3.fromRGB(255, 205, 90))
 		end
+	elseif info.type == "Overdrive" then
+		CombatController.overdrive(
+			if typeof(info.duration) == "number" then math.clamp(info.duration, 0, 10) else 4,
+			if typeof(info.multiplier) == "number" then math.clamp(info.multiplier, 1, 3) else 1.8
+		)
+		CombatSounds.play2D("AbilityReady", 1.3)
+		showMessage("SURCHAUFFE !", Color3.fromRGB(255, 150, 60))
+	elseif info.type == "Knockback" and typeof(info.velocity) == "Vector3" then
+		-- Projection décidée par le serveur (souffle, onde) : on l'applique à notre personnage.
+		local v = info.velocity :: Vector3
+		if v.Magnitude == v.Magnitude and v.Magnitude < 200 then
+			local character = Players.LocalPlayer.Character
+			local root = character and character:FindFirstChild("HumanoidRootPart")
+			local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+			if root and root:IsA("BasePart") then
+				if humanoid then
+					humanoid:ChangeState(Enum.HumanoidStateType.Freefall)
+				end
+				root.AssemblyLinearVelocity = v
+			end
+		end
 	elseif info.type == "Volley" then
 		CombatController.volley(
 			if typeof(info.shots) == "number" then math.clamp(info.shots, 1, 6) else 3,
@@ -373,6 +398,22 @@ local function onShotFx(info: any)
 		return
 	end
 	if typeof(info.origin) ~= "Vector3" or typeof(info.finish) ~= "Vector3" then
+		return
+	end
+	if info.kind == "SteamBlast" then
+		WeaponFx.steamCone(info.origin, info.finish)
+		CombatSounds.playAt("SteamBlast", info.origin, 1)
+		CameraFeel.kick(-1)
+		return
+	elseif info.kind == "Quake" then
+		WeaponFx.radialBurst(info.origin, 10, Color3.fromRGB(255, 170, 80))
+		CombatSounds.playAt("MeleeHitHeavy", info.origin, 0.55)
+		CombatSounds.playAt("CollapseHit", info.origin, 1.4)
+		CameraFeel.kick(-2.5)
+		return
+	elseif info.kind == "Reap" then
+		WeaponFx.radialBurst(info.origin, 10, Color3.fromRGB(190, 120, 255))
+		CombatSounds.playAt("HeavySwing", info.origin, 0.8)
 		return
 	end
 	if info.kind == "FractureWave" then

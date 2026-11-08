@@ -90,6 +90,11 @@ local remoteParries: { [Player]: number } = {}
 local lastParry = -math.huge
 -- Dernier tir (soi et les autres) : l'arme reste épaulée un instant après un tir.
 local lastFire = -math.huge
+-- Tir automatique (mitrailleuse, v0.10.0) : détente maintenue.
+local triggerHeld = false
+-- Surchauffe (v0.10.0) : cadence accélérée, munitions gratuites, jusqu'à cette heure (os.clock).
+local overdriveUntil = 0
+local overdriveMultiplier = 1
 local remoteFires: { [Instance]: number } = setmetatable({}, { __mode = "k" }) :: any
 local parryCooldownUntil = 0
 local parryHeldSince: number? = nil -- bouton de parade maintenu (Garde du Temps, v0.4.7)
@@ -281,7 +286,11 @@ local function fireHitscan(def: any, volleyShot: number?)
 		reload()
 		return
 	end
-	if volleyShot == nil and not WeaponState.canFire(state, def, now) then
+	local boosted = def.automatic == true and now < overdriveUntil
+	if
+		volleyShot == nil
+		and not WeaponState.canFire(state, def, now, 0, if boosted then overdriveMultiplier else 1)
+	then
 		return
 	end
 	local origin = muzzlePosition()
@@ -290,10 +299,35 @@ local function fireHitscan(def: any, volleyShot: number?)
 		return
 	end
 	WeaponState.fire(state, def, now)
+	if boosted then
+		state.ammo += 1 -- Surchauffe : la balle ne coûte rien (le serveur fait de même)
+	end
 	lastFire = now
 
 	local direction =
 		applySpread((target - origin).Unit, CombatController.getSpread() + (volleyShot or 0))
+	-- Tromblon : gerbe affichée tout de suite (le serveur tire la sienne et juge les touches).
+	if def.pellets and def.pellets > 1 then
+		local frame = CFrame.lookAt(Vector3.zero, direction)
+		local pelletParams = RaycastParams.new()
+		pelletParams.FilterType = Enum.RaycastFilterType.Exclude
+		pelletParams.FilterDescendantsInstances = { character() :: Model }
+		for _ = 2, def.pellets do
+			local spread = def.pelletSpread or 5
+			local a = math.random() * math.pi * 2
+			local r = spread * (0.45 + 0.55 * math.sqrt(math.random()))
+			local d = (frame * CFrame.Angles(
+				math.rad(math.sin(a) * r),
+				math.rad(math.cos(a) * r),
+				0
+			)).LookVector
+			local h = workspace:Raycast(origin, d * def.range, pelletParams)
+			WeaponFx.tracer(origin, if h then h.Position else origin + d * def.range)
+			if h and not h.Instance:FindFirstAncestorOfClass("Model") then
+				WeaponFx.impact(h.Position, h.Normal, h.Instance.Color)
+			end
+		end
+	end
 	bloom = math.min(bloom + SHOT_BLOOM, 4)
 
 	-- Affichage immédiat (le serveur confirmera les touches).
@@ -470,6 +504,30 @@ local function handleFire(_: string, state: Enum.UserInputState): Enum.ContextAc
 	end
 	if not canUseWeapon() then
 		meleeChargeStart = nil
+		return Enum.ContextActionResult.Sink
+	end
+	if def.automatic then
+		-- Arme automatique : on tire tant que la détente est maintenue (la cadence limite).
+		if state == Enum.UserInputState.Begin then
+			if not triggerHeld then
+				triggerHeld = true
+				task.spawn(function()
+					while triggerHeld do
+						local current = currentDef()
+						if current == nil or current.id ~= def.id or not canUseWeapon() then
+							break
+						end
+						if not Menu.isOpen() then
+							fireHitscan(current)
+						end
+						task.wait()
+					end
+					triggerHeld = false
+				end)
+			end
+		elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+			triggerHeld = false
+		end
 		return Enum.ContextActionResult.Sink
 	end
 	if state == Enum.UserInputState.Begin then
@@ -863,6 +921,16 @@ end
 -- Position du canon de l'arme en main (tirs spéciaux des capacités).
 function CombatController.getMuzzle(): Vector3?
 	return muzzlePosition()
+end
+
+-- Surchauffe (mitrailleuse) : cadence ×`multiplier` et munitions gratuites pendant `duration`.
+function CombatController.overdrive(duration: number, multiplier: number)
+	overdriveUntil = os.clock() + duration
+	overdriveMultiplier = multiplier
+end
+
+function CombatController.isOverdriven(): boolean
+	return os.clock() < overdriveUntil
 end
 
 -- Salve au levier (fusil) : `shots` tirs espacés de `interval`, dispersion ajoutée.

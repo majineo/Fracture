@@ -10,6 +10,27 @@
 
 local HitMath = {}
 
+-- Plombs d'un tromblon (v0.10.0) : `count` décalages (lacet, tangage) en degrés, répartis
+-- dans un disque de rayon `spread` autour de la visée. Déterministes pour une graine donnée
+-- (xorshift32) ; le premier plomb part au centre.
+function HitMath.pelletOffsets(count: number, spread: number, seed: number): { { number } }
+	local x = bit32.bor(math.floor(seed) % 4294967296, 1)
+	local function nextUnit(): number
+		x = bit32.bxor(x, bit32.lshift(x, 13))
+		x = bit32.bxor(x, bit32.rshift(x, 17))
+		x = bit32.bxor(x, bit32.lshift(x, 5))
+		return x / 4294967296
+	end
+	local out = { { 0, 0 } }
+	for i = 2, count do
+		-- Répartition en couronne (angle régulier + bruit) : pas de trou au milieu de la gerbe.
+		local angle = (i - 2) / math.max(count - 1, 1) * math.pi * 2 + nextUnit() * 0.6
+		local radius = spread * (0.45 + 0.55 * math.sqrt(nextUnit()))
+		out[i] = { math.cos(angle) * radius, math.sin(angle) * radius }
+	end
+	return out
+end
+
 -- Rayon (o + t·d, d unitaire, 0 ≤ t ≤ maxT) contre sphère (centre c, rayon r).
 function HitMath.raySphere(
 	ox: number,

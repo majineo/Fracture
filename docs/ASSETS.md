@@ -31,6 +31,10 @@ Ordre de création : voir [GDD 10 — Direction artistique](GDD/10-direction-art
 | 7b | Fusil du Zénith (sniper) | Arme | ✅ Intégré (v0.4.12) | `Fusil_Zenith.fbx` — 2 268 triangles, 7 pièces (indigo, laiton, ivoire, métal, noyau cyan, cristal violet, rouage articulé) ; lentille-cadran, cristal de Temps. Construit par `assets/blender/weapons/build_fusil_zenith.py` |
 | 7 | Arbalète lourde | Arme | ✅ Intégrée (v0.4.3) | `Arbalete_Lourde.fbx` — 1 232 triangles, 6 pièces (bois, acier, cuir, laiton, métal, carreau cyan) ; manivelle côté visible |
 | 8 | Épée longue | Arme | ✅ Intégrée (v0.4.3) | `Epee_Longue.fbx` — 1 208 triangles, 4 pièces (acier, cuir, laiton, gorge cyan) |
+| 8b | Tromblon à vapeur | Arme | ✅ Intégré (v0.10.0) | `Tromblon_Vapeur.fbx` — 1 380 triangles, 6 pièces (bois, laiton, cuir, cuivre, métal, noyau cyan) ; canon en cloche, réservoir de vapeur et manomètre côté visible. Construit par `assets/blender/weapons/build_arsenal.py` (source : `arsenal.blend`) |
+| 8c | Mitrailleuse à manivelle | Arme | ✅ Intégrée (v0.10.0) | `Mitrailleuse_Manivelle.fbx` — 1 084 triangles, 5 pièces dont le bloc de 6 canons « Rouage » qui tourne en jeu ; tambour-chargeur, manivelle côté visible |
+| 8d | Marteau-piston | Arme | ✅ Intégré (v0.10.0) | `Marteau_Piston.fbx` — 828 triangles, 7 pièces ; tête de fer à deux pistons, chaudière et noyau cyan côté visible |
+| 8e | Faux du Temps | Arme | ✅ Intégrée (v0.10.0) | `Faux_Temps.fbx` — 558 triangles, 7 pièces ; hampe indigo, collet-cadran lumineux, lame en croissant d'une pièce au fil cyan, cristaux |
 | 23 | Présentoir d'armurerie | Décor | 📋 À créer (bloc provisoire) | Refuge, 5 exemplaires |
 | 9 | Grappin | Outil | 📋 À créer | Animation de lancer |
 | 10 | Harnais et ancre de Fractureur | Accessoire avatar | 📋 À créer | Compatible avatars R15 |

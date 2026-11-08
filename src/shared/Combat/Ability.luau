@@ -17,6 +17,10 @@ export type AbilityId =
 	| "FractureWave"
 	| "TimeGuard"
 	| "ZenithBeam"
+	| "SteamBlast"
+	| "Overdrive"
+	| "Quake"
+	| "Reap"
 
 export type AbilityDef = {
 	id: AbilityId,
@@ -48,6 +52,15 @@ export type AbilityDef = {
 	-- Garde du Temps (épée longue)
 	drainTime: number?, -- secondes pour vider un noyau plein
 	frontAngle: number?, -- demi-angle protégé (degrés)
+	-- Arsenal de la Fracture (v0.10.0)
+	angle: number?, -- demi-angle du cône (Souffle de vapeur)
+	push: number?, -- vitesse de recul donnée aux cibles
+	selfPush: number?, -- recul du lanceur (propulsion)
+	stun: number?, -- étourdissement des ennemis (secondes)
+	lift: number?, -- vitesse verticale donnée aux cibles
+	rateMultiplier: number?, -- Surchauffe : cadence
+	lifesteal: number?, -- Moisson : part des dégâts rendue en santé
+	healMax: number?, -- Moisson : santé rendue au maximum
 	-- Commande
 	hold: boolean?, -- capacité secondaire : appui long (fusil) ou maintien de la parade (épée)
 }
@@ -129,6 +142,52 @@ Ability.DEFS = table.freeze({
 		range = 160, -- distance maximale du point visé
 		radius = 7,
 		damage = 70, -- au centre ; moitié au bord
+	} :: AbilityDef),
+	-- v0.10.0 ----------------------------------------------------------------------------
+	SteamBlast = table.freeze({
+		id = "SteamBlast",
+		name = "Souffle de vapeur",
+		charge = 90,
+		windup = 0.15,
+		length = 11,
+		angle = 55,
+		damage = 22,
+		push = 55,
+		lift = 22,
+		selfPush = 46,
+		stun = 1,
+		slow = 0.5,
+		slowDuration = 1,
+	} :: AbilityDef),
+	Overdrive = table.freeze({
+		id = "Overdrive",
+		name = "Surchauffe",
+		charge = 140,
+		windup = 0,
+		duration = 4,
+		rateMultiplier = 1.8,
+	} :: AbilityDef),
+	Quake = table.freeze({
+		id = "Quake",
+		name = "Frappe sismique",
+		charge = 110,
+		windup = 0.45,
+		radius = 10,
+		damage = 45, -- au centre ; moitié au bord
+		lift = 38,
+		stun = 1.5,
+		slow = 0.35,
+		slowDuration = 1.5,
+	} :: AbilityDef),
+	Reap = table.freeze({
+		id = "Reap",
+		name = "Moisson",
+		charge = 100,
+		windup = 0.25,
+		radius = 10,
+		damage = 32,
+		lifesteal = 0.4,
+		healMax = 45,
 	} :: AbilityDef),
 	TimeGuard = table.freeze({
 		id = "TimeGuard",

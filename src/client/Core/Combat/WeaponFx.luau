@@ -419,4 +419,115 @@ function WeaponFx.swingArc(root: BasePart, heavy: boolean, color: Color3?)
 	end)
 end
 
+-- Souffle de vapeur (tromblon, v0.10.0) : nuage blanc projeté en cône de `origin` vers `finish`.
+function WeaponFx.steamCone(origin: Vector3, finish: Vector3)
+	local direction = finish - origin
+	if direction.Magnitude < 0.1 then
+		return
+	end
+	local a = Instance.new("Attachment")
+	a.WorldCFrame = CFrame.lookAt(origin, finish)
+	a.Parent = workspace.Terrain
+	local steam = Instance.new("ParticleEmitter")
+	steam.Texture = VfxTextures.get("Dust")
+	steam.Enabled = false
+	steam.EmissionDirection = Enum.NormalId.Front
+	steam.Color = ColorSequence.new(Color3.fromRGB(245, 245, 240), Color3.fromRGB(190, 200, 205))
+	steam.LightEmission = 0.2
+	steam.Lifetime = NumberRange.new(0.4, 0.8)
+	steam.Speed = NumberRange.new(direction.Magnitude * 2.2, direction.Magnitude * 3.2)
+	steam.SpreadAngle = Vector2.new(35, 35)
+	steam.Drag = 4
+	steam.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.15),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	steam.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 1),
+		NumberSequenceKeypoint.new(1, 4.5),
+	})
+	steam.Parent = a
+	steam:Emit(40)
+	local brass = Instance.new("ParticleEmitter")
+	brass.Texture = VfxTextures.get("Spark")
+	brass.Enabled = false
+	brass.EmissionDirection = Enum.NormalId.Front
+	brass.Orientation = Enum.ParticleOrientation.VelocityParallel
+	brass.Color = ColorSequence.new(Color3.fromRGB(255, 200, 120))
+	brass.LightEmission = 1
+	brass.Lifetime = NumberRange.new(0.15, 0.3)
+	brass.Speed = NumberRange.new(30, 50)
+	brass.SpreadAngle = Vector2.new(30, 30)
+	brass.Size = NumberSequence.new(0.2, 0)
+	brass.Parent = a
+	brass:Emit(18)
+	Debris:AddItem(a, 1.2)
+end
+
+-- Onde circulaire au sol (Frappe sismique, Moisson ; v0.10.0) : anneau qui s'élargit jusqu'à
+-- `radius`, éclats et poussière.
+function WeaponFx.radialBurst(origin: Vector3, radius: number, color: Color3)
+	local params = RaycastParams.new()
+	params.FilterType = Enum.RaycastFilterType.Exclude
+	params.FilterDescendantsInstances = {}
+	local ground = workspace:Raycast(origin + Vector3.new(0, 1, 0), Vector3.new(0, -10, 0), params)
+	local at = if ground then ground.Position else origin - Vector3.new(0, 3, 0)
+	local ring = Instance.new("Part")
+	ring.Name = "Onde"
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.CanTouch = false
+	ring.CastShadow = false
+	ring.Material = Enum.Material.Neon
+	ring.Color = color
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Size = Vector3.new(0.3, 2, 2)
+	ring.CFrame = CFrame.new(at + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.pi / 2)
+	ring.Transparency = 0.2
+	ring.Parent = workspace.CurrentCamera
+	TweenService:Create(
+		ring,
+		TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+		{ Size = Vector3.new(0.3, radius * 2, radius * 2), Transparency = 1 }
+	):Play()
+	Debris:AddItem(ring, 0.5)
+	local a = Instance.new("Attachment")
+	a.WorldPosition = at + Vector3.new(0, 0.3, 0)
+	a.Parent = workspace.Terrain
+	local light = Instance.new("PointLight")
+	light.Color = color
+	light.Range = radius * 1.6
+	light.Brightness = 4
+	light.Parent = a
+	TweenService:Create(light, TweenInfo.new(0.4), { Brightness = 0 }):Play()
+	local shards = Instance.new("ParticleEmitter")
+	shards.Texture = VfxTextures.get("Shard")
+	shards.Enabled = false
+	shards.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
+	shards.LightEmission = 0.8
+	shards.Lifetime = NumberRange.new(0.3, 0.6)
+	shards.Speed = NumberRange.new(radius * 1.5, radius * 3)
+	shards.SpreadAngle = Vector2.new(180, 10)
+	shards.EmissionDirection = Enum.NormalId.Top
+	shards.Acceleration = Vector3.new(0, -50, 0)
+	shards.Size = NumberSequence.new(0.4, 0)
+	shards.Parent = a
+	shards:Emit(36)
+	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = VfxTextures.get("Dust")
+	dust.Enabled = false
+	dust.Color =
+		ColorSequence.new(if ground then ground.Instance.Color else Color3.new(0.6, 0.6, 0.6))
+	dust.Lifetime = NumberRange.new(0.5, 0.9)
+	dust.Speed = NumberRange.new(radius, radius * 1.6)
+	dust.SpreadAngle = Vector2.new(180, 5)
+	dust.Transparency = NumberSequence.new(0.3, 1)
+	dust.Size = NumberSequence.new(1, 2.5)
+	dust.Drag = 3
+	dust.Parent = a
+	dust:Emit(24)
+	Debris:AddItem(a, 1.2)
+end
+
 return WeaponFx

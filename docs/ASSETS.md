@@ -166,7 +166,7 @@ Construites par script (`assets/blender/beasts/build_betes.py`, primitives de
 | Raie_Temps | Raie_Temps_Metal | rbxassetid://101095044798836 | Metal #2a2d34 |
 | Raie_Temps | Raie_Temps_Noyau | rbxassetid://106060926436233 | Neon #50e6ff |
 
-### Kit de forteresse (`ServerStorage > FortressKit`, v0.5.1) — 📦 À importer
+### Kit de forteresse (`ServerStorage > FortressKit`, v0.6.2) — ✅ Importé (2026-11-08)
 
 Construit par `assets/blender/fortress/build_kit.py` (source : `fortress_kit.blend`). Tant qu'il
 n'est pas importé, les tuiles et les caisses restent en greybox (repli automatique) ; une fois
@@ -187,7 +187,7 @@ Fichier → Importer (échelle 0,01 comme pour les armes), puis ranger le Model 
 `ServerStorage > FortressKit` sous le nom du module (`Kit_Mur`…), pièces nommées
 `Kit_Mur_Pierre`, etc. Couleurs et matériaux sont posés par le code d'après le suffixe.
 
-### Armure du Roi Sans Heure (`ServerStorage > EnemyOutfits > Guardian`, v0.8.0) — 📦 À importer
+### Armure du Roi Sans Heure (`ServerStorage > EnemyOutfits > Guardian`, v0.8.0) — ✅ Importée (2026-11-08)
 
 Construite par `assets/blender/enemies/build_roi.py` → `Roi_Equipement.fbx` (1 264 triangles,
 17 pièces). Modélisée autour d'un R15 à l'échelle 1 (le jeu agrandit le Roi ×3 après l'avoir
@@ -195,6 +195,11 @@ habillé). Pièces nommées `<Partie du corps>__<Matériau>` (ex. `Head__Laiton`
 soudées à la partie du corps de ce nom ; couleurs et matériaux posés par le code (suffixe).
 Import : Fichier → Importer (échelle 0,01), ranger le Model sous `EnemyOutfits` avec le nom
 `Guardian`. Sans lui, le Roi garde une couronne provisoire en pièces.
+
+> 2026-11-08 : armure importée à l'échelle 0,01 (17 MeshParts, ajustement vérifié sur un R15 ×3).
+> Le kit avait été importé à l'échelle 1 (×100) puis laissé dans le Workspace : ramené à 1 stud
+> (`Model:ScaleTo`) et rangé dans `ServerStorage > FortressKit`. Les deux sont dans `Place1.rbxl`
+> uniquement : la place Éclat de test (`tools/ouvrir-eclat.ps1`) ne les contient pas encore.
 
 ## Procédure d'import (vérifiée en v0.4.2)
 

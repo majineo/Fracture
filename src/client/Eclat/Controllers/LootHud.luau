@@ -19,22 +19,25 @@ local ExtractionPlan = require(Shared:WaitForChild("Eclat"):WaitForChild("Extrac
 local Client = script.Parent.Parent.Parent
 local Net = require(Client.Lib.Net)
 local CombatSounds = require(Client.Combat.CombatSounds)
+local Menu = require(Client.Ui.Menu)
+local Theme = require(Client.Ui.Theme)
 
 local player = Players.LocalPlayer
 
-local CYAN = Color3.fromRGB(80, 230, 255)
-local ORANGE = Color3.fromRGB(255, 140, 60)
-local PANEL = Color3.fromRGB(16, 18, 24)
+local CYAN = Theme.ARCANE
+local ORANGE = Theme.DANGER
 
 local LootHud = {}
 
 local gui: ScreenGui
-local slots: { Frame } = {}
+local slots: { Theme.Slot } = {}
 local toastList: Frame
 local progressFrame: Frame
 local progressFill: Frame
 local progressText: TextLabel
-local result: Frame
+local resultWindow: Menu.Window
+local resultLines: { string } = {}
+local redeployed = true
 local stacksShown: { any } = {}
 
 local BANDAGE = "cons.bandage"
@@ -72,21 +75,8 @@ local function itemName(id: string): string
 	return if def then def.name else id
 end
 
-local function corner(parent: Instance, radius: number)
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, radius)
-	c.Parent = parent
-end
-
 local function text(parent: Instance, value: string, size: number, color: Color3?): TextLabel
-	local l = Instance.new("TextLabel")
-	l.BackgroundTransparency = 1
-	l.Font = Enum.Font.GothamBold
-	l.TextSize = size
-	l.TextColor3 = color or Color3.new(1, 1, 1)
-	l.Text = value
-	l.Parent = parent
-	return l
+	return Theme.label(parent, value, size + 2, color, Theme.BOLD_FONT)
 end
 
 -- Capacités du Codex (v0.7.1) : 2 pastilles au-dessus de l'inventaire.
@@ -99,22 +89,15 @@ end
 
 local function buildCodex()
 	for slot = 1, 2 do
-		local b = Instance.new("TextButton")
-		b.Name = `Codex{slot}`
-		b.AnchorPoint = Vector2.new(0.5, 1)
-		b.Position = UDim2.new(0.5, (slot - 1.5) * 190, 1, -152)
-		b.Size = UDim2.fromOffset(180, 30)
-		b.BackgroundColor3 = Color3.fromRGB(40, 24, 60)
-		b.BackgroundTransparency = 0.25
-		b.Font = Enum.Font.GothamBold
-		b.TextSize = 13
-		b.TextColor3 = Color3.fromRGB(200, 150, 255)
-		b.Visible = false
-		corner(b, 6)
-		b.Parent = gui
-		b.Activated:Connect(function()
+		local b = Theme.button(gui, "", "Violet", function()
 			useCodex(slot)
 		end)
+		b.Name = `Codex{slot}`
+		b.AnchorPoint = Vector2.new(0.5, 1)
+		b.Position = UDim2.new(0.5, (slot - 1.5) * 200, 1, -162)
+		b.Size = UDim2.fromOffset(190, 30)
+		b.TextSize = 15
+		b.Visible = false
 		codexButtons[slot] = b
 	end
 end
@@ -133,57 +116,34 @@ local function updateCodex(character: Model?)
 	end
 end
 
+local SLOT_SIZE = 40
+
 local function buildInventory()
 	local bar = Instance.new("Frame")
 	bar.Name = "Inventaire"
 	bar.AnchorPoint = Vector2.new(0.5, 1)
 	bar.Position = UDim2.new(0.5, 0, 1, -112)
-	bar.Size = UDim2.fromOffset(12 * 34 + 11 * 4, 34)
+	bar.Size = UDim2.fromOffset(12 * SLOT_SIZE + 11 * 5, SLOT_SIZE)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
 	local layout = Instance.new("UIListLayout")
 	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.Padding = UDim.new(0, 4)
+	layout.Padding = UDim.new(0, 5)
 	layout.Parent = bar
 	for i = 1, 12 do
-		local slot = Instance.new("Frame")
-		slot.Name = `Slot{i}`
-		slot.Size = UDim2.fromOffset(34, 34)
-		slot.BackgroundColor3 = PANEL
-		slot.BackgroundTransparency = 0.45
-		corner(slot, 5)
-		local stroke = Instance.new("UIStroke")
-		stroke.Color = Color3.fromRGB(70, 74, 84)
-		stroke.Thickness = 1
-		stroke.Parent = slot
-		local name = text(slot, "", 11)
-		name.Name = "Nom"
-		name.Size = UDim2.new(1, -2, 0, 14)
-		name.Position = UDim2.fromOffset(1, 3)
-		name.TextScaled = false
-		local qty = text(slot, "", 12)
-		qty.Name = "Qte"
-		qty.Size = UDim2.new(1, -4, 0, 14)
-		qty.Position = UDim2.new(0, 2, 1, -16)
-		qty.TextXAlignment = Enum.TextXAlignment.Right
-		local tap = Instance.new("TextButton")
-		tap.Name = "Toucher"
-		tap.Size = UDim2.fromScale(1, 1)
-		tap.BackgroundTransparency = 1
-		tap.Text = ""
-		tap.Parent = slot
-		tap.Activated:Connect(function()
-			local stack = stacksShown[i]
-			local def = stack and ItemDefs.get(stack.id)
-			if def and def.heal then
-				Net.fire("UseConsumable", stack.id)
-			elseif def and def.relic then
-				useRelic(i)
-			end
+		local slot = Theme.slot(bar, SLOT_SIZE)
+		slot.frame.Name = `Slot{i}`
+		slot.frame.LayoutOrder = i
+		slot.button.Activated:Connect(function()
+			LootHud.useSlot(i)
 		end)
-		slot.Parent = bar
 		slots[i] = slot
 	end
+	local hint = Theme.label(bar, "[Tab] Sac", 15, Theme.BRASS, Theme.BOLD_FONT)
+	hint.AnchorPoint = Vector2.new(0, 0.5)
+	hint.Position = UDim2.new(1, 10, 0.5, 0)
+	hint.Size = UDim2.fromOffset(80, 20)
+	hint.TextXAlignment = Enum.TextXAlignment.Left
 end
 
 local function showInventory(state: any)
@@ -193,22 +153,18 @@ local function showInventory(state: any)
 	stacksShown = state.stacks
 	for i, slot in slots do
 		local stack = state.stacks[i]
-		local name = slot:FindFirstChild("Nom") :: TextLabel
-		local qty = slot:FindFirstChild("Qte") :: TextLabel
-		local stroke = slot:FindFirstChildOfClass("UIStroke") :: UIStroke
 		if typeof(stack) == "table" and typeof(stack.id) == "string" then
-			name.Text = string.sub(itemName(stack.id), 1, 5)
-			name.TextColor3 = rarityColor(stack.id)
-			qty.Text = tostring(stack.qty)
-			stroke.Color = rarityColor(stack.id)
-			slot.BackgroundTransparency = 0.25
+			slot.set(
+				stack.id,
+				stack.qty,
+				string.sub(itemName(stack.id), 1, 6),
+				rarityColor(stack.id)
+			)
 		else
-			name.Text = ""
-			qty.Text = ""
-			stroke.Color = Color3.fromRGB(70, 74, 84)
-			slot.BackgroundTransparency = 0.45
+			slot.set(nil)
 		end
 	end
+	Menu.refresh("Sac")
 end
 
 local function toast(message: string, color: Color3)
@@ -272,60 +228,39 @@ local function buildProgress()
 	progressFrame.BackgroundTransparency = 1
 	progressFrame.Visible = false
 	progressFrame.Parent = gui
-	progressText = text(progressFrame, "", 16, CYAN)
+	progressText = Theme.label(progressFrame, "", 18, CYAN, Theme.BOLD_FONT)
 	progressText.Size = UDim2.new(1, 0, 0, 20)
 	progressText.TextStrokeTransparency = 0.4
-	local back = Instance.new("Frame")
+	local back, fill = Theme.bar(progressFrame, CYAN)
 	back.Position = UDim2.fromOffset(0, 26)
 	back.Size = UDim2.new(1, 0, 0, 8)
-	back.BackgroundColor3 = PANEL
-	back.BackgroundTransparency = 0.3
-	corner(back, 4)
-	back.Parent = progressFrame
-	progressFill = Instance.new("Frame")
-	progressFill.Size = UDim2.fromScale(0, 1)
-	progressFill.BackgroundColor3 = CYAN
-	corner(progressFill, 4)
-	progressFill.Parent = back
+	progressFill = fill
 end
 
-local function buildResult()
-	result = Instance.new("Frame")
-	result.AnchorPoint = Vector2.new(0.5, 0.5)
-	result.Position = UDim2.fromScale(0.5, 0.5)
-	result.Size = UDim2.fromOffset(380, 330)
-	result.BackgroundColor3 = PANEL
-	result.BackgroundTransparency = 0.1
-	result.Visible = false
-	corner(result, 10)
-	result.Parent = gui
-	local title = text(result, "EXTRAIT", 30, CYAN)
-	title.Name = "Titre"
-	title.Size = UDim2.new(1, 0, 0, 44)
-	title.Position = UDim2.fromOffset(0, 12)
-	local list = text(result, "", 15)
-	list.Name = "Liste"
-	list.Size = UDim2.new(1, -40, 0, 190)
-	list.Position = UDim2.fromOffset(20, 60)
-	list.Font = Enum.Font.Gotham
-	list.TextYAlignment = Enum.TextYAlignment.Top
-	list.TextWrapped = true
-	local button = Instance.new("TextButton")
-	button.Name = "Repartir"
-	button.AnchorPoint = Vector2.new(0.5, 1)
-	button.Position = UDim2.new(0.5, 0, 1, -16)
-	button.Size = UDim2.fromOffset(200, 42)
-	button.BackgroundColor3 = CYAN
-	button.Font = Enum.Font.GothamBold
-	button.TextSize = 18
-	button.TextColor3 = PANEL
-	button.Text = "Repartir"
-	corner(button, 8)
-	button.Parent = result
-	button.Activated:Connect(function()
-		result.Visible = false
+local function redeploy()
+	if not redeployed then
+		redeployed = true
 		Net.fire("RequestRedeploy")
-	end)
+	end
+end
+
+-- Bilan d'extraction : fenêtre du thème commun ; la fermer (ou « Repartir ») relance une partie.
+local function buildResult()
+	resultWindow = Menu.window("Bilan", "Extrait", Vector2.new(460, 400))
+	resultWindow.onTab = function(_, content: Frame)
+		local list = Theme.label(content, table.concat(resultLines, "\n"), 19, Theme.PARCHMENT)
+		list.Size = UDim2.new(1, 0, 1, -56)
+		list.TextYAlignment = Enum.TextYAlignment.Top
+		list.TextWrapped = true
+		local button = Theme.button(content, "Repartir", "Arcane", function()
+			Menu.close()
+		end)
+		button.Name = "Repartir"
+		button.AnchorPoint = Vector2.new(0.5, 1)
+		button.Position = UDim2.fromScale(0.5, 1)
+		button.Size = UDim2.fromOffset(200, 42)
+	end
+	resultWindow.onClose = redeploy
 end
 
 local function onResult(info: any)
@@ -346,9 +281,9 @@ local function onResult(info: any)
 	table.insert(lines, "")
 	table.insert(lines, `+{info.grains or 0} Grains (total : {info.totalGrains or 0})`)
 	table.insert(lines, `Extractions réussies : {info.extractions or 0}`)
-	local list = result:FindFirstChild("Liste") :: TextLabel
-	list.Text = table.concat(lines, "\n")
-	result.Visible = true
+	resultLines = lines
+	redeployed = false
+	Menu.open("Bilan")
 	CombatSounds.play2D("AbilityReady", 0.8)
 end
 
@@ -442,7 +377,7 @@ local function update()
 	end
 	-- Jauge de soin (bandage en cours).
 	local useEnds = character and character.Parent and character:GetAttribute("UseEnds")
-	if typeof(useEnds) == "number" and not result.Visible then
+	if typeof(useEnds) == "number" and Menu.current() ~= "Bilan" then
 		local left = useEnds - workspace:GetServerTimeNow()
 		local def = ItemDefs.get(BANDAGE)
 		local total = (def and def.useTime) or 2.5
@@ -458,7 +393,7 @@ local function update()
 	progressText.TextColor3 = CYAN
 	-- Jauge d'extraction.
 	local p = character and character.Parent and character:GetAttribute("ExtractProgress")
-	if typeof(p) == "number" and p > 0 and not result.Visible then
+	if typeof(p) == "number" and p > 0 and Menu.current() ~= "Bilan" then
 		progressFrame.Visible = true
 		local ratio = math.clamp(p / ExtractionPlan.HOLD, 0, 1)
 		progressFill.Size = UDim2.fromScale(ratio, 1)
@@ -482,6 +417,28 @@ local function watchZones(folder: Instance)
 	end
 	folder.DescendantAdded:Connect(consider)
 end
+
+-- API pour la fenêtre du sac (SacUi) --------------------------------------------------
+
+function LootHud.stacks(): { any }
+	return stacksShown
+end
+
+-- Utilise l'objet de l'emplacement `i` (bandage, relique) ; renvoie false s'il ne s'utilise pas.
+function LootHud.useSlot(i: number): boolean
+	local stack = stacksShown[i]
+	local def = stack and ItemDefs.get(stack.id)
+	if def and def.heal then
+		Net.fire("UseConsumable", stack.id)
+		return true
+	elseif def and def.relic then
+		useRelic(i)
+		return true
+	end
+	return false
+end
+
+LootHud.useCodex = useCodex
 
 function LootHud.start()
 	gui = Instance.new("ScreenGui")

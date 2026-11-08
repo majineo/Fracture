@@ -5,6 +5,72 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.9.0] — 2026-11-08 — « Laiton et voltige »
+
+### Description générale
+Une seule interface pour tout le jeu, enfin cliquable, et deux nouveaux mouvements : la roulade
+et le salto. Les vrais modèles Blender (armes, armure du Roi, kit de forteresse) sont aussi dans
+la place Éclat de test.
+
+### Nouvelles fonctionnalités
+- **Fenêtre unique** (Tab ou I) : le **sac** dans l'Éclat (12 emplacements, fiche détaillée,
+  bouton Utiliser, onglets Codex et Aide) et le **coffre** au Refuge (onglets Coffre, Codex,
+  Profil, Aide) ont exactement le même style : encre, cadres de laiton à rivets, néon cyan.
+- **Souris libre** dans toute fenêtre ouverte, même arme en main ; un clic dans la fenêtre ne tire
+  plus ; un clic hors de la fenêtre la ferme.
+- **Fiches d'objets** : description de chaque objet et relique.
+- **Page d'aide** : toutes les commandes (la touche de capacité s'affiche selon le clavier :
+  « A » en AZERTY).
+- **Invites au style du jeu** (« E Fouiller · Caisse ») : cartouche laiton, jauge de maintien,
+  cliquables à la souris ou au doigt.
+- **Roulade** : C en marchant (28 studs/s, 0,42 s) ; C juste avant d'atterrir après une chute
+  rapide = roulade de réception qui garde l'élan.
+- **Salto** : saut en l'air, une fois par saut (rechargé au sol ou sur un mur), avant ou arrière
+  selon la direction ; rotation complète du corps.
+- Bouton « Sac » sur écran tactile.
+
+### Modifications
+- Barre d'objets, jauges, bilan d'extraction, pastilles du Codex : thème commun ; le bilan est
+  une fenêtre (la fermer = repartir).
+- Place Éclat de test : armes, tenues et kit de forteresse importés depuis `assets/roblox/*.rbxm`.
+- La liste des joueurs de Roblox est masquée (Tab ouvre le sac).
+
+### Corrections de bugs
+- **Impossible de cliquer dans le coffre, le sac ou le bilan arme en main** : la caméra d'épaule
+  reverrouillait la souris au centre à chaque image.
+- Pendant les tests : un clic dans une zone vide d'une fenêtre la fermait.
+
+### Vérifications
+- Studio (Éclat) : sac ouvert par Tab arme en main → souris libre, clic sur un objet → fiche et
+  « Utiliser », clic dans la fenêtre → aucun tir (12/12), clic dehors → fermeture.
+- Studio (Refuge) : coffre → sélection d'une relique intacte → « Stabiliser » → Codex niveau 1 →
+  « Équiper » (1/2).
+- Salto : vitesse verticale 48, rotation mesurée sur l'articulation de la racine ; roulade :
+  9 studs, vitesse 28 ; roulade de réception déclenchée après une chute de 30 studs.
+- Invite personnalisée affichée devant une caisse ; 112 tests Lune.
+
+### Problèmes connus
+- Ressenti de la roulade et du salto à valider au clavier et au tactile.
+- Manette : pas encore de bouton pour ouvrir le sac.
+- Quelques sons choisis sans écoute renvoient une erreur de chargement (identifiants à remplacer).
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Ui/{Theme,Menu,ItemViews}.luau`,
+  `src/client/Core/Controllers/PromptStyle.luau`, `src/client/Eclat/Controllers/SacUi.luau`,
+  `src/client/Core/Movement/{Roll,Flip}.luau`, `assets/roblox/*.rbxm`
+- **Modifiés** : `src/client/Core/Controllers/{ShoulderCamera,CombatController,MovementController,CharacterAnimation,CameraFeel}.luau`,
+  `src/client/Eclat/Controllers/LootHud.luau`, `src/client/Refuge/Controllers/VaultUi.luau`,
+  `src/server/Core/Systems/MovementState.luau`, `src/shared/Movement/MovementConfig.luau`,
+  `src/shared/Loot/ItemDefs.luau`, `src/shared/Config.luau`, `places/eclat.project.json`,
+  `docs/{DECISIONS,ASSETS}.md`, `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Nouvelles armes à capacités spéciales ; ville steampunk / arcane modélisée dans Blender ; carte
+  de l'Éclat plus grande, à explorer.
+
+---
+
 ## [v0.8.1] — 2026-11-08 — « Armure du Roi »
 
 ### Description générale

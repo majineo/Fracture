@@ -23,6 +23,8 @@ local MODES = table.freeze({
 	Grapple = true,
 	Dash = true,
 	WallRun = true,
+	Roll = true,
+	Flip = true,
 })
 
 -- Tolérance du serveur pour chaque mouvement rapide : durée, vitesse, montée, recharge.
@@ -38,6 +40,20 @@ local ALLOWANCES = table.freeze({
 		speed = MovementConfig.WALLRUN_SPEED + MovementConfig.WALLJUMP_PUSH + 8,
 		rise = 22,
 		cooldown = MovementConfig.WALLRUN_COOLDOWN * 0.8,
+	},
+	-- Roulade : vitesse de roulade (ou de réception, bornée à la vitesse de glissade).
+	Roll = {
+		seconds = MovementConfig.ROLL_TIME + 0.6,
+		speed = math.max(MovementConfig.ROLL_SPEED, MovementConfig.SLIDE_SPEED) + 6,
+		rise = 4,
+		cooldown = MovementConfig.ROLL_COOLDOWN * 0.8,
+	},
+	-- Salto : second saut (montée supplémentaire ~4 studs) et petite poussée horizontale.
+	Flip = {
+		seconds = MovementConfig.FLIP_TIME + 1,
+		speed = MovementConfig.SPRINT_SPEED + MovementConfig.FLIP_PUSH + 6,
+		rise = 24,
+		cooldown = 0.6,
 	},
 })
 

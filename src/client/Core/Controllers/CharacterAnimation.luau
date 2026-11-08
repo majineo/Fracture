@@ -29,7 +29,7 @@ local MovementController = require(script.Parent.MovementController)
 local localPlayer = Players.LocalPlayer
 
 -- Durées estimées pour les autres joueurs (dont on ne connaît pas l'avancement exact).
-local REMOTE_DURATION = { Slide = 0.8, Mantle = 0.4, Grapple = 1.2 }
+local REMOTE_DURATION = { Slide = 0.8, Mantle = 0.4, Grapple = 1.2, Roll = 0.42, Flip = 0.5 }
 local MANTLE_SPLIT = 0.45 -- avancement où l'on passe de « attraper » à « se hisser »
 local LAND_MIN_SPEED = 12
 local SPRINT_LEAN_FROM = 15
@@ -90,6 +90,9 @@ local function buildAnimator(rig: JointRig.Rig): PoseAnimator.PoseAnimator
 	-- Mobilité (v0.4.11) : course sur les murs (pose calculée à chaque image), élan.
 	animator.addLayer("WallRun", {}, false, 16)
 	animator.addLayer("Dash", Poses.Dash, false, 26)
+	-- Roulade et salto (v0.9.0) : rotation complète du corps, pose recalculée à chaque image.
+	animator.addLayer("Roll", {}, false, 40)
+	animator.addLayer("Flip", {}, false, 40)
 	-- Combat : par-dessus le déplacement (on peut viser en glissant).
 	-- Tenue de l'arme : bras calculés par cinématique inverse (Animation/WeaponHold).
 	animator.addLayer("Hold", {}, false, 14)
@@ -377,6 +380,61 @@ local function updateEntry(entry: Tracked, dt: number)
 	)
 	animator.setWeight("Slide", if mode == "Slide" then 1 else 0)
 	animator.setWeight("Dash", if mode == "Dash" then 1 else 0)
+	-- Roulade : corps groupé qui tourne d'un tour complet vers l'avant, près du sol.
+	if mode == "Roll" then
+		local t = math.clamp(progress, 0, 1)
+		local eased = t * t * (3 - 2 * t)
+		local tuck = math.sin(math.pi * t)
+		-- Axe de rotation : perpendiculaire au sens de la roulade (avant, côté, arrière), vu dans
+		-- le repère du personnage (il peut regarder ailleurs, caméra d'épaule).
+		local flat = Vector3.new(velocity.X, 0, velocity.Z)
+		local localDir = if flat.Magnitude > 2
+			then root.CFrame:VectorToObjectSpace(flat.Unit)
+			else Vector3.new(0, 0, -1)
+		local axis = Vector3.yAxis:Cross(Vector3.new(localDir.X, 0, localDir.Z).Unit)
+		animator.setPose("Roll", {
+			Root = CFrame.new(0, -1.3 * tuck, 0) * CFrame.fromAxisAngle(axis, math.pi * 2 * eased),
+			Waist = CFrame.Angles(math.rad(-35 * tuck), 0, 0),
+			Neck = CFrame.Angles(math.rad(-30 * tuck), 0, 0),
+			RightHip = CFrame.Angles(math.rad(95 * tuck), 0, 0),
+			LeftHip = CFrame.Angles(math.rad(95 * tuck), 0, 0),
+			RightKnee = CFrame.Angles(math.rad(-120 * tuck), 0, 0),
+			LeftKnee = CFrame.Angles(math.rad(-120 * tuck), 0, 0),
+			RightShoulder = CFrame.Angles(math.rad(40 * tuck), 0, math.rad(15)),
+			LeftShoulder = CFrame.Angles(math.rad(40 * tuck), 0, math.rad(-15)),
+			RightElbow = CFrame.Angles(math.rad(70 * tuck), 0, 0),
+			LeftElbow = CFrame.Angles(math.rad(70 * tuck), 0, 0),
+		})
+		animator.setWeight("Roll", 1)
+	else
+		animator.setWeight("Roll", 0)
+	end
+	-- Salto : tour complet en l'air (avant ou arrière), jambes groupées au milieu.
+	if mode == "Flip" then
+		local sign = 1
+		if isLocal then
+			sign = MovementController.getFlipSign()
+		else
+			local look = root.CFrame.LookVector
+			sign = if Vector3.new(velocity.X, 0, velocity.Z):Dot(look) < -4 then -1 else 1
+		end
+		local t = math.clamp(progress, 0, 1)
+		local eased = 1 - (1 - t) * (1 - t)
+		local tuck = math.sin(math.pi * t)
+		animator.setPose("Flip", {
+			Root = CFrame.Angles(-sign * math.pi * 2 * eased, 0, 0),
+			Waist = CFrame.Angles(math.rad(-25 * tuck), 0, 0),
+			RightHip = CFrame.Angles(math.rad(100 * tuck), 0, 0),
+			LeftHip = CFrame.Angles(math.rad(100 * tuck), 0, 0),
+			RightKnee = CFrame.Angles(math.rad(-110 * tuck), 0, 0),
+			LeftKnee = CFrame.Angles(math.rad(-110 * tuck), 0, 0),
+			RightShoulder = CFrame.Angles(math.rad(60 * tuck), 0, math.rad(30 * tuck)),
+			LeftShoulder = CFrame.Angles(math.rad(60 * tuck), 0, math.rad(-30 * tuck)),
+		})
+		animator.setWeight("Flip", 1)
+	else
+		animator.setWeight("Flip", 0)
+	end
 	if mode == "WallRun" then
 		-- Côté du mur : connu pour soi, retrouvé par un rayon pour les autres joueurs.
 		local side = if isLocal then MovementController.getWallSide() else wallSideOf(entry)

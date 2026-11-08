@@ -1,6 +1,7 @@
 --!strict
--- Coffre du Refuge et Codex (v0.6.1, v0.7.1) : contenu du coffre, statistiques, stabilisation
--- des reliques intactes et choix des 2 capacités emportées.
+-- Coffre du Refuge et Codex (v0.6.1, v0.7.1 ; fenêtre commune en v0.9.0) : même fenêtre et
+-- mêmes briques que le sac de l'Éclat (Ui/Menu, Ui/ItemViews). Ouverte par le coffre (invite)
+-- ou Tab / I n'importe où dans le Refuge ; la souris est libre tant qu'elle est ouverte.
 -- Studio : StarterPlayer > StarterPlayerScripts > Client > Place > Controllers > VaultUi
 --
 -- Affichage à partir de l'instantané du profil (ProfileController) ; les boutons envoient une
@@ -18,179 +19,148 @@ local Codex = require(Loot:WaitForChild("Codex"))
 local Client = script.Parent.Parent.Parent
 local Net = require(Client.Lib.Net)
 local ProfileController = require(Client.Controllers.ProfileController)
-
-local PANEL = Color3.fromRGB(16, 18, 24)
-local GOLD = Color3.fromRGB(230, 190, 90)
-local VIOLET = Color3.fromRGB(190, 110, 255)
-local GREY = Color3.fromRGB(170, 170, 170)
+local Menu = require(Client.Ui.Menu)
+local Theme = require(Client.Ui.Theme)
+local ItemViews = require(Client.Ui.ItemViews)
 
 local player = Players.LocalPlayer
 
 local VaultUi = {}
 
-local panel: Frame
-local list: ScrollingFrame
 local notice: TextLabel
+local selected: number? = nil
+local SLOTS = 40
 
-local function text(parent: Instance, value: string, size: number, color: Color3?): TextLabel
-	local l = Instance.new("TextLabel")
-	l.BackgroundTransparency = 1
-	l.Font = Enum.Font.GothamBold
-	l.TextSize = size
-	l.TextColor3 = color or Color3.new(1, 1, 1)
-	l.Text = value
-	l.Parent = parent
-	return l
-end
-
-local function button(parent: Instance, label: string, color: Color3, onClick: () -> ()): TextButton
-	local b = Instance.new("TextButton")
-	b.AnchorPoint = Vector2.new(1, 0.5)
-	b.Position = UDim2.new(1, -4, 0.5, 0)
-	b.Size = UDim2.fromOffset(110, 26)
-	b.BackgroundColor3 = color
-	b.Font = Enum.Font.GothamBold
-	b.TextSize = 13
-	b.TextColor3 = PANEL
-	b.Text = label
-	local c = Instance.new("UICorner")
-	c.CornerRadius = UDim.new(0, 6)
-	c.Parent = b
-	b.Parent = parent
-	b.Activated:Connect(onClick)
-	return b
-end
-
-local order = 0
-local function row(value: string, color: Color3?, height: number?): Frame
-	order += 1
-	local r = Instance.new("Frame")
-	r.BackgroundTransparency = 1
-	r.Size = UDim2.new(1, -8, 0, height or 28)
-	r.LayoutOrder = order
-	local l = text(r, value, 14, color)
-	l.Font = Enum.Font.Gotham
-	l.Size = UDim2.new(1, -120, 1, 0)
-	l.TextXAlignment = Enum.TextXAlignment.Left
-	l.TextWrapped = true
-	r.Parent = list
-	return r
-end
-
-local function refresh()
-	for _, child in list:GetChildren() do
-		if child:IsA("Frame") then
-			child:Destroy()
+local function buildCoffre(window: Menu.Window, content: Frame, snapshot: any)
+	local stash = if typeof(snapshot.stash) == "table" then snapshot.stash else {}
+	local items: { ItemViews.Entry } = {}
+	for i, item in stash do
+		items[i] = { id = item.id, qty = item.qty }
+	end
+	if selected and items[selected] == nil then
+		selected = nil
+	end
+	local left, right = ItemViews.split(content, 5 * 64 + 4 * 8 + 14)
+	ItemViews.grid(left, items, math.max(SLOTS, #items), 64, selected, function(i)
+		selected = i
+		window.refresh()
+	end)
+	local entry = if selected then items[selected] else nil
+	local def = entry and ItemDefs.get(entry.id)
+	if entry and def and def.relic then
+		local intact = entry.qty >= 3
+		local actions = ItemViews.details(
+			right,
+			entry,
+			if intact
+				then `Intacte : stabilise-la pour l'ajouter au Codex ({Codex.COST_GRAINS} Grains + 1 Acier ancien).`
+				else "Abîmée : une relique utilisée ne peut plus être stabilisée."
+		)
+		if intact then
+			local guid = stash[selected :: number].guid
+			Theme.button(actions, "Stabiliser", "Violet", function()
+				Net.fire("StabilizeRelic", guid)
+			end)
 		end
+	else
+		ItemViews.details(
+			right,
+			entry,
+			if entry
+				then nil
+				else `Coffre : tout ce que tu as extrait. Grains : {snapshot.grains or 0}.`
+		)
 	end
-	order = 0
-	local snapshot = ProfileController.get()
-	if snapshot == nil then
-		row("Chargement du profil…", GREY)
-		return
-	end
-	row(`Grains : {snapshot.grains or 0}`, GOLD)
-	-- Codex.
-	row("CODEX", VIOLET, 24)
+end
+
+local function buildCodex(content: Frame, snapshot: any)
+	local list = ItemViews.list(content)
 	local equipped = if typeof(snapshot.equipped) == "table" then snapshot.equipped else {}
-	local any = false
+	local order = 0
 	for _, id in ItemDefs.RELICS do
 		local level = typeof(snapshot.codex) == "table" and snapshot.codex[id] or nil
 		if level then
-			any = true
+			order += 1
 			local def = ItemDefs.get(id) :: ItemDefs.ItemDef
 			local on = table.find(equipped, id) ~= nil
-			local r =
-				row(`{def.name} — niveau {level} ({Codex.usesFor(level)} utilisations / vie)`)
-			button(r, if on then "Retirer" else "Équiper", if on then GREY else VIOLET, function()
-				Net.fire("EquipCodex", id, not on)
-			end)
-		end
-	end
-	if not any then
-		row("Vide : stabilise une relique intacte rapportée d'un Éclat.", GREY, 40)
-	else
-		row(`Équipées : {#equipped}/{Codex.MAX_EQUIPPED} (touches V et B dans l'Éclat)`, GREY)
-	end
-	-- Coffre.
-	row("COFFRE", GOLD, 24)
-	local stash = snapshot.stash
-	if typeof(stash) == "table" and #stash > 0 then
-		for _, item in stash do
-			local def = ItemDefs.get(item.id)
-			if def and def.relic then
-				local intact = item.qty >= 3
-				local r = row(
-					`Relique {def.name} ({item.qty}/3{if intact then ", intacte" else ", abîmée"})`,
-					VIOLET
-				)
-				if intact then
-					button(r, "Stabiliser", GOLD, function()
-						Net.fire("StabilizeRelic", item.guid)
-					end)
+			ItemViews.card(
+				list,
+				order,
+				`{def.name} — niveau {level}`,
+				`{Codex.usesFor(level)} utilisations par vie. {if on
+					then "Emportée dans l'Éclat."
+					else ""}`,
+				if on then Theme.ARCANE else Theme.VIOLET,
+				if on then "Retirer" else "Équiper",
+				if on then "Muted" else "Violet",
+				function()
+					Net.fire("EquipCodex", id, not on)
 				end
-			else
-				row(`{item.qty} × {if def then def.name else item.id}`)
-			end
+			)
 		end
-		row(`Stabiliser : {Codex.COST_GRAINS} Grains + 1 Acier ancien`, GREY)
-	else
-		row("Le coffre est vide : rapporte du butin d'un Éclat.", GREY)
 	end
-	row(`Extractions : {snapshot.extractions or 0} · Morts : {snapshot.deaths or 0}`, GREY)
+	if order == 0 then
+		ItemViews.card(
+			list,
+			1,
+			"Codex vide",
+			"Rapporte une relique intacte (3 charges) d'un Éclat, puis stabilise-la au coffre.",
+			Theme.MUTED
+		)
+	else
+		ItemViews.card(
+			list,
+			order + 1,
+			`Équipées : {#equipped}/{Codex.MAX_EQUIPPED}`,
+			"Touches V et B dans l'Éclat.",
+			Theme.BRASS
+		)
+	end
+end
+
+local function buildProfil(content: Frame, snapshot: any)
+	local list = ItemViews.list(content)
+	ItemViews.card(list, 1, "Grains", `{snapshot.grains or 0}`, Theme.BRASS)
+	ItemViews.card(list, 2, "Extractions réussies", `{snapshot.extractions or 0}`, Theme.ARCANE)
+	ItemViews.card(list, 3, "Morts dans l'Éclat", `{snapshot.deaths or 0}`, Theme.DANGER)
 end
 
 local function build()
+	local window = Menu.window(
+		"Coffre",
+		"Coffre du Refuge",
+		Vector2.new(820, 500),
+		{ "Coffre", "Codex", "Profil", "Aide" }
+	)
+	window.onTab = function(tab: string, content: Frame)
+		local snapshot = ProfileController.get()
+		if tab == "Aide" then
+			ItemViews.help(content)
+			return
+		end
+		if snapshot == nil then
+			local l = Theme.label(content, "Chargement du profil…", 18, Theme.MUTED)
+			l.Size = UDim2.fromScale(1, 1)
+			return
+		end
+		if tab == "Coffre" then
+			buildCoffre(window, content, snapshot)
+		elseif tab == "Codex" then
+			buildCodex(content, snapshot)
+		else
+			buildProfil(content, snapshot)
+		end
+	end
+	Menu.setMain("Coffre")
+
 	local gui = Instance.new("ScreenGui")
-	gui.Name = "VaultUi"
+	gui.Name = "VaultNotice"
 	gui.ResetOnSpawn = false
+	gui.DisplayOrder = 30
 	gui.Parent = player:WaitForChild("PlayerGui")
-	panel = Instance.new("Frame")
-	panel.AnchorPoint = Vector2.new(0.5, 0.5)
-	panel.Position = UDim2.fromScale(0.5, 0.5)
-	panel.Size = UDim2.fromOffset(440, 420)
-	panel.BackgroundColor3 = PANEL
-	panel.BackgroundTransparency = 0.08
-	panel.Visible = false
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 10)
-	corner.Parent = panel
-	panel.Parent = gui
-	local title = text(panel, "COFFRE DU REFUGE", 22, GOLD)
-	title.Size = UDim2.new(1, 0, 0, 40)
-	title.Position = UDim2.fromOffset(0, 8)
-	list = Instance.new("ScrollingFrame")
-	list.Position = UDim2.fromOffset(16, 52)
-	list.Size = UDim2.new(1, -32, 1, -112)
-	list.BackgroundTransparency = 1
-	list.BorderSizePixel = 0
-	list.ScrollBarThickness = 4
-	list.AutomaticCanvasSize = Enum.AutomaticSize.Y
-	list.CanvasSize = UDim2.new()
-	local layout = Instance.new("UIListLayout")
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 2)
-	layout.Parent = list
-	list.Parent = panel
-	local close = Instance.new("TextButton")
-	close.AnchorPoint = Vector2.new(0.5, 1)
-	close.Position = UDim2.new(0.5, 0, 1, -14)
-	close.Size = UDim2.fromOffset(160, 38)
-	close.BackgroundColor3 = GOLD
-	close.Font = Enum.Font.GothamBold
-	close.TextSize = 16
-	close.TextColor3 = PANEL
-	close.Text = "Fermer"
-	local c2 = Instance.new("UICorner")
-	c2.CornerRadius = UDim.new(0, 8)
-	c2.Parent = close
-	close.Parent = panel
-	close.Activated:Connect(function()
-		panel.Visible = false
-	end)
-	notice = text(gui, "", 18, Color3.fromRGB(255, 160, 80))
+	notice = Theme.label(gui, "", 20, Theme.COPPER, Theme.BOLD_FONT)
 	notice.AnchorPoint = Vector2.new(0.5, 0)
-	notice.Position = UDim2.new(0.5, 0, 0, 120)
+	notice.Position = UDim2.new(0.5, 0, 0, 10) -- au-dessus des fenêtres (v0.9.0)
 	notice.Size = UDim2.fromOffset(700, 30)
 	notice.TextTransparency = 1
 	notice.TextStrokeTransparency = 1
@@ -218,14 +188,15 @@ function VaultUi.start()
 	build()
 	ProximityPromptService.PromptTriggered:Connect(function(prompt: ProximityPrompt)
 		if prompt:GetAttribute("Vault") == true then
-			refresh()
-			panel.Visible = not panel.Visible
+			local window = Menu.get("Coffre")
+			if window then
+				window.tab = "Coffre"
+			end
+			Menu.toggle("Coffre")
 		end
 	end)
 	ProfileController.Changed:Connect(function()
-		if panel.Visible then
-			refresh()
-		end
+		Menu.refresh("Coffre")
 	end)
 	Net.on("Notice", showNotice)
 end

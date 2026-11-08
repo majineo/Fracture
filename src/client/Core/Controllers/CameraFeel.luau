@@ -94,7 +94,10 @@ function CameraFeel.start()
 					then AIM_FOV_REDUCTION
 					else 0)
 			roll.target = if mode == "Slide" then SLIDE_ROLL else 0
-			drop.target = if mode == "Slide" then -MovementConfig.SLIDE_CAMERA_DROP else 0
+			drop.target = if mode == "Slide"
+				then -MovementConfig.SLIDE_CAMERA_DROP
+				elseif mode == "Roll" then -MovementConfig.ROLL_CAMERA_DROP
+				else 0
 			shoulder.target = if armed
 				then (if aiming then AIM_SHOULDER_OFFSET else SHOULDER_OFFSET)
 				else 0

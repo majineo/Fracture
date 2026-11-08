@@ -22,6 +22,8 @@
 --   Grappin  : G (vise le curseur) · manette R3 et bouton tactile (visent le centre de l'écran)
 --   Élan     : F · manette croix ▲ · bouton tactile « Élan »
 --   Course sur les murs : automatique ; saut pendant la course = saut mural
+--   Roulade  : C en marchant (v0.9.0) ; C juste avant l'atterrissage = roulade de réception
+--   Salto    : saut en l'air (v0.9.0), une fois par saut ; recharge au sol ou sur un mur
 
 local ContextActionService = game:GetService("ContextActionService")
 local Players = game:GetService("Players")
@@ -45,8 +47,10 @@ local Mantle = require(Client.Movement.Mantle)
 local Slide = require(Client.Movement.Slide)
 local Dash = require(Client.Movement.Dash)
 local WallRun = require(Client.Movement.WallRun)
+local Roll = require(Client.Movement.Roll)
+local Flip = require(Client.Movement.Flip)
 
-type Mode = "Normal" | "Slide" | "Mantle" | "Grapple" | "Dash" | "WallRun"
+type Mode = "Normal" | "Slide" | "Mantle" | "Grapple" | "Dash" | "WallRun" | "Roll" | "Flip"
 
 local ACTION_SPRINT = "Fracture_Sprint"
 local ACTION_SLIDE = "Fracture_Slide"
@@ -86,6 +90,10 @@ local lastDash = -math.huge
 local airDashes = MovementConfig.DASH_AIR_CHARGES
 local lastWallRunEnd = -math.huge
 local wallSide = 0 -- 1 = mur à droite, -1 = à gauche (animations)
+local lastRoll = -math.huge
+local rollBufferedUntil = 0 -- roulade de réception demandée en l'air
+local flips = MovementConfig.FLIP_CHARGES
+local flipSign = 1 -- 1 = salto avant, -1 = arrière (animations)
 
 local function setMode(newMode: Mode)
 	if newMode == mode then
@@ -173,7 +181,7 @@ local function tryDash(): boolean
 	if context == nil or isDowned(context) then
 		return false
 	end
-	if mode ~= "Normal" and mode ~= "Slide" then
+	if mode ~= "Normal" and mode ~= "Slide" and mode ~= "Flip" and mode ~= "Roll" then
 		return false
 	end
 	if os.clock() - lastDash < MovementConfig.DASH_COOLDOWN then
@@ -186,7 +194,7 @@ local function tryDash(): boolean
 	if not Stamina.spend(stamina, MovementConfig.DASH_STAMINA_COST, MovementConfig) then
 		return false
 	end
-	if mode == "Slide" then
+	if mode == "Slide" or mode == "Flip" or mode == "Roll" then
 		endAction()
 	end
 	lastDash = os.clock()
@@ -200,6 +208,51 @@ local function tryDash(): boolean
 	end
 	action = Dash.start(context, direction)
 	setMode("Dash")
+	return true
+end
+
+-- Roulade au sol (v0.9.0). `speed` : vitesse de départ (réception de chute).
+local function tryRoll(speed: number?): boolean
+	local context = ctx
+	if context == nil or isDowned(context) or mode ~= "Normal" or not onGround(context) then
+		return false
+	end
+	if os.clock() - lastRoll < MovementConfig.ROLL_COOLDOWN then
+		return false
+	end
+	if not Stamina.spend(stamina, MovementConfig.ROLL_STAMINA_COST, MovementConfig) then
+		return false
+	end
+	lastRoll = os.clock()
+	rollBufferedUntil = 0
+	slideBufferedUntil = 0
+	local direction = context.humanoid.MoveDirection
+	if direction.Magnitude < 0.1 then
+		local horizontal = Context.horizontalVelocity(context)
+		direction = if horizontal.Magnitude > 2 then horizontal else context.root.CFrame.LookVector
+	end
+	action = Roll.start(context, direction, speed)
+	setMode("Roll")
+	return true
+end
+
+-- Salto (v0.9.0) : second saut en l'air.
+local function tryFlip(): boolean
+	local context = ctx
+	if context == nil or isDowned(context) or onGround(context) then
+		return false
+	end
+	if mode ~= "Normal" or flips <= 0 then
+		return false
+	end
+	if not Stamina.spend(stamina, MovementConfig.FLIP_STAMINA_COST, MovementConfig) then
+		return false
+	end
+	flips -= 1
+	local flipAction, sign = Flip.start(context)
+	flipSign = sign
+	action = flipAction
+	setMode("Flip")
 	return true
 end
 
@@ -222,6 +275,7 @@ local function tryWallRun(context: Context.Context)
 		return
 	end
 	airDashes = MovementConfig.DASH_AIR_CHARGES -- toucher un mur rend l'élan aérien
+	flips = MovementConfig.FLIP_CHARGES -- et le salto
 	wallSide = wall.side
 	action = WallRun.start(context, wall)
 	setMode("WallRun")
@@ -295,6 +349,11 @@ local function onJumpRequest()
 	if not onGround(context) and not coyoteUsed and airborneFor <= MovementConfig.COYOTE_TIME then
 		coyoteUsed = true
 		context.humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+		return
+	end
+	-- En l'air (après le coyote) : salto.
+	if not onGround(context) and airborneFor > MovementConfig.COYOTE_TIME then
+		tryFlip()
 	end
 end
 
@@ -317,9 +376,25 @@ local function handleSprint(
 	return Enum.ContextActionResult.Sink
 end
 
+-- C : glissade si l'on court, roulade si l'on marche ; en l'air, roulade de réception.
+local function pressSlide()
+	local context = ctx
+	if context and not onGround(context) then
+		rollBufferedUntil = os.clock() + MovementConfig.ROLL_LANDING_WINDOW
+		return
+	end
+	if trySlide() then
+		return
+	end
+	if context ~= nil and isMoving(context) and tryRoll() then
+		return
+	end
+	slideBufferedUntil = os.clock() + MovementConfig.INPUT_BUFFER
+end
+
 local function handleSlide(_: string, state: Enum.UserInputState): Enum.ContextActionResult
-	if state == Enum.UserInputState.Begin and not trySlide() then
-		slideBufferedUntil = os.clock() + MovementConfig.INPUT_BUFFER
+	if state == Enum.UserInputState.Begin then
+		pressSlide()
 	end
 	return Enum.ContextActionResult.Sink
 end
@@ -428,12 +503,27 @@ local function updateGrounding(context: Context.Context)
 	local grounded = onGround(context)
 	local vy = context.root.AssemblyLinearVelocity.Y
 	if grounded then
-		if not wasGrounded and peakFallSpeed >= LANDING_MIN_SPEED and mode == "Normal" then
-			MovementController.Landed:Fire(peakFallSpeed)
+		if not wasGrounded and mode == "Normal" then
+			-- Roulade de réception : C pressé juste avant de toucher le sol après une chute.
+			local rolled = false
+			if
+				os.clock() < rollBufferedUntil
+				and peakFallSpeed >= MovementConfig.ROLL_LANDING_MIN_FALL
+			then
+				local keep = math.min(
+					Context.horizontalVelocity(context).Magnitude,
+					MovementConfig.SLIDE_SPEED
+				)
+				rolled = tryRoll(keep)
+			end
+			if not rolled and peakFallSpeed >= LANDING_MIN_SPEED then
+				MovementController.Landed:Fire(peakFallSpeed)
+			end
 		end
 		lastGroundedAt = os.clock()
 		coyoteUsed = false
 		airDashes = MovementConfig.DASH_AIR_CHARGES
+		flips = MovementConfig.FLIP_CHARGES
 		peakFallSpeed = 0
 	else
 		peakFallSpeed = math.max(peakFallSpeed, -vy)
@@ -522,13 +612,16 @@ function MovementController.touchSprint()
 end
 
 function MovementController.touchSlide()
-	if not trySlide() then
-		slideBufferedUntil = os.clock() + MovementConfig.INPUT_BUFFER
-	end
+	pressSlide()
 end
 
 function MovementController.touchDash()
 	tryDash()
+end
+
+-- Sens du salto en cours (1 = avant, -1 = arrière).
+function MovementController.getFlipSign(): number
+	return flipSign
 end
 
 -- Côté du mur pendant une course sur les murs (1 = droite, -1 = gauche, 0 = aucun).
@@ -604,6 +697,10 @@ local function createStudioTestHook()
 			return trySlide()
 		elseif command == "dash" then
 			return tryDash()
+		elseif command == "roll" then
+			return tryRoll()
+		elseif command == "slideKey" then
+			pressSlide()
 		elseif command == "jump" then
 			onJumpRequest()
 		elseif command == "grapple" and typeof(argument) == "Vector3" then

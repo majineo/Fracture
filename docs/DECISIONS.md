@@ -376,3 +376,29 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
   relique dans la barre d'inventaire.
 - **Signature** (jauge de repérage, GDD 02 §5) : reportée ; elle dépend de la boussole (à venir).
 
+
+## D-049 — Interface unique et souris libre dans les fenêtres
+- **Date** : 2026-11-08 · **Version** : v0.9.0 · **Statut** : ✅ Implémentée
+- **Constat** : arme en main, la caméra d'épaule verrouillait la souris au centre à chaque image ;
+  on ne pouvait rien cliquer dans le coffre, le sac ou le bilan. Chaque écran avait aussi son
+  propre style.
+- **Décision** : un seul thème (`Client/Ui/Theme` : encre, laiton, néon cyan, police Bodoni pour
+  les titres) et un seul gestionnaire de fenêtres (`Client/Ui/Menu`) : une fenêtre à la fois,
+  souris libre et tir désactivé tant qu'elle est ouverte. Le sac de l'Éclat et le coffre du Refuge
+  partagent les mêmes briques (`Client/Ui/ItemViews`) ; les invites (« E Fouiller ») ont le même
+  style et se cliquent.
+- **Touches** : Tab ou I ouvrent la fenêtre principale de la place (sac / coffre). La liste des
+  joueurs de Roblox (Tab) est masquée, comme dans la plupart des jeux d'extraction (on ne sait pas
+  qui est dans la partie).
+- **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
+  à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
+
+## D-050 — Roulade et salto
+- **Date** : 2026-11-08 · **Version** : v0.9.0 · **Statut** : ✅ Implémentée
+- **Roulade** : même touche que la glissade (C) : on glisse si l'on court, on roule si l'on marche.
+  Pressée en l'air juste avant l'atterrissage d'une chute rapide, elle devient une roulade de
+  réception qui garde l'élan. Pas d'invulnérabilité (le serveur ne peut pas la vérifier
+  équitablement) : elle sert à sortir vite d'une zone annoncée.
+- **Salto** : saut en l'air, une fois par saut, rechargé au sol ou en touchant un mur ; avant ou
+  arrière selon la direction. Le serveur accepte la montée supplémentaire (24 studs dans la
+  seconde) au plus une fois toutes les 0,6 s.

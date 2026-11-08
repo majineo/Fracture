@@ -18,6 +18,7 @@ local UserInputService = game:GetService("UserInputService")
 local UserGameSettings = UserSettings():GetService("UserGameSettings")
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Menu = require(script.Parent.Parent.Ui.Menu)
 local Spring = require(
 	ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Util"):WaitForChild("Spring")
 ) :: any
@@ -107,9 +108,17 @@ function ShoulderCamera.start()
 				camera.CameraType = Enum.CameraType.Scriptable
 			end
 
-			-- La souris reste au centre ; ses déplacements font tourner la vue.
-			UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
-			local delta = UserInputService:GetMouseDelta()
+			-- La souris reste au centre ; ses déplacements font tourner la vue. Fenêtre ouverte
+			-- (sac, coffre…) : souris libre et visible, la vue ne tourne plus (v0.9.0).
+			local delta = Vector2.zero
+			if Menu.isOpen() then
+				UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+				UserInputService.MouseIconEnabled = true
+			else
+				UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter
+				UserInputService.MouseIconEnabled = false
+				delta = UserInputService:GetMouseDelta()
+			end
 			-- Plus le champ de vision est serré (lunette), plus la souris est fine.
 			local fov = workspace.CurrentCamera and workspace.CurrentCamera.FieldOfView or 70
 			local zoom = math.clamp(fov / 70, 0.2, 1)

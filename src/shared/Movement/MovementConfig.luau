@@ -67,4 +67,21 @@ return table.freeze({
 	WALLRUN_COOLDOWN = 0.35, -- avant de pouvoir reprendre un mur
 	WALLJUMP_PUSH = 24, -- saut mural : éloignement du mur
 	WALLJUMP_UP = 42, -- saut mural : vers le haut
+
+	-- Roulade (v0.9.0) : C en marchant ; ou C juste avant de toucher le sol après une chute
+	ROLL_SPEED = 28,
+	ROLL_EXIT_SPEED = 14,
+	ROLL_TIME = 0.42,
+	ROLL_COOLDOWN = 0.55,
+	ROLL_STAMINA_COST = 0.12,
+	ROLL_LANDING_WINDOW = 0.35, -- C pressé au plus tôt ce temps-là avant l'atterrissage
+	ROLL_LANDING_MIN_FALL = 26, -- vitesse de chute (studs/s) à partir de laquelle on roule
+	ROLL_CAMERA_DROP = 1.4,
+
+	-- Salto (v0.9.0) : saut en l'air, une fois par saut (recharge au sol ou sur un mur)
+	FLIP_UP_SPEED = 48,
+	FLIP_PUSH = 8, -- poussée horizontale dans la direction du mouvement
+	FLIP_TIME = 0.5, -- durée de la rotation
+	FLIP_STAMINA_COST = 0.18,
+	FLIP_CHARGES = 1,
 })

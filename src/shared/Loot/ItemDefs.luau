@@ -17,20 +17,43 @@ export type ItemDef = {
 	useTime: number?, -- durée d'utilisation (secondes), interrompue par les dégâts
 	unique: boolean?, -- jamais empilé (relique : la quantité est le nombre de charges)
 	relic: boolean?, -- relique de l'Éclat (v0.7.0)
+	description: string?, -- texte de la fiche d'objet (sac, coffre ; v0.9.0)
 }
 
 local GRAINS = "currency.grains"
 
 local defs: { [string]: ItemDef } = {
-	[GRAINS] = { id = GRAINS, name = "Grains", rarity = "Commun", maxStack = 500, value = 1 },
-	["mat.iron"] = { id = "mat.iron", name = "Fer", rarity = "Commun", maxStack = 20, value = 4 },
-	["mat.wood"] = { id = "mat.wood", name = "Bois", rarity = "Commun", maxStack = 20, value = 3 },
+	[GRAINS] = {
+		id = GRAINS,
+		name = "Grains",
+		rarity = "Commun",
+		maxStack = 500,
+		value = 1,
+		description = "Poussière de temps cristallisée, la monnaie du Refuge. Versée au solde à l'extraction, perdue à la mort.",
+	},
+	["mat.iron"] = {
+		id = "mat.iron",
+		name = "Fer",
+		rarity = "Commun",
+		maxStack = 20,
+		value = 4,
+		description = "Ferraille des engrenages de la ville. Sert à l'artisanat.",
+	},
+	["mat.wood"] = {
+		id = "mat.wood",
+		name = "Bois",
+		rarity = "Commun",
+		maxStack = 20,
+		value = 3,
+		description = "Planches et poutres de charpente. Sert à l'artisanat.",
+	},
 	["mat.leather"] = {
 		id = "mat.leather",
 		name = "Cuir",
 		rarity = "Commun",
 		maxStack = 20,
 		value = 5,
+		description = "Cuir tanné des sangles et des sacoches. Sert à l'artisanat.",
 	},
 	["mat.ancient_steel"] = {
 		id = "mat.ancient_steel",
@@ -38,6 +61,7 @@ local defs: { [string]: ItemDef } = {
 		rarity = "Rare",
 		maxStack = 10,
 		value = 18,
+		description = "Acier forgé avant la Fracture. Nécessaire pour stabiliser une relique.",
 	},
 	["mat.rift_stone"] = {
 		id = "mat.rift_stone",
@@ -45,6 +69,7 @@ local defs: { [string]: ItemDef } = {
 		rarity = "Épique",
 		maxStack = 5,
 		value = 60,
+		description = "Éclat de la Faille, encore tiède. Rare et précieux.",
 	},
 	["cons.bandage"] = {
 		id = "cons.bandage",
@@ -54,6 +79,7 @@ local defs: { [string]: ItemDef } = {
 		value = 8,
 		heal = 30,
 		useTime = 2.5,
+		description = "Rend 30 points de vie en 2,5 s. Un coup reçu interrompt le soin. Touche H.",
 	},
 	-- Reliques (v0.7.0, GDD 04 §2) : 3 charges, chacune l'abîme ; intacte, elle se stabilise au
 	-- Refuge (Codex, à venir). Quantité = charges restantes.
@@ -65,6 +91,7 @@ local defs: { [string]: ItemDef } = {
 		value = 120,
 		unique = true,
 		relic = true,
+		description = "Bond instantané vers l'avant, intouchable un court instant. 3 charges ; intacte, se stabilise au Refuge. Touche T.",
 	},
 	["relic.stase"] = {
 		id = "relic.stase",
@@ -74,6 +101,7 @@ local defs: { [string]: ItemDef } = {
 		value = 120,
 		unique = true,
 		relic = true,
+		description = "Crée devant vous une bulle de temps figé qui ralentit tout, tirs compris. 3 charges. Touche T.",
 	},
 	["relic.onde_de_choc"] = {
 		id = "relic.onde_de_choc",
@@ -83,6 +111,7 @@ local defs: { [string]: ItemDef } = {
 		value = 120,
 		unique = true,
 		relic = true,
+		description = "Repousse, blesse et étourdit tout ce qui est à moins de 10 m. 3 charges. Touche T.",
 	},
 }
 

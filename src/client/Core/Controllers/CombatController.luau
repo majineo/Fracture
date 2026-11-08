@@ -33,6 +33,7 @@ local WeaponFx = require(Client.Combat.WeaponFx)
 local CameraFeel = require(script.Parent.CameraFeel)
 local MovementController = require(script.Parent.MovementController)
 local ShoulderCamera = require(script.Parent.ShoulderCamera)
+local Menu = require(Client.Ui.Menu)
 
 local DEFAULT_LOADOUT = { "weapon.fracture_pistol", "weapon.short_blade" }
 local SLOT_COUNT = 2
@@ -463,7 +464,8 @@ end
 
 local function handleFire(_: string, state: Enum.UserInputState): Enum.ContextActionResult
 	local def = currentDef()
-	if def == nil then
+	-- Fenêtre ouverte (sac, coffre…) : le clic sert à l'interface, pas à tirer.
+	if def == nil or (Menu.isOpen() and state == Enum.UserInputState.Begin) then
 		return Enum.ContextActionResult.Pass -- mains nues : le clic garde son rôle normal
 	end
 	if not canUseWeapon() then
@@ -492,7 +494,7 @@ local function handleAim(
 	input: InputObject
 ): Enum.ContextActionResult
 	local def = currentDef()
-	if def == nil then
+	if def == nil or (Menu.isOpen() and state == Enum.UserInputState.Begin) then
 		return Enum.ContextActionResult.Pass
 	end
 	-- Arme de mêlée : le bouton de visée sert à parer (le maintenir lève la Garde du Temps).

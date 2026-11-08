@@ -55,20 +55,143 @@
           "$className": "Part",
           "$properties": {
             "Anchored": true,
-            "Size": [320, 4, 320],
-            "CFrame": { "CFrame": { "position": [0, -2, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } },
+            "Size": [
+              320,
+              4,
+              320
+            ],
+            "CFrame": {
+              "CFrame": {
+                "position": [
+                  0,
+                  -2,
+                  0
+                ],
+                "orientation": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    1
+                  ]
+                ]
+              }
+            },
             "Material": "Cobblestone",
-            "Color": [0.42, 0.42, 0.45]
+            "Color": [
+              0.42,
+              0.42,
+              0.45
+            ]
           }
         },
         "SpawnLocation": {
           "$className": "SpawnLocation",
           "$properties": {
             "Anchored": true,
-            "Size": [12, 1, 12],
-            "CFrame": { "CFrame": { "position": [0, 0.5, 0], "orientation": [[1, 0, 0], [0, 1, 0], [0, 0, 1]] } },
+            "Size": [
+              12,
+              1,
+              12
+            ],
+            "CFrame": {
+              "CFrame": {
+                "position": [
+                  0,
+                  0.5,
+                  0
+                ],
+                "orientation": [
+                  [
+                    1,
+                    0,
+                    0
+                  ],
+                  [
+                    0,
+                    1,
+                    0
+                  ],
+                  [
+                    0,
+                    0,
+                    1
+                  ]
+                ]
+              }
+            },
             "Duration": 0
           }
+        }
+      }
+    },
+    "Lighting": {
+      "$properties": {
+        "Technology": "Future",
+        "ClockTime": 14.6,
+        "Brightness": 2.4,
+        "GeographicLatitude": 32,
+        "OutdoorAmbient": [
+          0.52,
+          0.53,
+          0.58
+        ],
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.34,
+          "Offset": 0.12,
+          "Color": [
+            0.8,
+            0.87,
+            0.96
+          ],
+          "Decay": [
+            0.46,
+            0.56,
+            0.72
+          ],
+          "Glare": 0.35,
+          "Haze": 1.4
+        }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.55,
+          "Size": 30,
+          "Threshold": 1.5
+        }
+      },
+      "SunRays": {
+        "$className": "SunRaysEffect",
+        "$properties": {
+          "Intensity": 0.06,
+          "Spread": 0.6
+        }
+      },
+      "Couleurs": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Saturation": 0.1,
+          "Contrast": 0.06,
+          "TintColor": [
+            1,
+            0.98,
+            0.94
+          ]
         }
       }
     }

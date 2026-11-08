@@ -16,6 +16,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayout"))
 local ExtractionPlan = require(Shared.Eclat:WaitForChild("ExtractionPlan"))
+local Districts = require(game:GetService("ReplicatedStorage").Shared.Eclat.Districts)
 local ItemDefs = require(Shared:WaitForChild("Loot"):WaitForChild("ItemDefs"))
 
 local Core = script.Parent.Parent.Parent
@@ -31,16 +32,7 @@ local TICK = 0.1
 local CYAN = Color3.fromRGB(80, 230, 255)
 local ORANGE = Color3.fromRGB(255, 140, 60)
 
--- Où poser la zone dans chaque type de tuile (repère tourné, y = sol), à l'écart des décors.
-local ZONE_OFFSETS: { [string]: Vector3 } = {
-	CourArmes = Vector3.new(0, 1.2, 0),
-	Village = Vector3.new(0, 0, 9),
-	Remparts = Vector3.new(-4, 0, 10),
-	TourGuet = Vector3.new(-12, 0, -10),
-	PontLevis = Vector3.new(4, 0, 20),
-	Crypte = Vector3.new(0, 0, 18),
-	Donjon = Vector3.new(0, 16, -8), -- la Faille finale, sur le toit
-}
+-- Où poser la zone : Shared/Eclat/Districts (repère tourné, y = sol, à l'écart des décors).
 
 type Zone = { point: ExtractionPlan.Point, position: Vector3, part: BasePart }
 
@@ -59,7 +51,10 @@ local function buildZones(layout: EclatLayout.Layout)
 	end
 	for i, point in ExtractionPlan.build(layout, schedule) do
 		local tile = EclatLayout.tileAt(layout, point.x, point.z) :: EclatLayout.Tile
-		local offset = ZONE_OFFSETS[tile.kind] or Vector3.zero
+		local def = Districts.get(tile.kind)
+		local offset = if def
+			then Vector3.new(def.extract.x, def.extract.y, def.extract.z)
+			else Vector3.zero
 		local position = EclatService.tileFrame(tile):PointToWorldSpace(offset)
 		local part = Instance.new("Part")
 		part.Name = `Extraction_{i}`

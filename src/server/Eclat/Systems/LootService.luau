@@ -24,24 +24,11 @@ local HealthService = require(Core.Systems.HealthService)
 local PlayerData = require(Core.Systems.PlayerData)
 local EclatService = require(script.Parent.EclatService)
 local Kit = require(script.Parent.Parent.Lib.Kit)
+local Districts = require(game:GetService("ReplicatedStorage").Shared.Eclat.Districts)
 
 type Stack = RunInventory.Stack
 
-type Spot = { table: string, x: number, y: number, z: number }
-
--- Emplacements dans le repère tourné de chaque type de tuile (y = sol du conteneur).
-local SPOTS: { [string]: { Spot } } = {
-	CourArmes = {
-		{ table = "Caisse", x = 0, y = 0, z = -16 },
-		{ table = "Caisse", x = 16, y = 0, z = 4 },
-	},
-	Village = { { table = "Caisse", x = 0, y = 0, z = -7 } },
-	Remparts = { { table = "Caisse", x = 6, y = 0, z = 14 } },
-	TourGuet = { { table = "Coffre", x = 11, y = 24, z = 11 } },
-	Crypte = { { table = "Coffre", x = 0, y = 0, z = -7.5 } },
-	Donjon = { { table = "Coffre", x = -6, y = 16, z = 6 } },
-	PontLevis = { { table = "Caisse", x = -18, y = 0, z = -20 } },
-}
+-- Emplacements des conteneurs : Shared/Eclat/Districts (repère tourné de chaque quartier).
 
 local LOOK: { [string]: { size: Vector3, color: Color3, hold: number, label: string } } = {
 	Caisse = {
@@ -241,10 +228,10 @@ end
 
 local function placeContainers(layout: EclatLayout.Layout)
 	for _, tile in layout.tiles do
-		local spots = SPOTS[tile.kind]
-		if spots then
+		local def = Districts.get(tile.kind)
+		if def then
 			local frame = EclatService.tileFrame(tile)
-			for _, spot in spots do
+			for _, spot in def.loot do
 				local cf = frame
 					* CFrame.new(spot.x, spot.y, spot.z)
 					* CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0)

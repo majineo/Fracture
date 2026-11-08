@@ -214,6 +214,27 @@ Import : Fichier → Importer (échelle 0,01), ranger le Model sous `EnemyOutfit
 > (`Model:ScaleTo`) et rangé dans `ServerStorage > FortressKit`. Exportés ensuite en `.rbxm`
 > et intégrés à la place Éclat de test : armure (17 pièces soudées) et kit vérifiés en partie.
 
+### Maquette de l'Éclat agrandi (v0.11.0, D-052) — ✅ Validée par l'utilisateur
+
+- Plan exporté du jeu : `lune run tools/export_layout <graine>` → `build/layout_<graine>.json`.
+- Maquette Blender : `assets/blender/fortress/blockout_eclat.py` (+ `blockout_eclat.blend`),
+  rendus de revue : `render_blockout.py` (ensemble, dessus avec points de jeu, gros plans).
+- Modules à modéliser (empreintes dans `Shared/Eclat/Districts.MODULES`, préfixe `Fort_`) :
+  Donjon (terrasse 24 + tour 56), tour de guet, maisons, corps de garde, mur, porte, rempart,
+  tourelle, escalier, trébuchet, bélier, barricade, chaudière, mécanisme d'horlogerie, cloche,
+  puits, râtelier, sarcophage, cristal, étendard, éboulis. **En attente** des images de
+  référence « studs » de l'utilisateur ; d'ici là, le jeu les pose en blocs gris.
+- Import : régler `CollisionFidelity` (Box) sur les modèles sources dans Studio — un script de
+  jeu n'a pas le droit de le faire (erreur trouvée en v0.11.0).
+
+### Kit de la Cité d'Horlogerie (v0.11.0) — ⏸ Mis de côté (D-052)
+
+`assets/blender/city/build_cite.py` (+ `cite_kit.blend`, FBX exportés à l'échelle 0,01) :
+10 modules (immeubles, atelier, tour de l'horloge, arche, lampadaire, étal, fontaine,
+escalier, dirigeable). Non importés : la direction a basculé vers la forteresse agrandie.
+Le dirigeable pourra servir de décor de siège (Client/Place/Controllers/SkyDecor, repli en
+ballon simple).
+
 ## Procédure d'import (vérifiée en v0.4.2)
 
 1. Studio → **Fichier → Importer** (Ctrl+M) → choisir le `.fbx` → **Importer**.

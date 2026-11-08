@@ -14,6 +14,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayout"))
 local ItemDefs = require(Shared:WaitForChild("Loot"):WaitForChild("ItemDefs"))
+local Districts = require(game:GetService("ReplicatedStorage").Shared.Eclat.Districts)
 local RunInventory = require(Shared.Loot:WaitForChild("RunInventory"))
 local Codex = require(Shared.Loot:WaitForChild("Codex"))
 
@@ -36,13 +37,7 @@ local SHOCK_DAMAGE = 15
 local SHOCK_STUN = 1.5
 local VIOLET = Color3.fromRGB(170, 95, 255)
 
--- Emplacements possibles d'un autel (repère tourné de la tuile).
-local ALTAR_SPOTS: { [string]: Vector3 } = {
-	TourGuet = Vector3.new(4, 24, 13), -- au sommet de la tour
-	Crypte = Vector3.new(0, 0, 3), -- entre les sarcophages
-	CourArmes = Vector3.new(-16, 0, -4),
-	Village = Vector3.new(-2, 0, 14),
-}
+-- Emplacements possibles d'un autel : Shared/Eclat/Districts (champ « altar »).
 
 local RelicService = {}
 
@@ -57,7 +52,8 @@ local function placeAltars(layout: EclatLayout.Layout)
 	local r = EclatLayout.rng(layout.seed * 17 + 3)
 	local candidates = {}
 	for _, tile in layout.tiles do
-		if ALTAR_SPOTS[tile.kind] and not tile.spawn then
+		local district = Districts.get(tile.kind)
+		if district and district.altar and not tile.spawn then
 			table.insert(candidates, tile)
 		end
 	end
@@ -66,7 +62,8 @@ local function placeAltars(layout: EclatLayout.Layout)
 	for i = 1, count do
 		local tile = candidates[i]
 		local relicId = ItemDefs.RELICS[EclatLayout.nextInt(r, 1, #ItemDefs.RELICS)]
-		local frame = EclatService.tileFrame(tile) * CFrame.new(ALTAR_SPOTS[tile.kind])
+		local spot = (Districts.get(tile.kind) :: Districts.District).altar :: Districts.Spot
+		local frame = EclatService.tileFrame(tile) * CFrame.new(spot.x, spot.y, spot.z)
 		local def = ItemDefs.get(relicId) :: ItemDefs.ItemDef
 		local altar =
 			LootService.spawnContainer("Autel", frame, { { id = relicId, qty = 3 } }, def.name)

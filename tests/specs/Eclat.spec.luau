@@ -32,15 +32,19 @@ return function(T)
 		T.equal(distinct, 19, "graines 2 à 20 toutes différentes de la graine 1")
 	end)
 
+	local SIZE = EclatLayout.SIZE
+	local MID = (SIZE - 1) / 2
+	local LAST = SIZE - 1
+
 	T.test("Donjon au centre, 4 Bords d'apparition au milieu de chaque côté", function()
 		for seed = 1, 200 do
 			local layout = EclatLayout.generate(seed)
-			T.equal(EclatLayout.tileAt(layout, 2, 2).kind, "Donjon")
+			T.equal(EclatLayout.tileAt(layout, MID, MID).kind, "Donjon")
 			local spawns = EclatLayout.spawnTiles(layout)
 			T.equal(#spawns, 4, "apparitions")
 			for _, tile in spawns do
 				T.equal(tile.kind, "Bord")
-				T.equal(tile.ring, 2)
+				T.equal(tile.ring, MID)
 			end
 		end
 	end)
@@ -67,6 +71,7 @@ return function(T)
 			end
 			T.equal(counts.Crypte, 1)
 			T.equal(counts.Donjon, 1)
+			T.equal(counts.Bord, 4)
 		end
 	end)
 
@@ -76,8 +81,8 @@ return function(T)
 			for seed = 1, 200 do
 				local layout = EclatLayout.generate(seed)
 				local shared, void = 0, 0
-				for z = 0, 4 do
-					for x = 0, 4 do
+				for z = 0, LAST do
+					for x = 0, LAST do
 						for _, dir in EclatLayout.DIRECTIONS do
 							local o = EclatLayout.OFFSETS[dir]
 							local neighbor = EclatLayout.tileAt(layout, x + o[1], z + o[2])
@@ -102,37 +107,38 @@ return function(T)
 						end
 					end
 				end
-				T.equal(shared, 80, "bords partagés vus des deux côtés")
-				T.equal(void, 20, "bords extérieurs")
+				T.equal(shared, 4 * SIZE * (SIZE - 1), "bords partagés vus des deux côtés")
+				T.equal(void, 4 * SIZE, "bords extérieurs")
 			end
 		end
 	)
 
 	T.test("conversion monde ↔ tuile", function()
 		local layout = EclatLayout.generate(7)
-		local cx, cz = EclatLayout.tileCenter(layout, 2, 2)
+		local cx, cz = EclatLayout.tileCenter(layout, MID, MID)
 		T.equal(cx, 0)
 		T.equal(cz, 0)
-		local x, z = EclatLayout.tileFromWorld(layout, -159, 159)
+		local half = SIZE * EclatLayout.TILE / 2
+		local x, z = EclatLayout.tileFromWorld(layout, -half + 1, half - 1)
 		T.equal(x, 0)
-		T.equal(z, 4)
-		local nx = EclatLayout.tileFromWorld(layout, 161, 0)
+		T.equal(z, LAST)
+		local nx = EclatLayout.tileFromWorld(layout, half + 1, 0)
 		T.equal(nx, nil, "hors de la grille")
 	end)
 
 	T.suite("CollapseSchedule")
 
-	T.test("4 vagues de 4 tuiles extérieures, le reste tombe à la fin", function()
+	T.test("4 vagues d'un côté chacune de la couronne extérieure, le reste à la fin", function()
 		for seed = 1, 100 do
 			local layout = EclatLayout.generate(seed)
 			local schedule = CollapseSchedule.build(layout)
 			T.equal(#schedule.waves, 4)
 			local perWave = {}
-			for z = 0, 4 do
-				for x = 0, 4 do
+			for z = 0, LAST do
+				for x = 0, LAST do
 					local at = CollapseSchedule.tileCollapseAt(schedule, x, z)
 					local tile = EclatLayout.tileAt(layout, x, z)
-					if tile.ring == 2 then
+					if tile.ring == MID then
 						perWave[at] = (perWave[at] or 0) + 1
 						T.truthy(at < 720, "extérieur tombé avant la Faille")
 					else
@@ -141,7 +147,7 @@ return function(T)
 				end
 			end
 			for _, at in schedule.waves do
-				T.equal(perWave[at], 4, `vague à {at}`)
+				T.equal(perWave[at], SIZE - 1, `vague à {at}`)
 			end
 		end
 	end)
@@ -158,8 +164,8 @@ return function(T)
 		T.equal(CollapseSchedule.nextCollapse(s, 700), 960)
 		T.equal(CollapseSchedule.nextCollapse(s, 960), nil)
 		-- Une tuile de la première vague.
-		for z = 0, 4 do
-			for x = 0, 4 do
+		for z = 0, LAST do
+			for x = 0, LAST do
 				if CollapseSchedule.tileCollapseAt(s, x, z) == 300 then
 					T.equal(CollapseSchedule.tileState(s, x, z, 269), "Stable")
 					T.equal(CollapseSchedule.tileState(s, x, z, 270), "Warning")
@@ -168,7 +174,7 @@ return function(T)
 			end
 		end
 		T.equal(
-			CollapseSchedule.tileState(s, 2, 2, 959),
+			CollapseSchedule.tileState(s, MID, MID, 959),
 			"Warning",
 			"Donjon en alerte juste avant la fin"
 		)

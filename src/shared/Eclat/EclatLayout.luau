@@ -1,5 +1,7 @@
 --!strict
--- Plan d'un Éclat (v0.5.0, GDD 02 §2 et 06 §2) : grille de 5 × 5 tuiles tirée d'une graine.
+-- Plan d'un Éclat (v0.5.0, GDD 02 §2 et 06 §2) : grille de tuiles tirée d'une graine.
+-- v0.11.0 : forteresse agrandie — 7 × 7 tuiles de 96 studs (672 × 672, ≈ 4,4 fois la carte de
+-- la v0.5), sur la grille de construction de 8 studs (96 = 12 × 8), pour une carte à explorer.
 -- Module pur (aucune instance) : le serveur construit la carte à partir de ce plan, les clients
 -- recalculent le même plan à partir de la même graine (rien d'autre n'a besoin d'être envoyé).
 -- Studio : ReplicatedStorage > Shared > Eclat > EclatLayout
@@ -8,25 +10,25 @@
 -- grille est à l'origine du monde. Directions des bords : N = -Z, E = +X, S = +Z, W = -X.
 --
 -- Règles :
---   * centre (2, 2) : toujours le Donjon ;
+--   * centre : toujours le Donjon ;
 --   * milieu de chaque côté de la couronne extérieure : un Bord d'Éclat (apparition des escouades,
 --     le plus loin possible les unes des autres) ;
---   * coins : Remparts ou Tour de guet ; reste : tirage dans des réserves fixes (chaque type de
---     tuile apparaît, aucun n'écrase les autres) ;
+--   * coins : Remparts ou Tour de guet ; reste : tirage dans des réserves remplies à la taille de
+--     chaque couronne (chaque type de tuile apparaît, la Crypte une seule fois) ;
 --   * chaque bord partagé entre deux tuiles offre toujours au moins deux passages (GDD 06 §3) :
 --     « Open » (pas de mur), « Gates » (mur percé de deux portes) ou « Rampart » (une porte au sol
---     et un chemin de ronde avec escaliers). Le Donjon est toujours fermé par un mur (Gates /
---     Rampart). Les bords extérieurs donnent sur le Vide (« Void »).
+--     et un chemin de ronde avec escaliers). Le Donjon est toujours muré (Gates / Rampart). Les
+--     bords extérieurs donnent sur le Vide (« Void »).
 
 export type TileKind =
-	"Donjon"
-	| "CourArmes"
-	| "Remparts"
-	| "TourGuet"
-	| "Village"
-	| "PontLevis"
-	| "Crypte"
-	| "Bord"
+	"Donjon" -- centre, unique : Gardien, Faille finale
+	| "CourArmes" -- combat ouvert
+	| "Remparts" -- chemins en hauteur, tireurs
+	| "TourGuet" -- point de vue, autel possible
+	| "Village" -- village fortifié, combat rapproché
+	| "PontLevis" -- pont-levis et douves, passage risqué
+	| "Crypte" -- souterrain, butin rare (unique)
+	| "Bord" -- bord d'Éclat : apparition des escouades
 export type EdgeKind = "Open" | "Gates" | "Rampart" | "Void"
 export type Direction = "N" | "E" | "S" | "W"
 
@@ -35,7 +37,7 @@ export type Tile = {
 	z: number,
 	kind: TileKind,
 	rotation: number, -- quarts de tour (0 à 3), pour varier l'intérieur
-	ring: number, -- 0 = centre, 1 = couronne du milieu, 2 = couronne extérieure
+	ring: number, -- 0 = centre, puis couronnes 1, 2… jusqu'à la couronne extérieure
 	spawn: boolean, -- tuile d'apparition d'une escouade
 }
 
@@ -48,8 +50,8 @@ export type Layout = {
 
 local EclatLayout = {}
 
-EclatLayout.SIZE = 5
-EclatLayout.TILE = 64 -- studs (GDD 06 §2)
+EclatLayout.SIZE = 7
+EclatLayout.TILE = 96 -- studs (v0.11.0 ; 64 dans la forteresse de la v0.5)
 EclatLayout.DIRECTIONS = table.freeze({ "N", "E", "S", "W" }) :: { Direction }
 
 local OFFSETS: { [Direction]: { number } } = {
@@ -141,7 +143,7 @@ function EclatLayout.tileFromWorld(layout: Layout, wx: number, wz: number): (num
 end
 
 -- Couronne extérieure dans le sens des aiguilles d'une montre, depuis le coin nord-ouest :
--- quatre côtés de quatre tuiles (le coin de départ compris). Sert aussi à l'effondrement.
+-- quatre côtés de `size - 1` tuiles (le coin de départ compris). Sert aussi à l'effondrement.
 function EclatLayout.outerSides(size: number): { { { number } } }
 	local last = size - 1
 	local sides = { {}, {}, {}, {} }
@@ -155,29 +157,23 @@ function EclatLayout.outerSides(size: number): { { { number } } }
 end
 
 local CORNER_POOL: { TileKind } = { "Remparts", "Remparts", "TourGuet", "TourGuet" }
-local OUTER_POOL: { TileKind } = {
-	"Village",
-	"Village",
-	"Village",
-	"PontLevis",
-	"PontLevis",
-	"CourArmes",
-	"CourArmes",
-	"Remparts",
-}
-local MIDDLE_POOL: { TileKind } = {
-	"CourArmes",
-	"CourArmes",
-	"Village",
-	"Village",
-	"Crypte",
-	"TourGuet",
-	"PontLevis",
-	"Remparts",
-}
+-- Réserves de base, répétées jusqu'à remplir chaque couronne.
+local OUTER_BASE: { TileKind } =
+	{ "Village", "CourArmes", "PontLevis", "Village", "Remparts", "TourGuet" }
+local INNER_BASE: { TileKind } =
+	{ "CourArmes", "Village", "Remparts", "TourGuet", "PontLevis", "CourArmes" }
 
 local function copy<T>(list: { T }): { T }
 	return table.clone(list)
+end
+
+-- `count` éléments tirés en cycle dans `base` (puis mélangés par l'appelant).
+local function fill<T>(base: { T }, count: number): { T }
+	local out = {}
+	for i = 1, count do
+		out[i] = base[(i - 1) % #base + 1]
+	end
+	return out
 end
 
 function EclatLayout.generate(seed: number): Layout
@@ -185,9 +181,18 @@ function EclatLayout.generate(seed: number): Layout
 	local r = EclatLayout.rng(seed)
 	local last = size - 1
 	local mid = last / 2
+	local outerRing = size // 2
 	local corners = EclatLayout.shuffle(r, copy(CORNER_POOL))
-	local outer = EclatLayout.shuffle(r, copy(OUTER_POOL))
-	local middle = EclatLayout.shuffle(r, copy(MIDDLE_POOL))
+	-- Couronne extérieure : 8 × outerRing tuiles, moins 4 coins et 4 Bords.
+	local outer = EclatLayout.shuffle(r, fill(OUTER_BASE, 8 * outerRing - 8))
+	-- Couronnes intérieures (1 … outerRing - 1) : la Crypte une seule fois.
+	local innerCount = 0
+	for ring = 1, outerRing - 1 do
+		innerCount += 8 * ring
+	end
+	local middleList = fill(INNER_BASE, innerCount - 1)
+	table.insert(middleList, "Crypte")
+	local middle = EclatLayout.shuffle(r, middleList)
 	local tiles: { Tile } = {}
 	for z = 0, last do
 		for x = 0, last do
@@ -196,12 +201,12 @@ function EclatLayout.generate(seed: number): Layout
 			local spawn = false
 			if ring == 0 then
 				kind = "Donjon"
-			elseif ring == 2 and (x == mid or z == mid) then
+			elseif ring == outerRing and (x == mid or z == mid) then
 				kind = "Bord"
 				spawn = true
-			elseif ring == 2 and (x == 0 or x == last) and (z == 0 or z == last) then
+			elseif ring == outerRing and (x == 0 or x == last) and (z == 0 or z == last) then
 				kind = table.remove(corners) :: TileKind
-			elseif ring == 2 then
+			elseif ring == outerRing then
 				kind = table.remove(outer) :: TileKind
 			else
 				kind = table.remove(middle) :: TileKind

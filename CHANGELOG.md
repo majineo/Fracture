@@ -5,6 +5,79 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.11.0] — 2026-11-08 — « Forteresse agrandie »
+
+### Description générale
+L'Éclat passe de 5 × 5 tuiles de 64 studs à 7 × 7 tuiles de 96 (≈ 4,4 fois plus grand), dans
+l'esprit du brief d'environnement : une forteresse arrachée à un siège, touches steampunk,
+fractures de cristal. La maquette grise, validée, est jouable ; les modèles suivront les
+références « studs ». Nouveau : une base de connaissance Obsidian générée depuis le dépôt.
+
+### Nouvelles fonctionnalités
+- **Carte 7 × 7** (672 × 672 studs, grille de construction de 8) : Donjon au centre (terrasse à
+  24, tour de 56 visible de partout, deux grands escaliers, Faille finale sur la terrasse),
+  quatre Bords d'apparition, Crypte unique, cours d'armes, remparts, tours de guet, villages,
+  pont-levis et douves.
+- **Plan type d'une tuile** : îlot central, chemin de ronde avec éboulis-couverts tous les
+  ~20 studs, bords en courtines à deux portes, remparts praticables (une porte, deux
+  escaliers), brèches, ou bord du Vide ; une tourelle à chaque angle.
+- **Siège figé** : trébuchet brisé, bélier, barricades, chaudières à vapeur, mécanisme
+  d'horlogerie, cloche, sarcophages, cristaux, étendards (en blocs gris pour l'instant).
+- **Dirigeables** qui tournent au loin autour de la forteresse (décor local).
+- **Ambiance** : éclairage « Future », brume, bloom, rayons de soleil, correction des couleurs.
+- **Maquette Blender** générée depuis les données du jeu, avec rendus de revue.
+- **Base de connaissance Obsidian** (`tools/obsidian_sync.py`) : 152 notes liées — accueil,
+  GDD, 52 décisions, 33 versions, technique, catalogue (armes, capacités, objets, ennemis,
+  tuiles) tiré des données du jeu ; dossier « Mes notes » jamais touché.
+
+### Modifications
+- **Une seule source pour le contenu des tuiles** : `Shared/Eclat/Districts` (bâtiments,
+  escaliers, plateformes, décor, butin, Échoués, extraction, autels, apparitions, trône) — lue
+  par TileKit, LootService, EnemySpawns, ExtractionService, RelicService, GuardianService et la
+  maquette Blender (fini les tables de positions dispersées).
+- Extraction : 3 ou 4 points secondaires (2 ou 3 avant). Échoués : ≈ 35 (densité par couronne).
+- Effondrement : la couronne extérieure tombe en 4 vagues de 6 tuiles.
+- Arène du Gardien : toute la tuile du Donjon (45 studs de demi-côté).
+- Export FBX : option d'échelle (0,01 → import Studio direct sans réglage).
+
+### Corrections de bugs
+- La construction de la carte s'arrêtait à la 2e tuile : un script ne peut pas modifier
+  `CollisionFidelity` (trouvé en test, réglage déplacé vers l'import des modèles).
+- Le HUD affichait « Chute du côté ? » sur une grille autre que 5 × 5.
+- Deux caisses de butin placées dans des caisses de décor (trouvées par le nouveau test).
+
+### Vérifications
+- Studio : 49 tuiles, ≈ 3 000 pièces, 35 Échoués, 130 conteneurs (aucun sous un plafond),
+  4 zones d'extraction, apparition sur un Bord, Gardien sur son trône, « Chute du côté sud ».
+- 125 tests Lune (Districts : aucun point de jeu dans un mur, dans l'eau ou dans le vide ;
+  bâtiments dans l'îlot sans chevauchement ; chemin de ronde dégagé ; escaliers raccordés).
+- Coffre Obsidian : 152 notes, aucun lien cassé.
+
+### Problèmes connus
+- Tout le décor de la forteresse est en blocs gris (modèles en attente des références).
+- Les quadrillages de murs restent très réguliers (équilibre portes / brèches à trancher).
+- Dirigeables en ballons simples tant que le modèle n'est pas importé.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Eclat/Districts.luau`, `src/client/Eclat/Controllers/SkyDecor.luau`,
+  `tests/specs/Districts.spec.luau`, `tools/{export_layout,export_catalog}.luau`,
+  `tools/obsidian_sync.py`, `assets/blender/fortress/{blockout_eclat.py,blockout_eclat.blend,render_blockout.py}`,
+  `assets/blender/city/*`
+- **Modifiés** : `src/shared/Eclat/{EclatLayout,CollapseSchedule,ExtractionPlan}.luau`,
+  `src/server/Eclat/Lib/{TileKit,Kit}.luau`,
+  `src/server/Eclat/Systems/{EclatService,EnemySpawns,ExtractionService,GuardianService,LootService,RelicService}.luau`,
+  `src/client/Eclat/Controllers/EclatHud.luau`, `places/eclat.project.json`,
+  `assets/blender/lib/fracture_shapes.py`, `tests/run.luau`, `tests/specs/{Eclat,Loot}.spec.luau`,
+  `src/shared/Config.luau`, `docs/{DECISIONS,ASSETS}.md`, `docs/GDD/06-environnements.md`,
+  `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Échantillon de style « studs » (mur, porte, sol, accent cristal / horlogerie) dès réception
+  des références, puis le kit complet, puis l'import dans Studio.
+
+---
+
 ## [v0.10.0] — 2026-11-08 — « Arsenal de la Fracture »
 
 ### Description générale

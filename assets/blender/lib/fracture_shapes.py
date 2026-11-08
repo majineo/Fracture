@@ -139,7 +139,9 @@ class Shapes:
 
 # Joint les pièces d'une collection par matériau dans une collection « <nom>_Export »
 # (modificateurs appliqués) et exporte un FBX. `keep` : noms de pièces à garder à part.
-def export_by_material(source_name, prefix, fbx_path, keep=(), origin=(0, 0, 0)):
+def export_by_material(source_name, prefix, fbx_path, keep=(), origin=(0, 0, 0), scale=1.0):
+    # scale = 0.01 : Studio lit les FBX de Blender en centimètres ; à 0,01, l'import par défaut
+    # donne directement 1 unité Blender = 1 stud (v0.11.0, modules de la Cité).
     src = bpy.data.collections[source_name]
     export_name = source_name + "_Export"
     old = bpy.data.collections.get(export_name)
@@ -182,7 +184,7 @@ def export_by_material(source_name, prefix, fbx_path, keep=(), origin=(0, 0, 0))
     bpy.context.view_layer.objects.active = made[0]
     bpy.ops.export_scene.fbx(
         filepath=fbx_path, use_selection=True, object_types={"MESH"}, use_mesh_modifiers=True,
-        mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=1.0,
+        mesh_smooth_type="FACE", apply_unit_scale=True, global_scale=scale,
         axis_forward="-Z", axis_up="Y", bake_space_transform=True, add_leaf_bones=False,
     )
     bpy.ops.object.select_all(action="DESELECT")

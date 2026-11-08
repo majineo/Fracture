@@ -10,26 +10,13 @@
 
 local EnemyService = require(script.Parent.Parent.Parent.Systems.EnemyService)
 local EclatService = require(script.Parent.EclatService)
+local Districts = require(game:GetService("ReplicatedStorage").Shared.Eclat.Districts)
 
 local RESPAWN_DELAY = 90
-local MAN = "enemy.man_at_arms"
-local BOW = "enemy.crossbowman"
 
-type Post = { id: string, x: number, y: number, z: number }
+type Post = Districts.Post
 
-local POSTS: { [string]: { Post } } = {
-	Donjon = {
-		{ id = BOW, x = 6, y = 16, z = 6 }, -- sur le toit du donjon
-		{ id = MAN, x = 0, y = 0, z = 18 },
-		{ id = MAN, x = 18, y = 0, z = 0 },
-	},
-	CourArmes = { { id = MAN, x = -6, y = 0, z = 4 }, { id = MAN, x = 6, y = 0, z = -4 } },
-	Remparts = { { id = BOW, x = -6, y = 12, z = -8 }, { id = MAN, x = 0, y = 0, z = 8 } },
-	TourGuet = { { id = BOW, x = 8, y = 24, z = 8 } },
-	Village = { { id = MAN, x = 0, y = 0, z = -6 }, { id = BOW, x = 0, y = 0, z = 8 } },
-	PontLevis = { { id = MAN, x = -12, y = 0, z = -14 } },
-	Crypte = { { id = MAN, x = 0, y = 0, z = -5 }, { id = MAN, x = 0, y = 0, z = 5 } },
-}
+-- Postes de garde : Shared/Eclat/Districts (champ « posts »).
 
 local EnemySpawns = {}
 
@@ -54,8 +41,9 @@ function EnemySpawns.init()
 	EclatService.Built:Connect(function(layout: any)
 		generation += 1
 		local token = generation
-		-- Densité (GDD 02 §2 : Échoués faibles pendant l'exploration, ≈ 15) : tous les postes au
-		-- Donjon et sur les tuiles du milieu, un poste sur chaque tuile extérieure.
+		-- Densité (carte 7 × 7, v0.11.0) : tous les postes au Donjon et sur la première
+		-- couronne, un poste par quartier de la deuxième, un quartier sur deux à l'extérieur
+		-- (≈ 30 Échoués pour une carte 4,4 fois plus grande que la forteresse).
 		-- Pas de poste à côté d'une tuile d'apparition : on n'arrive pas sous le feu.
 		local rng = Random.new(layout.seed)
 		local function nearSpawn(tile: any): boolean
@@ -67,14 +55,16 @@ function EnemySpawns.init()
 			return false
 		end
 		for _, tile in layout.tiles do
-			local posts = POSTS[tile.kind]
-			if posts and not nearSpawn(tile) then
+			local district = Districts.get(tile.kind)
+			local posts = district and district.posts
+			if posts and #posts > 0 and not nearSpawn(tile) then
 				local frame = EclatService.tileFrame(tile)
+				local outer = tile.ring >= (layout.size - 1) / 2
 				if tile.ring <= 1 then
 					for _, post in posts do
 						occupy(tile, post, frame, token)
 					end
-				else
+				elseif not outer or rng:NextNumber() < 0.5 then
 					occupy(tile, posts[rng:NextInteger(1, #posts)], frame, token)
 				end
 			end

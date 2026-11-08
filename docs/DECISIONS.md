@@ -393,6 +393,22 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-052 — Forteresse agrandie (7 × 7 tuiles de 96 studs), style steampunk de siège
+- **Date** : 2026-11-08 · **Version** : v0.11.0 · **Statut** : ✅ Maquette validée et jouable en greybox ; modèles 📋 (attente des références « studs »)
+- **Choix de l'utilisateur** : le style de son brief d'environnement (forteresse médiévale prise
+  dans un siège, machinerie steampunk sobre, identité cristal de la Brisure) **sur la grande
+  carte** en cours de développement, plutôt que la grille 5 × 5 de 64 du GDD ; la ville
+  steampunk (« Cité d'Horlogerie ») est abandonnée au profit de ce mélange.
+- **Grille** : 7 × 7 tuiles de 96 studs (96 = 12 × 8, compatible avec la grille de 8 studs).
+  Les règles du GDD 06 (au moins deux passages par bord, Donjon muré, couverts tous les 15 à
+  20 studs, rebords escaladables lisibles) restent valables.
+- **Une seule source** : `Shared/Eclat/Districts` décrit le contenu de chaque tuile et tous ses
+  points de jeu ; le jeu (TileKit, butin, Échoués, extraction, autels, Gardien) et la maquette
+  Blender (`tools/export_layout` → `assets/blender/fortress/blockout_eclat.py`) le lisent.
+  Un test vérifie qu'aucun point de jeu n'est dans un mur et que les chemins restent dégagés.
+- **En attente** : les images de référence « studs » de l'utilisateur, qui fixeront le style des
+  modules avant la modélisation détaillée.
+
 ## D-051 — Arsenal de la Fracture : quatre armes, quatre styles
 - **Date** : 2026-11-08 · **Version** : v0.10.0 · **Statut** : ✅ Implémentée
 - **Principe** : chaque nouvelle arme apporte une mécanique, pas seulement d'autres chiffres :

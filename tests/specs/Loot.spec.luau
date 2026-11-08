@@ -107,7 +107,7 @@ return function(T)
 	T.suite("ExtractionPlan")
 
 	T.test(
-		"2 ou 3 points secondaires + la Faille finale, tuiles debout pendant la fenêtre",
+		"3 ou 4 points secondaires + la Faille finale, tuiles debout pendant la fenêtre",
 		function()
 			for seed = 1, 200 do
 				local layout = EclatLayout.generate(seed)
@@ -115,10 +115,10 @@ return function(T)
 				local points = ExtractionPlan.build(layout, schedule)
 				local final = points[#points]
 				T.truthy(final.final, "la dernière est la Faille")
-				T.equal(final.x, 2)
+				T.equal(final.x, (EclatLayout.SIZE - 1) / 2)
 				T.equal(final.opensAt, 720)
 				local secondary = #points - 1
-				T.truthy(secondary >= 2 and secondary <= 3, `secondaires : {secondary}`)
+				T.truthy(secondary >= 3 and secondary <= 4, `secondaires : {secondary}`)
 				local seen = {}
 				for i = 1, secondary do
 					local p = points[i]

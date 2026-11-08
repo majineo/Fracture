@@ -82,10 +82,11 @@ local function sideName(at: number): string?
 		return nil
 	end
 	local sx, sz, n = 0, 0, 0
+	local mid = (current.size - 1) / 2 -- centre de la grille (et numéro de la couronne extérieure)
 	for _, tile in current.tiles do
-		if CollapseSchedule.tileCollapseAt(plan, tile.x, tile.z) == at and tile.ring == 2 then
-			sx += tile.x - 2
-			sz += tile.z - 2
+		if CollapseSchedule.tileCollapseAt(plan, tile.x, tile.z) == at and tile.ring == mid then
+			sx += tile.x - mid
+			sz += tile.z - mid
 			n += 1
 		end
 	end

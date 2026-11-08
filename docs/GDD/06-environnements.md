@@ -23,9 +23,14 @@ Une forteresse sur un éperon rocheux, arrachée au moment d'un siège. Brume, b
 déchirées, flèches figées en plein vol, cloches qui sonnent sans raison.
 
 ### Grille et tuiles
-- Une **tuile** = un carré de **64 × 64 studs** au sol, assemblé à partir d'un **kit modulaire**
-  sur une grille de 8 studs (murs, sols, escaliers, arches, toits).
-- Un Éclat de la vertical slice = grille de **5 × 5 tuiles**. Le centre est toujours le Donjon.
+- Une **tuile** = un carré de **96 × 96 studs** au sol (64 jusqu'à la v0.10), assemblé à partir
+  d'un **kit modulaire** sur une grille de 8 studs (murs, sols, escaliers, arches, toits).
+- Un Éclat = grille de **7 × 7 tuiles** (5 × 5 jusqu'à la v0.10 ; carte ≈ 4,4 fois plus grande,
+  décision D-052). Le centre est toujours le Donjon.
+- Plan type d'une tuile (`Shared/Eclat/Districts`) : un îlot central (±26), un chemin de ronde
+  au sol tout autour (26 à 40, éboulis-couverts tous les ~20 studs), la bande des bords (40 à 48).
+- Direction : forteresse arrachée à un siège, machinerie steampunk sobre (laiton, chaudières,
+  mécanismes d'horlogerie), fractures de cristal cyan, rares cristaux violets.
 - Les bords de tuiles respectent des **connecteurs** standard (passage au sol, passage sur
   rempart, mur plein) pour que n'importe quelle tuile se raccorde à ses voisines.
 

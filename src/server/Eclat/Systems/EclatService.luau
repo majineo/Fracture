@@ -301,6 +301,25 @@ function EclatService.start()
 	if floor then
 		floor:Destroy()
 	end
+	-- Décor du ciel (v0.11.0) : le dirigeable modélisé est copié pour les clients, qui font
+	-- tourner leurs propres dirigeables autour de la Cité (Client/Place/Controllers/SkyDecor).
+	local kit = game:GetService("ServerStorage"):FindFirstChild("CityKit")
+	local airship = kit and kit:FindFirstChild("Cite_Dirigeable")
+	if airship then
+		local decor = Instance.new("Folder")
+		decor.Name = "Decor"
+		local copy = airship:Clone()
+		for _, d in copy:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.Anchored = true
+				d.CanCollide = false
+				d.CanQuery = false
+				d.CanTouch = false
+			end
+		end
+		copy.Parent = decor
+		decor.Parent = game:GetService("ReplicatedStorage")
+	end
 	build(newSeed(), 1)
 	if RunService:IsStudio() then
 		workspace:GetAttributeChangedSignal("EclatRestart"):Connect(function()

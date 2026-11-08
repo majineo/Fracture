@@ -7,7 +7,7 @@
 --   0 – 5 min   Exploration
 --   5 – 12 min  Effondrement : un côté de la couronne extérieure (4 tuiles) tombe toutes les
 --               2 min, alerte 30 s avant ; l'ordre des côtés dépend de la graine
---   12 – 16 min Faille finale (le Gardien s'éveille, la Faille s'ouvre près du Donjon)
+--   12 – 16 min Faille finale (le Gardien s'éveille, la Faille s'ouvre au pied du Donjon)
 --   16 min      Fin : tout ce qui reste s'effondre, tout joueur encore présent meurt
 
 -- Chemin relatif : fonctionne dans Roblox (frère du module) et dans les tests Lune.

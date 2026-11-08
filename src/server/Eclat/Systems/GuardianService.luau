@@ -1,5 +1,5 @@
 --!strict
--- Le Gardien, le Roi Sans Heure (v0.8.0, GDD 07 §3) : il s'éveille sur le toit du Donjon au début
+-- Le Gardien, le Roi Sans Heure (v0.8.0, GDD 07 §3) : il s'éveille dans la cour du Donjon au début
 -- de la Faille finale ; 3 phases ; couronne exposée après une charge ratée ; récompense.
 -- Studio : ServerScriptService > Server > Place > Systems > GuardianService (place Éclat)
 --
@@ -16,6 +16,8 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local GuardianBrain = require(Shared:WaitForChild("Combat"):WaitForChild("GuardianBrain"))
 local CollapseSchedule = require(Shared:WaitForChild("Eclat"):WaitForChild("CollapseSchedule"))
 local ItemDefs = require(Shared:WaitForChild("Loot"):WaitForChild("ItemDefs"))
+local Districts = require(Shared:WaitForChild("Eclat"):WaitForChild("Districts"))
+local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayout"))
 
 local Core = script.Parent.Parent.Parent
 local Net = require(Core.Lib.Net)
@@ -26,8 +28,11 @@ local HealthService = require(Core.Systems.HealthService)
 local EclatService = require(script.Parent.EclatService)
 local LootService = require(script.Parent.LootService)
 
-local THRONE = Vector3.new(0, 0, 22) -- repère tourné du Donjon : dans la cour, devant le donjon
-local ARENA_HALF = 29 -- l'arène = la tuile du Donjon (il ne passe pas les portes)
+-- Trône : dans la cour, devant le Donjon (Shared/Eclat/Districts).
+local THRONE_SPOT = (Districts.get("Donjon") :: Districts.District).throne :: Districts.Spot
+local THRONE = Vector3.new(THRONE_SPOT.x, THRONE_SPOT.y, THRONE_SPOT.z)
+-- L'arène = la tuile du Donjon (il ne quitte pas sa tuile).
+local ARENA_HALF = EclatLayout.TILE / 2 - 3
 local SCALE = 3
 local TICK = 0.2
 local SWING_DAMAGE = 35
@@ -415,7 +420,7 @@ local function awaken()
 		chargeHit = false,
 	}
 	current = state
-	announce("Le Roi Sans Heure s'éveille sur le Donjon !")
+	announce("Le Roi Sans Heure s'éveille au pied du Donjon !")
 end
 
 function GuardianService.init()

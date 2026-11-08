@@ -7,7 +7,7 @@
 --     premier quart de la partie et le début de la Faille finale, sur une tuile qui tient
 --     debout pendant toute sa fenêtre (et encore 20 s après) ; jamais sur un Bord d'apparition,
 --     jamais deux sur la même tuile ;
---   * la Faille finale, sur le toit du Donjon, ouverte de la phase « Faille finale » à la fin.
+--   * la Faille finale, au pied du Donjon, ouverte de la phase « Faille finale » à la fin.
 -- Pour extraire, il faut rester HOLD secondes dans la zone sans subir de dégâts.
 
 local EclatLayout = require("./EclatLayout")
@@ -37,7 +37,8 @@ function ExtractionPlan.build(
 	local window = math.max(ExtractionPlan.WINDOW * scale, ExtractionPlan.HOLD + 4)
 	local margin = ExtractionPlan.MARGIN * scale
 	local r = EclatLayout.rng(layout.seed * 11 + 5)
-	local count = 2 + (if EclatLayout.nextFloat(r) < 0.5 then 1 else 0)
+	-- Cité 7 × 7 (v0.11.0) : 3 ou 4 points secondaires (2 ou 3 dans la forteresse 5 × 5).
+	local count = 3 + (if EclatLayout.nextFloat(r) < 0.5 then 1 else 0)
 	local earliest = t.finish * 0.25
 	local latest = t.finalRift - window
 	local points: { Point } = {}

@@ -40,6 +40,7 @@ export type Solid = {
 	top: number,
 	bottom: number?, -- dalle suspendue (toit de crypte, passerelle) ; 0 par défaut
 	material: string,
+	module: string?, -- module Blender qui habille la plateforme (v0.12)
 }
 export type Spot = { x: number, y: number, z: number }
 export type LootSpot = Spot & { table: string }
@@ -70,7 +71,7 @@ Districts.MODULES = table.freeze({
 	-- Bâtiments
 	-- Terrasse praticable à 24 et grande tour centrale de 56 : le repère de toute la carte.
 	Fort_Donjon = { w = 32, d = 32, h = 56, roof = 24, tower = { w = 12, d = 12, h = 56 } },
-	Fort_TourGuet = { w = 12, d = 12, h = 28, roof = 24 },
+	Fort_TourGuet = { w = 14, d = 14, h = 28, roof = 24 }, -- habille la plateforme de la tour
 	Fort_Maison = { w = 12, d = 10, h = 16 },
 	Fort_GrandeMaison = { w = 16, d = 12, h = 18 },
 	Fort_Corps = { w = 14, d = 10, h = 12 }, -- corps de garde
@@ -213,8 +214,8 @@ DEFS.Remparts = {
 		{ x = 7, z = 14, turns = 0, rise = 12, run = 16, width = 6 }, -- longe l'aile
 	},
 	solids = {
-		{ x = -2, z = -8, w = 36, d = 6, top = 12, material = "Slate" },
-		{ x = 13, z = 6, w = 6, d = 22, top = 12, material = "Slate" },
+		{ x = -2, z = -8, w = 36, d = 6, top = 12, material = "Slate", module = "Fort_Rempart" },
+		{ x = 13, z = 6, w = 6, d = 22, top = 12, material = "Slate", module = "Fort_Rempart" },
 	},
 	loot = {
 		{ table = "Caisse", x = -14, y = 12, z = -8 },
@@ -239,7 +240,9 @@ DEFS.TourGuet = {
 	}, with(cornerBanners(), ringCover())),
 	-- Escalier de 30 de long, de x = -25 (sol) à x = 5 (haut), vers +X.
 	stairs = { { x = -10, z = 0, turns = 3, rise = 24, run = 30, width = 6 } },
-	solids = { { x = 12, z = -1, w = 14, d = 14, top = 24, material = "Slate" } },
+	solids = {
+		{ x = 12, z = -1, w = 14, d = 14, top = 24, material = "Slate", module = "Fort_TourGuet" },
+	},
 	loot = {
 		{ table = "Coffre", x = 16, y = 24, z = -4 },
 		{ table = "Caisse", x = -6, y = 0, z = 12 },

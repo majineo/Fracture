@@ -24,6 +24,7 @@ local specs = {
 	require("./specs/GuardianBrain.spec"),
 	require("./specs/Arsenal.spec"),
 	require("./specs/Districts.spec"),
+	require("./specs/DecorMotion.spec"),
 }
 
 for _, spec in specs do

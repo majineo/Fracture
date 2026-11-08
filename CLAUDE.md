@@ -32,6 +32,18 @@ Claude est l'associé technique et créatif. Tout échange avec l'utilisateur se
   clone figé du personnage (sans Animator) plutôt qu'à l'œil : voir GreatswordGuard, v0.4.3.
 - Vérifier l'orientation en main en mesurant `LookVector` (= -Z, l'avant) et `UpVector` de la
   poignée dans le repère du corps — attention à ne pas inverser le signe.
+- Ne jamais présenter une greybox comme un résultat : l'utilisateur juge l'ambiance et la qualité
+  visuelle (style : forteresse gothique sombre, énergie cyan intégrée — voir le coffre Obsidian).
+
+## Documentation Obsidian (obligatoire)
+- Le coffre `C:/Users/neost/Documents/fracture vault` est la base de connaissance centrale.
+  `Fracture/Environment/*` (Overview, Art-Direction, Map-Layout, Tile-Documentation, Asset-Library,
+  Gameplay-Readability, Technical-Specifications, Progress-Log, Issues-and-Decisions,
+  Export-Manifest) : notes **tenues à la main**, à mettre à jour après chaque étape importante.
+- Statuts : NOT STARTED · IN PROGRESS · NEEDS REVIEW · APPROVED · COMPLETED. Séparer le confirmé
+  des hypothèses ; ne jamais noter un export non vérifié comme testé ; ne rien effacer sans le dire.
+- Notes générées (`généré: true`) : `lune run tools/export_catalog` puis `python tools/obsidian_sync.py`.
+- Fin de séance : rapport court (créé / modifié, notes mises à jour, inachevé, à approuver, limites).
 
 ## Versions et Git
 - Chaque version : entrée complète dans `CHANGELOG.md` (10 rubriques), `Config.GAME_VERSION`,

@@ -227,6 +227,25 @@ Import : Fichier → Importer (échelle 0,01), ranger le Model sous `EnemyOutfit
 - Import : régler `CollisionFidelity` (Box) sur les modèles sources dans Studio — un script de
   jeu n'a pas le droit de le faire (erreur trouvée en v0.11.0).
 
+### Kit de la forteresse gothique (v0.12.0) — ✅ Importé et intégré
+
+Direction : forteresse gothique sombre (11 références, coffre Obsidian `Fracture/Environment`),
+échantillon validé par l'utilisateur. `assets/blender/fortress/build_fort_kit.py`
+(+ `fort_kit.blend`) construit 30 modules `Fort_*` ; rendus de revue : `render_kit.py`.
+
+- **Export** : un seul `FortKit.fbx` (échelle 0,01) ; une pièce par matériau
+  `<Module>_<Matériau>`, pièces animées `<Module>_Anim<Clé>_<Matériau>`, pivot
+  `<Module>_Origine` ; repères dans `FortKit_marks.json` (coordonnées Blender).
+- **Import (vérifié le 2026-11-08)** : Studio → Importer (réglages par défaut) dans Place1 ;
+  script MCP de rangement : un Model par module dans `ServerStorage > FortressKit`,
+  `CollisionFidelity` (PreciseConvexDecomposition pierre / bois / ardoise, Hull le reste,
+  Box pour les pièces animées), attachements `Fx_*` / `Pivot_*` / `Pose_*` créés depuis les
+  repères (Roblox = (-x, z, y) de Blender). Puis Place1 sauvegardée et
+  `assets/roblox/FortressKit.rbxm` réexporté (clic droit → Sauvegarder/Exporter →
+  Sauvegarder dans un fichier).
+- **Leçon** : importer dans Place1 et sauvegarder aussitôt (un import dans la place Éclat
+  construite, jamais sauvegardée, a été perdu à la fermeture de Studio).
+
 ### Kit de la Cité d'Horlogerie (v0.11.0) — ⏸ Mis de côté (D-052)
 
 `assets/blender/city/build_cite.py` (+ `cite_kit.blend`, FBX exportés à l'échelle 0,01) :

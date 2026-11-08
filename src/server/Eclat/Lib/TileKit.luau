@@ -67,6 +67,11 @@ local FALLBACK: { [string]: { material: Enum.Material, color: Color3 } } = {
 	Kit_Coffre = { material = Enum.Material.WoodPlanks, color = C.wood },
 }
 
+-- Sols modélisés posés sur l'îlot selon son matériau (dessus des dalles ≈ 0,65 au-dessus de leur
+-- origine : on les enfonce pour que le sol de jeu reste à y = 0).
+local FLOORS: { [string]: string } = { Slate = "Fort_Dalle", Cobblestone = "Fort_Pave" }
+local FLOOR_Y = -0.6
+
 local GROUND: { [string]: { material: Enum.Material, color: Color3 } } = {
 	Slate = { material = Enum.Material.Slate, color = C.paleStone },
 	Cobblestone = { material = Enum.Material.Cobblestone, color = Color3.fromRGB(138, 130, 120) },
@@ -141,7 +146,7 @@ local function module(
 	if placed then
 		for _, d in placed:GetDescendants() do
 			if d:IsA("BasePart") then
-				d.CanCollide = solid ~= false
+				d.CanCollide = d.CanCollide and solid ~= false
 			end
 		end
 		placed.Parent = b.model
@@ -226,20 +231,29 @@ local function stair(
 	local placed =
 		Kit.placeScaled("Fort_Escalier", cf, Vector3.new(width / m.w, rise / m.h, run / m.d))
 	if placed then
+		-- Les marches étirées sont trop hautes pour être gravies : on marche sur une rampe
+		-- invisible, les marches ne servent qu'au rendu.
+		for _, d in placed:GetDescendants() do
+			if d:IsA("BasePart") then
+				d.CanCollide = false
+			end
+		end
 		placed.Parent = b.model
-		return
 	end
-	-- Repli : rampe pleine.
 	local a = cf:PointToWorldSpace(Vector3.new(0, 0, run / 2))
 	local c = cf:PointToWorldSpace(Vector3.new(0, rise, -run / 2))
 	local length = (c - a).Magnitude
-	make(
+	local ramp = make(
 		b,
 		Vector3.new(width, 1, length),
 		CFrame.lookAt((a + c) / 2, c) * CFrame.new(0, -0.5, 0),
 		Enum.Material.Slate,
 		C.paleStone
 	)
+	ramp.Name = "Rampe"
+	if placed then
+		ramp.Transparency = 1
+	end
 end
 
 -- Bords ------------------------------------------------------------------------------------
@@ -399,6 +413,26 @@ local function ground(b: Builder, def: Districts.District)
 			look.color
 		)
 		plaza.Name = "Ilot"
+		-- Dallage ou pavage modélisé (v0.12) : dessus à fleur du sol de jeu (y ≈ 0).
+		local floor = FLOORS[def.ground]
+		if floor and Kit.has(floor) then
+			for i = -3, 3 do
+				for j = -3, 3 do
+					local name = floor
+					if floor == "Fort_Dalle" and (i * 5 + j * 3) % 7 == 0 then
+						name = "Fort_DalleFissure"
+					end
+					local turn = ((i * 7 + j * 13) % 4) * math.pi / 2
+					local cf = b.inner
+						* CFrame.new(i * 8, FLOOR_Y, j * 8)
+						* CFrame.Angles(0, turn, 0)
+					local placed = Kit.placeScaled(name, cf, Vector3.one)
+					if placed then
+						placed.Parent = b.model
+					end
+				end
+			end
+		end
 	end
 	-- Trottoirs : bordures autour de l'îlot.
 	block(b, b.center, Vector3.new(T - 6, 14, T - 6), 0, -18, 0, Enum.Material.Basalt, C.rock)
@@ -407,6 +441,47 @@ local function ground(b: Builder, def: Districts.District)
 end
 
 -- Intérieur du quartier ----------------------------------------------------------------------
+
+-- Habille une plateforme avec son module (v0.12) : tour de guet posée telle quelle, remparts
+-- alignés sur la longueur et étirés à la hauteur du dessus. false si le module manque.
+local function dressSolid(b: Builder, s: Districts.Solid): boolean
+	local name = s.module :: string
+	local m = Districts.MODULES[name]
+	if m == nil or not Kit.has(name) then
+		return false
+	end
+	if name == "Fort_Rempart" then
+		local along = s.w >= s.d
+		local length = if along then s.w else s.d
+		local count = math.max(1, math.floor(length / m.w + 0.5))
+		local width = length / count
+		for i = 1, count do
+			local t = -length / 2 + width * (i - 0.5)
+			local x = if along then s.x + t else s.x
+			local z = if along then s.z else s.z + t
+			-- Façade (-Z du module) vers l'extérieur de l'îlot.
+			local yaw = if along
+				then (if s.z < 0 then 0 else math.pi)
+				else (if s.x < 0 then math.pi / 2 else -math.pi / 2)
+			local cf = b.inner * CFrame.new(x, 0, z) * CFrame.Angles(0, yaw, 0)
+			local placed = Kit.placeScaled(name, cf, Vector3.new(width / m.w, s.top / m.h, 1))
+			if placed then
+				placed.Parent = b.model
+			end
+		end
+		return true
+	end
+	local placed = Kit.placeScaled(
+		name,
+		b.inner * CFrame.new(s.x, 0, s.z),
+		Vector3.new(s.w / m.w, s.top / (m.roof or m.h), s.d / m.d)
+	)
+	if placed then
+		placed.Parent = b.model
+		return true
+	end
+	return false
+end
 
 local function interior(b: Builder, def: Districts.District)
 	for _, p in def.buildings do
@@ -424,6 +499,9 @@ local function interior(b: Builder, def: Districts.District)
 	for _, s in def.solids do
 		local look = GROUND[s.material] or GROUND.Slate
 		local bottom = s.bottom or 0
+		if s.module and bottom == 0 and dressSolid(b, s) then
+			continue
+		end
 		if s.top > 0 and bottom > 0 then
 			-- Dalle suspendue (toit de crypte, passerelle).
 			block(

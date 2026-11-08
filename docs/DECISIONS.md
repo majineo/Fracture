@@ -393,6 +393,28 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-053 — Forteresse gothique : kit Blender complet et décor vivant
+- **Date** : 2026-11-08 · **Version** : v0.12.0 · **Statut** : ✅ Implémentée
+- **Direction** : forteresse gothique sombre au crépuscule teal (11 références de l'utilisateur,
+  coffre Obsidian `Fracture/Environment/Art-Direction`) : arcs brisés, créneaux, mâchicoulis,
+  contreforts, maçonnerie en relief, énergie cyan **intégrée** (failles, cristaux qui percent la
+  pierre, éclats suspendus). La greybox n'est plus jamais présentée comme un résultat.
+- **Kit** : 30 modules `Fort_*` modélisés par code (`assets/blender/fortress/build_fort_kit.py`),
+  exportés en **un seul FBX** (un seul import Studio). Une pièce par matériau, plus une pièce
+  `<Module>_Origine` qui sert de pivot (la boîte englobante varie avec les saillies).
+- **Matériaux lisses** (SmoothPlastic, palette de l'Art-Direction) : le relief vient de la
+  géométrie, pas des textures Roblox (retour utilisateur : « textures trop présentes »).
+- **Collisions** : `PreciseConvexDecomposition` réglé sur les modèles sources (pierre, bois,
+  ardoise), `Hull` pour le reste ; lueurs, cristaux et tissus traversables ; escaliers : marches
+  visuelles et rampe invisible (marches étirées trop hautes pour être gravies).
+- **Décor vivant côté client** (`Client/Place/Controllers/DecorFx`, mouvements purs testés dans
+  `Shared/Eclat/DecorMotion`) : repères posés dans Blender et convertis en attachements Studio
+  (`Fx_*`, `Pivot_*`, `Pose_*`) ; torches et braseros posés automatiquement sur les bâtiments ;
+  seuls les effets proches de la caméra sont actifs (36 lumières dynamiques au plus). Aucun coût
+  réseau, rien de jouable ne dépend des effets.
+- **Temps fracturé** : rouages, aiguilles et balancier avancent par à-coups (trois crans en avant,
+  un en arrière), la cloche figée tremble : le décor raconte l'univers des Éclats temporels.
+
 ## D-052 — Forteresse agrandie (7 × 7 tuiles de 96 studs), style steampunk de siège
 - **Date** : 2026-11-08 · **Version** : v0.11.0 · **Statut** : ✅ Maquette validée et jouable en greybox ; modèles 📋 (attente des références « studs »)
 - **Choix de l'utilisateur** : le style de son brief d'environnement (forteresse médiévale prise

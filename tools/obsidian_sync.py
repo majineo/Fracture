@@ -244,7 +244,8 @@ home = [
     "le dépôt Git** (référence) : relancer `python tools/obsidian_sync.py` pour le mettre à jour. "
     "Tes notes personnelles vont dans **[[Mes notes/Lisez-moi|Mes notes]]** (jamais touchées).", "",
     f"**Version actuelle** : [[{latest_v[1]}|{latest_v[0]}]] ({latest_v[2]})" if latest_v else "", "",
-    "## Explorer", "- [[Présentation du projet]] · [[Règles de travail]]", "- [[GDD]] — le design complet",
+    "## Explorer", "- **[[Overview|Environnement de l'Éclat]]** — carte, style, assets, progression (notes tenues à la main)",
+    "- [[Présentation du projet]] · [[Règles de travail]]", "- [[GDD]] — le design complet",
     "- [[Catalogue]] — armes, capacités, objets, ennemis, tuiles", "- [[Décisions]] — pourquoi le jeu est comme il est",
     "- [[Versions]] — ce qui a changé, version par version",
     "- Technique : [[Architecture]] · [[Assets]] · [[Feuille de route]] · [[Numérotation des versions]] · [[OmniRoute]]", "",
@@ -336,6 +337,8 @@ for folder, _, files in os.walk(VAULT):
 
 # Liens cassés (contrôle)
 names = note_names | {"Mes notes/Lisez-moi", "Lisez-moi"}
+for _folder, _dirs, _files in os.walk(VAULT):
+    names |= {os.path.splitext(f)[0] for f in _files if f.endswith(".md")}
 broken = set()
 for p in written:
     with open(p, encoding="utf-8") as f:

@@ -5,6 +5,76 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.12.0] — 2026-11-08 — « Forteresse gothique »
+
+### Description générale
+La greybox de l'Éclat est remplacée par une vraie forteresse gothique modélisée dans Blender,
+dans la direction choisie par l'utilisateur (11 références) : crépuscule teal, pierre sombre,
+arcs brisés, créneaux, énergie cyan intégrée à la maçonnerie. Le décor prend vie : torches,
+braseros, fumées, vapeur, éclats, mécanismes d'horlogerie figés qui avancent par à-coups.
+
+### Nouvelles fonctionnalités
+- **Kit gothique (30 modules)** : Donjon à terrasse et tour à quatre horloges figées et fêlées
+  (flèche à environ 78 studs, éclats en orbite, rosaces cyan, portails), tour de guet à
+  échauguette, tourelles à poivrière, maisons à colombages et grande maison à tourelle, corps de
+  garde crénelé, courtines (dont une fracturée), rempart praticable, porte à arc brisé et herse,
+  escalier, trébuchet brisé, bélier, barricade, chaudière, horloge, cloche, puits, râtelier,
+  sarcophage, cristal, étendard, éboulis, torche murale, brasero, dalles (fissurées), pavés.
+- **Sols** : les îlots dallés et pavés reçoivent des dalles irrégulières ou des pavés modélisés.
+- **Décor vivant** (client) : feu et braises des torches et braseros, lumières qui vacillent,
+  fumée des cheminées, vapeur et soupape de la chaudière, éclats cyan des cristaux, failles et
+  puits, fragments en orbite autour du Donjon ; rouages, balancier, aiguilles des horloges du
+  Donjon, cloche et bannières animés.
+- **Torches et braseros posés automatiquement** sur les portes, maisons, corps de garde, tour de
+  guet et Donjon (repères `Pose_*` dans les modèles).
+- **Ambiance** : crépuscule teal (heure 17,6, brume bleu-vert, bloom plus fort).
+
+### Modifications
+- `Kit` : pivot par la pièce `<Module>_Origine`, attachements conservés (et étirés avec la
+  pièce), pièces animées et décor lumineux traversables, palette lisse de l'Art-Direction.
+- `TileKit` : sols modélisés, rampe invisible sous les escaliers, plateformes habillées
+  (tour de guet, remparts intérieurs) ; `Districts` : champ `module` des plateformes, tour de
+  guet 14 × 14.
+- Rempart : plus de parapet intérieur (il bloquait l'arrivée des escaliers).
+
+### Corrections de bugs
+- La fêlure de la cloche ne suivait pas la cloche ; contrefiches flottantes retirées.
+
+### Vérifications
+- Studio (place Éclat) : 49 tuiles, 2 937 modules, environ 13 900 pièces, 685 repères d'effets,
+  348 torches ; aucune erreur de script ; animations vérifiées (la bannière oscille) ; captures
+  du Donjon et d'un village au crépuscule.
+- Import : échelle (0,2 → 0,2 stud) et axes contrôlés (+X Blender → -X Roblox, -Y → -Z).
+- Performances mesurées dans Studio (PC de développement, pas sur mobile) : 60 images/s face
+  au Donjon, dans un village et en vue large (pics de 33 à 43 ms).
+- 131 tests Lune (nouveau : `DecorMotion`), Selene 0 erreur, StyLua, Rojo.
+
+### Problèmes connus
+- Non testés au clavier : collisions précises des bâtiments (escalade, terrasses), lisibilité
+  au combat, performances sur mobile (environ 13 900 pièces, Donjon à 31 000 triangles).
+- Quelques maillages fraîchement importés sont encore « en cours de génération » côté Roblox à
+  la première ouverture (avertissements dans la console).
+- Plateformes de la Crypte et passerelles du Donjon encore en blocs simples.
+- Le garde anti-téléportation empêche de déplacer le personnage par script en test (caméra de
+  test utilisée à la place).
+
+### Fichiers
+- **Ajoutés** : `assets/blender/fortress/{build_fort_kit.py,render_echantillon.py,render_kit.py,fort_kit.blend,FortKit.fbx,FortKit_marks.json}`,
+  `src/client/Eclat/Controllers/DecorFx.luau`, `src/shared/Eclat/DecorMotion.luau`,
+  `tests/specs/DecorMotion.spec.luau`
+- **Modifiés** : `src/server/Eclat/Lib/{Kit,TileKit}.luau`, `src/shared/Eclat/Districts.luau`,
+  `src/shared/Config.luau`, `places/eclat.project.json`, `assets/roblox/FortressKit.rbxm`,
+  `tests/run.luau`, `tools/obsidian_sync.py`, `docs/{DECISIONS,ASSETS}.md`, `CLAUDE.md`,
+  `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Test au clavier par l'utilisateur (déplacements, escalade, combats à la torche).
+- Habiller la Crypte et les passerelles ; varier les courtines (brèches, hauteurs).
+- Mesurer les performances et alléger le Donjon si besoin.
+
+---
+
 ## [v0.11.0] — 2026-11-08 — « Forteresse agrandie »
 
 ### Description générale

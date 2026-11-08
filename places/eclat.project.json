@@ -18,6 +18,17 @@
         }
       }
     },
+    "ServerStorage": {
+      "WeaponModels": {
+        "$path": "../assets/roblox/WeaponModels.rbxm"
+      },
+      "EnemyOutfits": {
+        "$path": "../assets/roblox/EnemyOutfits.rbxm"
+      },
+      "FortressKit": {
+        "$path": "../assets/roblox/FortressKit.rbxm"
+      }
+    },
     "StarterPlayer": {
       "$properties": {
         "CharacterWalkSpeed": 14,

@@ -70,8 +70,17 @@ en lot** → choisir les 5 PNG. Claude récupère ensuite les identifiants et le
 ## Maillages importés sur Roblox
 
 Les modèles intégrés vivent dans la place de travail (`ServerStorage > WeaponModels`) :
-**enregistrer la place** pour ne pas les perdre. Identifiants (pour les retrouver ou les
-réassembler) :
+**enregistrer la place** pour ne pas les perdre.
+
+**Copie versionnée (2026-11-08)** : les dossiers `WeaponModels`, `EnemyOutfits`, `FortressKit`
+et `Beasts` de `ServerStorage` sont exportés dans `assets/roblox/*.rbxm` (Explorateur → clic
+droit → Sauvegarder/Exporter → Sauvegarder dans un fichier). Le projet Rojo de l'Éclat
+(`places/eclat.project.json`) y puise les trois premiers : la place Éclat de test a donc les
+vraies armes, l'armure du Roi et le kit de forteresse. **Après tout nouvel import dans Place1,
+ré-exporter le dossier concerné** (même nom de fichier), sinon l'Éclat garde l'ancienne version.
+`Beasts.rbxm` n'est qu'une sauvegarde (le bestiaire est au Refuge).
+
+Identifiants (pour les retrouver ou les réassembler) :
 
 | Arme | Pièce | MeshId | Matériau Roblox |
 |---|---|---|---|
@@ -198,8 +207,8 @@ Import : Fichier → Importer (échelle 0,01), ranger le Model sous `EnemyOutfit
 
 > 2026-11-08 : armure importée à l'échelle 0,01 (17 MeshParts, ajustement vérifié sur un R15 ×3).
 > Le kit avait été importé à l'échelle 1 (×100) puis laissé dans le Workspace : ramené à 1 stud
-> (`Model:ScaleTo`) et rangé dans `ServerStorage > FortressKit`. Les deux sont dans `Place1.rbxl`
-> uniquement : la place Éclat de test (`tools/ouvrir-eclat.ps1`) ne les contient pas encore.
+> (`Model:ScaleTo`) et rangé dans `ServerStorage > FortressKit`. Exportés ensuite en `.rbxm`
+> et intégrés à la place Éclat de test : armure (17 pièces soudées) et kit vérifiés en partie.
 
 ## Procédure d'import (vérifiée en v0.4.2)
 

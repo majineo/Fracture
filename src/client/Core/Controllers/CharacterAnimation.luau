@@ -17,6 +17,7 @@ local MovementEffects = require(Client.Animation.MovementEffects)
 local PoseAnimator = require(Client.Animation.PoseAnimator)
 local Poses = require(Client.Animation.Poses)
 local MeleeMotion = require(Client.Animation.MeleeMotion)
+local PunchMotion = require(Client.Animation.PunchMotion)
 local WeaponHold = require(Client.Animation.WeaponHold)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local WeaponDefs = require(
@@ -106,6 +107,7 @@ end
 -- Arme déplacée par un coup / une parade / une charge (Animation/MeleeMotion).
 type MeleeOverride = { grip: CFrame, direct: boolean, blend: number? }
 local SWING_HOLD = 0.1 -- la fin du coup reste affichée un instant avant le retour en garde
+local PUNCH_GUARD_LINGER = 0.9 -- poings nus : la garde reste levée un moment après un coup
 -- Dégainer (v0.4.9) : l'arme part de la hanche droite, canon / lame vers le bas.
 local HOLSTER = CFrame.new(0.95, -1.1, -0.25) * CFrame.Angles(math.rad(-75), 0, 0)
 -- Rechargement : arme ramenée vers la poitrine et basculée.
@@ -537,6 +539,44 @@ local function updateEntry(entry: Tracked, dt: number)
 			twist = CFrame.new():Lerp(torsoTwist, charge)
 		end
 	end
+	-- Poings nus (Update 2.0) : jab, direct, crochet, uppercut chargé ; garde levée entre deux
+	-- coups. Les deux bras suivent les poings par cinématique inverse (Animation/PunchMotion).
+	local fists: { [string]: CFrame }? = nil
+	if usable and (weapon == nil or weapon == "") then
+		local who = if isLocal then nil else entry.player
+		local now = os.clock()
+		local swing = CombatController.getSwing(who)
+		local charge = if isLocal then CombatController.getMeleeCharge() else nil
+		local kind: PunchMotion.Kind? = nil
+		local t, blend = 0, 1
+		if swing then
+			local k: PunchMotion.Kind = if swing.heavy
+				then "Uppercut"
+				else PunchMotion.comboKind(swing.combo or 1)
+			local duration = PunchMotion.duration(k)
+			local elapsed = now - swing.at
+			if elapsed >= 0 and elapsed <= duration then
+				kind, t = k, elapsed / duration
+			elseif elapsed >= 0 and elapsed <= duration + PUNCH_GUARD_LINGER then
+				kind = "Guard"
+			end
+		end
+		if charge and (kind == nil or kind == "Guard") then
+			-- Coup chargé en préparation : le poing droit s'arme bas, prêt pour l'uppercut.
+			kind, t, blend = "Uppercut", 0, charge
+		end
+		if kind then
+			local arms = entry.arms
+			if arms == nil or now - entry.armsMeasuredAt > ARMS_REMEASURE then
+				arms = WeaponHold.measureArms(entry.rig)
+				entry.arms = arms
+				entry.armsMeasuredAt = now
+			end
+			if arms then
+				fists, twist = PunchMotion.solve(arms, kind, t, blend)
+			end
+		end
+	end
 	animator.setPose("Twist", { Waist = twist or CFrame.identity })
 	animator.setWeight("Twist", if twist then 1 else 0)
 
@@ -545,6 +585,10 @@ local function updateEntry(entry: Tracked, dt: number)
 	if hold and weapon and WeaponHold.has(hold) then
 		holding =
 			updateHold(entry, hold, weapon, holdingGun, mode, grounded, horizontal, dt, motion)
+	end
+	if fists then
+		animator.setPose("Hold", fists)
+		holding = true
 	end
 	if not holding then
 		entry.grip = nil

@@ -9,7 +9,7 @@
 
 export type WeaponKind = "Hitscan" | "Melee"
 export type Slot = "Firearm" | "Melee"
-export type Hold = "Pistol" | "LongGun" | "Blade" | "Greatsword"
+export type Hold = "Pistol" | "LongGun" | "Blade" | "Greatsword" | "Fists"
 
 export type WeaponDef = {
 	id: string,
@@ -136,6 +136,34 @@ local WeaponDefs: { [string]: WeaponDef } = {
 		swingTime = 0.2,
 		ability = "ShadowStep",
 		passive = "Riposte",
+	},
+
+	-- Poings nus (v0.12.1) : arme implicite mains nues, jamais placée dans la charge.
+	-- Clic gauche = coup de poing rapide, courte portée, faible dégât.
+	["weapon.poing"] = {
+		id = "weapon.poing",
+		name = "Poings nus",
+		kind = "Melee",
+		slot = "Melee",
+		hold = "Fists", -- pas de modèle tenu : bras animés par Animation/PunchMotion
+		damage = 14,
+		falloffStart = 0,
+		falloffEnd = 0,
+		minDamageRatio = 1,
+		range = 4,
+		fireRate = 2.8,
+		magazine = 0,
+		reloadTime = 0,
+		spreadHip = 0,
+		spreadAim = 0,
+		recoil = 0,
+		sound = "Swing",
+		soundPitch = 0.85,
+		arcDegrees = 60,
+		heavyMultiplier = 1.5,
+		heavyChargeTime = 0.45,
+		parryWindow = 0.15,
+		swingTime = 0.16,
 	},
 
 	-- Armes de l'Arsenal (v0.4.3) --------------------------------------------------------

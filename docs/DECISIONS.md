@@ -393,6 +393,37 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-055 — Coup de poing : repris de l'essai Lemonade, animé par notre système
+- **Date** : 2026-11-10 · **Version** : v0.13.0 · **Statut** : ✅ Implémentée
+- **Origine** : l'utilisateur a ajouté avec Lemonade (dans la place Éclat de test, jamais dans le
+  dépôt) un coup de poing mains nues, un gel des ennemis touchés en mêlée et un contour rouge
+  pendant leur préparation. Retrouvé dans la sauvegarde automatique de Studio du 2026-11-08.
+- **Gardé** : arme implicite `weapon.poing` (14 dégâts, 4 studs), coups validés par le serveur
+  (`WeaponService.meleeStrike`), gel de 0,1 s des ennemis touchés (`FrozenUntil`), flash
+  renforcé, son, contour rouge.
+- **Refait** : animation par `Animation/PunchMotion` (jab, direct, crochet, uppercut chargé,
+  garde) — les deux poings par cinématique inverse, comme les armes ; impact propre (onde de
+  choc et poussière). **Écarté** : le moteur d'animation de Lemonade (écrivait les mêmes
+  articulations que notre PoseAnimator → conflit, hors architecture, non typé) et la
+  statistique « coups de poing » dans le profil (changement de format de sauvegarde et un
+  envoi réseau à chaque coup, sans usage).
+- **Leçon** : un outil qui modifie la place dans Studio n'écrit pas dans le dépôt ; la
+  reconstruction Rojo efface ses ajouts. Tout ajout de ce type doit être reporté dans `src/`.
+
+## D-054 — Une seule caméra maison, trois vues (Update 2.0, phase 2)
+- **Date** : 2026-11-10 · **Version** : v0.13.0 · **Statut** : ✅ Implémentée (ressenti à valider)
+- **Choix** : `PlayerCamera` remplace ShoulderCamera (PC arme en main seulement) et la caméra
+  Roblox (le reste) : un seul comportement avec ou sans arme, à la souris, au doigt, au stick.
+- **Vues** (F5, bouton « Vue » sur mobile) : première personne → dos → face. Arme en main, la
+  vue de face devient la vue de dos (on ne vise jamais vers son propre visage) ; la préférence
+  reste pour la session. En vue de face, les déplacements sont ramenés dans le repère du
+  regard du joueur (sinon avancer ferait reculer).
+- **Ressenti** : rotation jamais lissée (aucun retard d'entrée) ; point suivi par ressorts
+  (≈ 0,3 stud de retard au démarrage, léger dépassement à l'arrêt) ; balancement et inclinaison
+  très faibles, effacés en visée ; collision par sphère, entrée instantanée et sortie douce.
+- **Une seule source** de transparence locale du personnage (lunette, première personne, caméra
+  trop proche) : PlayerCamera.
+
 ## D-053 — Forteresse gothique : kit Blender complet et décor vivant
 - **Date** : 2026-11-08 · **Version** : v0.12.0 · **Statut** : ✅ Implémentée
 - **Direction** : forteresse gothique sombre au crépuscule teal (11 références de l'utilisateur,

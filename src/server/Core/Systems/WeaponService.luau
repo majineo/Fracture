@@ -33,6 +33,7 @@ local MovementGuard = require(script.Parent.MovementGuard)
 local WeaponModels = require(script.Parent.Parent.Lib.WeaponModels)
 
 local BASE_LOADOUT = table.freeze({ "weapon.fracture_pistol", "weapon.short_blade" })
+local UNARMED_ID = "weapon.poing" -- poings : arme implicite mains nues (jamais dans la charge)
 local SLOT_KIND: { [number]: WeaponDefs.Slot } = { "Firearm", "Melee" }
 local FIRE_TOLERANCE = 0.05 -- gigue réseau acceptée sur la cadence
 local INTERPOLATION_DELAY = 0.05 -- retard d'affichage des autres joueurs chez le tireur
@@ -45,7 +46,6 @@ local THRUST_MULTIPLIER = 1.3
 -- Fente de mêlée côté client : quelques studs très vite (voir CombatController).
 local LUNGE_ALLOWANCE = 0.5
 local LUNGE_SPEED = 40
-
 type Loadout = {
 	weapons: { string }, -- [1] arme à feu, [2] mêlée
 	equipped: number, -- 0 = mains nues
@@ -203,7 +203,8 @@ local function notifyHit(
 	victimTarget: CombatTargets.Target,
 	result: any,
 	headshot: boolean,
-	origin: Vector3
+	origin: Vector3,
+	frozen: boolean?
 )
 	if attacker then
 		Net.fire("CombatEvent", attacker, {
@@ -212,6 +213,7 @@ local function notifyHit(
 			headshot = headshot,
 			killed = result.killed,
 			downed = result.downed,
+			frozen = frozen == true,
 			position = victimTarget.root.Position,
 		})
 	end
@@ -403,7 +405,22 @@ function WeaponService.meleeStrike(
 		origin = root.Position,
 	})
 	if result then
-		notifyHit(attackerPlayer, best.target, result, false, root.Position)
+		notifyHit(
+			attackerPlayer,
+			best.target,
+			result,
+			false,
+			root.Position,
+			best.target.kind == "Enemy"
+		)
+		-- Gel de l'ennemi touché : attribut répliqué, lu par EnemyService et les clients.
+		-- Durée réglable : CombatConfig.MELEE_HIT_FREEZE.
+		if best.target.kind == "Enemy" then
+			best.target.model:SetAttribute(
+				"FrozenUntil",
+				workspace:GetServerTimeNow() + CombatConfig.MELEE_HIT_FREEZE
+			)
+		end
 		return "Hit"
 	end
 	return nil
@@ -751,6 +768,11 @@ local function onMelee(player: Player, heavy: unknown, direction: unknown, clien
 	end
 	local loadout = loadouts[player]
 	local def, state = equippedDef(player)
+	if def == nil and loadout ~= nil and loadout.equipped == 0 then
+		-- Mains nues : coup de poing (arme implicite, état local comme les autres).
+		def = WeaponDefs[UNARMED_ID]
+		state = if def then stateFor(loadout, def.id) else nil
+	end
 	if
 		loadout == nil
 		or def == nil

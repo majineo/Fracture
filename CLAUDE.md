@@ -65,4 +65,5 @@ Claude est l'associé technique et créatif. Tout échange avec l'utilisateur se
 - Outils (Rokit) : `%USERPROFILE%\.rokit\bin` ; Git / gh : recharger le PATH machine dans les
   commandes PowerShell si besoin.
 - Le module caméra Roblox (`PlayerModule`) n'est pas accessible aux scripts dans cette version :
-  la caméra de combat est faite maison (`Controllers/ShoulderCamera`).
+  la caméra est faite maison pour tous les cas (`Controllers/PlayerCamera`, calculs dans
+  `Shared/Camera/CameraMotion`).

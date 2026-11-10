@@ -52,6 +52,7 @@ local SOUNDS: { [string]: Entry } = table.freeze({
 	MeleeHit = { id = "rbxassetid://138293953015099", volume = 0.6 }, -- « SFX_Hit_Sword_Medium_01 »
 	MeleeHitHeavy = { id = "rbxassetid://84636875169658", volume = 0.7 }, -- « Heavy Sword Hit 1 »
 	Parry = { id = "rbxassetid://9116460378", volume = 0.55 }, -- « Manacles Metal Clangs » (ProSoundEffects)
+	MeleeFreeze = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.5 }, -- gel temporel d'un ennemi touché en mêlée
 	-- Retours de touche
 	Hit = { id = "rbxassetid://133749572213659", volume = 0.45 }, -- « Hit Marker sound effect »
 	Headshot = { id = "rbxassetid://118799613600209", volume = 0.5, maxTime = 0.9 }, -- « Headshot Ding »

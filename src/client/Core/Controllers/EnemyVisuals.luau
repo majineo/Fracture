@@ -7,6 +7,7 @@
 --   AimAt     → arbalète épaulée, trait rouge vers le joueur visé, qui s'intensifie
 --   StunnedUntil → posture déséquilibrée (coup paré)
 --   StutterAt → « saut » temporel : silhouette cyan une fraction de seconde
+--   FrozenUntil → gel sur coup de mêlée reçu : poses suspendues un instant
 --   Dead      → bris en éclats cyan
 
 local Players = game:GetService("Players")
@@ -27,7 +28,8 @@ local EnemyDefs = require(
 ) :: any
 
 local WARN_COLOR = Color3.fromRGB(255, 70, 40)
-local HOT_COLOR = Color3.fromRGB(255, 230, 200)
+-- Contour bien rouge pendant toute la préparation d'un coup de mêlée.
+local OUTLINE_RED = Color3.fromRGB(255, 35, 35)
 local BRISURE_CYAN = Color3.fromRGB(80, 230, 255)
 local STUTTER_FLASH = 0.16
 local STRIKE_HOLD = 0.25 -- durée de la pose de fin de coup
@@ -289,7 +291,9 @@ local function update(visual: Visual, dt: number)
 	if attackAt then
 		local remaining = math.max(0, attackAt - t)
 		local heat = 1 - math.clamp(remaining / 0.6, 0, 1)
-		highlight.OutlineColor = WARN_COLOR:Lerp(HOT_COLOR, heat)
+		-- Contour rouge vif constant pendant toute la préparation (la teinte de remplissage
+		-- continue de s'intensifier à l'approche du coup).
+		highlight.OutlineColor = OUTLINE_RED
 		highlight.FillColor = WARN_COLOR
 		highlight.FillTransparency = 1 - heat * 0.35
 		highlight.Enabled = true
@@ -345,7 +349,12 @@ local function update(visual: Visual, dt: number)
 			visual.grip = nil
 		end
 		animator.setWeight("Hold", if holding then 1 else 0)
-		animator.step(dt)
+		-- Gel sur coup de mêlée reçu (FrozenUntil, posé par WeaponService) : les poses
+		-- ne progressent plus pendant la durée du gel.
+		local frozenUntil = (model:GetAttribute("FrozenUntil") :: number?) or 0
+		if clock >= frozenUntil then
+			animator.step(dt)
+		end
 	end
 end
 

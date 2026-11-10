@@ -23,6 +23,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Combat = Shared:WaitForChild("Combat")
 local WeaponDefs = require(Combat:WaitForChild("WeaponDefs")) :: any
 local WeaponState = require(Combat:WaitForChild("WeaponState")) :: any
+local CombatConfig = require(Combat:WaitForChild("CombatConfig")) :: any
 local Signal = require(Shared:WaitForChild("Util"):WaitForChild("Signal")) :: any
 local PlaceKind = require(Shared:WaitForChild("PlaceKind")) :: any
 
@@ -32,10 +33,11 @@ local CombatSounds = require(Client.Combat.CombatSounds)
 local WeaponFx = require(Client.Combat.WeaponFx)
 local CameraFeel = require(script.Parent.CameraFeel)
 local MovementController = require(script.Parent.MovementController)
-local ShoulderCamera = require(script.Parent.ShoulderCamera)
+local PlayerCamera = require(script.Parent.PlayerCamera)
 local Menu = require(Client.Ui.Menu)
 
 local DEFAULT_LOADOUT = { "weapon.fracture_pistol", "weapon.short_blade" }
+local UNARMED_ID = "weapon.poing" -- poings : arme implicite quand rien n'est équipé
 local SLOT_COUNT = 2
 local AIM_RANGE = 400
 local MOVE_SPREAD = 1.2 -- degrés ajoutés en courant
@@ -393,7 +395,10 @@ local function meleeTarget(def: any, root: BasePart): BasePart?
 	if camera == nil then
 		return nil
 	end
-	local look = Vector3.new(camera.CFrame.LookVector.X, 0, camera.CFrame.LookVector.Z)
+	local view = if PlayerCamera.perspective() == "Front"
+		then root.CFrame.LookVector
+		else camera.CFrame.LookVector
+	local look = Vector3.new(view.X, 0, view.Z)
 	if look.Magnitude < 0.1 then
 		return nil
 	end
@@ -475,6 +480,10 @@ local function swing(def: any, heavy: boolean)
 	local root = c and c:FindFirstChild("HumanoidRootPart")
 	local camera = workspace.CurrentCamera
 	local direction = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
+	-- Vue de face (mains nues) : la caméra regarde le personnage ; on frappe devant lui.
+	if root and root:IsA("BasePart") and PlayerCamera.perspective() == "Front" then
+		direction = root.CFrame.LookVector
+	end
 	if root and root:IsA("BasePart") then
 		local target = meleeTarget(def, root)
 		if target then
@@ -484,7 +493,14 @@ local function swing(def: any, heavy: boolean)
 	end
 	lastSwing = { at = now, heavy = heavy, combo = combo }
 	if c then
-		WeaponFx.bladeTrail(c, (def.swingTime or 0.2) * (if heavy then 1.6 else 1) + 0.08, heavy)
+		-- Coup de poing : les bras sont animés par CharacterAnimation (Animation/PunchMotion).
+		if def.id ~= UNARMED_ID then
+			WeaponFx.bladeTrail(
+				c,
+				(def.swingTime or 0.2) * (if heavy then 1.6 else 1) + 0.08,
+				heavy
+			)
+		end
 	end
 	CombatSounds.play2D(
 		if heavy then "HeavySwing" else def.sound,
@@ -498,9 +514,30 @@ end
 
 local function handleFire(_: string, state: Enum.UserInputState): Enum.ContextActionResult
 	local def = currentDef()
+	if def == nil then
+		-- Mains nues : clic gauche = coup de poing (arme implicite « weapon.poing »).
+		def = WeaponDefs[UNARMED_ID]
+		if def == nil or (Menu.isOpen() and state == Enum.UserInputState.Begin) then
+			return Enum.ContextActionResult.Pass
+		end
+		if not canUseWeapon() then
+			meleeChargeStart = nil
+			return Enum.ContextActionResult.Pass
+		end
+		if state == Enum.UserInputState.Begin then
+			meleeChargeStart = os.clock()
+		elseif state == Enum.UserInputState.End or state == Enum.UserInputState.Cancel then
+			if meleeChargeStart then
+				local held = os.clock() - meleeChargeStart
+				meleeChargeStart = nil
+				swing(def, held >= (def.heavyChargeTime or 0.6))
+			end
+		end
+		return Enum.ContextActionResult.Sink
+	end
 	-- Fenêtre ouverte (sac, coffre…) : le clic sert à l'interface, pas à tirer.
-	if def == nil or (Menu.isOpen() and state == Enum.UserInputState.Begin) then
-		return Enum.ContextActionResult.Pass -- mains nues : le clic garde son rôle normal
+	if Menu.isOpen() and state == Enum.UserInputState.Begin then
+		return Enum.ContextActionResult.Pass
 	end
 	if not canUseWeapon() then
 		meleeChargeStart = nil
@@ -673,17 +710,31 @@ local function onCombatEvent(info: any)
 		end
 		-- Coup de lame qui porte : étincelles, son d'impact, micro-arrêt du coup (« hit stop »).
 		local swingNow = lastSwing
-		local def = currentDef()
+		local def = currentDef() or WeaponDefs[UNARMED_ID]
 		if swingNow and def and def.kind == "Melee" and os.clock() - swingNow.at < 0.6 then
+			local punch = def.id == UNARMED_ID
 			if typeof(info.position) == "Vector3" then
-				WeaponFx.meleeImpact(info.position + Vector3.new(0, 0.8, 0), swingNow.heavy)
+				local at = info.position + Vector3.new(0, 0.8, 0)
+				if punch then
+					local camera = workspace.CurrentCamera
+					local look = if camera then camera.CFrame.LookVector else Vector3.new(0, 0, -1)
+					WeaponFx.punchImpact(at, look, swingNow.heavy)
+				else
+					WeaponFx.meleeImpact(at, swingNow.heavy)
+				end
 			end
 			CombatSounds.play2D(
 				if swingNow.heavy then "MeleeHitHeavy" else "MeleeHit",
-				0.95 + math.random() * 0.1
+				(if punch then 0.8 else 0.95) + math.random() * 0.1
 			)
 			swingNow.at += HIT_STOP
 			CameraFeel.kick(if swingNow.heavy then -2 else -1)
+		end
+		-- Gel d'un ennemi touché (le serveur confirme avec frozen = true) : secousse de
+		-- caméra et son cristallin dédiés, réglables dans CombatConfig.
+		if info.frozen then
+			CameraFeel.kick(-CombatConfig.MELEE_FREEZE_SHAKE)
+			CombatSounds.play2D("MeleeFreeze", 0.9 + math.random() * 0.1)
 		end
 		if typeof(info.position) == "Vector3" and typeof(info.amount) == "number" then
 			WeaponFx.damageNumber(
@@ -776,8 +827,11 @@ local function onShotFx(info: any)
 		local root = c and c:FindFirstChild("HumanoidRootPart")
 		local def = typeof(info.weapon) == "string" and WeaponDefs[info.weapon]
 		if c and root and root:IsA("BasePart") then
-			local swingTime = if def then def.swingTime or 0.2 else 0.2
-			WeaponFx.bladeTrail(c, swingTime * (if heavy then 1.6 else 1) + 0.08, heavy)
+			-- Coup de poing d'un autre joueur : bras animés par CharacterAnimation.
+			if not (def and def.id == UNARMED_ID) then
+				local swingTime = if def then def.swingTime or 0.2 else 0.2
+				WeaponFx.bladeTrail(c, swingTime * (if heavy then 1.6 else 1) + 0.08, heavy)
+			end
 			CombatSounds.playAt(if heavy then "HeavySwing" else "Swing", root.Position)
 		end
 	end
@@ -794,12 +848,13 @@ local function onRender(dt: number)
 	bloom = math.max(0, bloom - SPREAD_RECOVERY * dt * 0.5)
 	aimPoint = if armed then computeAimPoint() else nil
 
-	-- PC : caméra d'épaule à nous quand l'arme est en main (voir ShoulderCamera).
-	ShoulderCamera.set(armed, isAiming())
+	-- Caméra du joueur (Update 2.0) : vue de dos à l'épaule arme en main, visée rapprochée.
+	PlayerCamera.set(armed, isAiming())
 
-	-- Le personnage suit la caméra quand l'arme est en main (mode Normal uniquement).
+	-- Le personnage suit la caméra quand l'arme est en main ou en première personne (mode Normal
+	-- uniquement).
 	if humanoid and root and root:IsA("BasePart") and MovementController.getMode() == "Normal" then
-		if armed then
+		if armed or PlayerCamera.facesCamera() then
 			humanoid.AutoRotate = false
 			local camera = workspace.CurrentCamera
 			if camera then
@@ -977,7 +1032,7 @@ end
 
 -- Charge de l'attaque lourde en cours (0 à 1), ou nil.
 function CombatController.getMeleeCharge(): number?
-	local def = currentDef()
+	local def = currentDef() or WeaponDefs[UNARMED_ID]
 	if meleeChargeStart == nil or def == nil then
 		return nil
 	end
@@ -1008,7 +1063,7 @@ function CombatController.start()
 			if command == "equip" then
 				equip(argument)
 			elseif command == "fire" then
-				local def = currentDef()
+				local def = currentDef() or WeaponDefs[UNARMED_ID]
 				if def and def.kind == "Hitscan" then
 					fireHitscan(def)
 				elseif def then
@@ -1039,7 +1094,7 @@ function CombatController.start()
 				equipped = weaponAt(equippedSlot),
 				ammo = ammo,
 				magazine = mag,
-				shoulderCamera = ShoulderCamera.isActive(),
+				shoulderCamera = PlayerCamera.isActive(),
 			}
 		end
 		hook.Parent = player:WaitForChild("PlayerScripts")

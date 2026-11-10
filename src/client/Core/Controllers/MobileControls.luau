@@ -19,6 +19,7 @@ local UserInputService = game:GetService("UserInputService")
 local AbilityController = require(script.Parent.AbilityController)
 local CombatController = require(script.Parent.CombatController)
 local MovementController = require(script.Parent.MovementController)
+local PlayerCamera = require(script.Parent.PlayerCamera)
 
 local CYAN = Color3.fromRGB(80, 230, 255)
 local DARK = Color3.fromRGB(18, 20, 26)
@@ -183,6 +184,15 @@ function MobileControls.start()
 		onPress = MovementController.touchDash,
 	})
 
+	-- Vue (Update 2.0) : première personne → dos → face, comme F5 sur PC.
+	makeButton(anchor, {
+		name = "View",
+		text = "Vue",
+		position = UDim2.fromScale(0.27, 0.04),
+		size = 0.16,
+		onPress = PlayerCamera.cycle,
+	})
+
 	-- Capacité de l'arme (v0.4.5) : le contour se remplit avec le noyau.
 	local ability = makeButton(anchor, {
 		name = "Ability",
@@ -210,9 +220,10 @@ function MobileControls.start()
 		end
 		local armed = CombatController.isArmed()
 		local melee = CombatController.isMeleeEquipped()
-		fire.Text = if melee then "FRAPPER" else "TIRER"
+		-- Mains nues : le bouton de tir donne un coup de poing (Update 2.0).
+		fire.Text = if melee or not armed then "FRAPPER" else "TIRER"
 		aim.Text = if melee then "Parer" else "Viser"
-		fire.TextTransparency = if armed then 0 else 0.6
+		fire.TextTransparency = 0
 		aim.TextTransparency = if armed then 0 else 0.6
 		reload.Visible = armed and not melee
 		local stroke = sprint:FindFirstChildOfClass("UIStroke")

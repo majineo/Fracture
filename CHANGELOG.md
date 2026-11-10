@@ -5,6 +5,67 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.13.0] — 2026-11-10 — « Regard et poings »
+
+### Description générale
+Première étape de l'Update 2.0 : une caméra fluide et moderne avec trois vues (comme F5 dans
+Minecraft), et le coup de poing ajouté par l'utilisateur avec Lemonade, repris dans le dépôt
+et animé par notre propre système.
+
+### Nouvelles fonctionnalités
+- **Caméra du joueur** pour tous les cas (avec ou sans arme, PC, mobile, manette) : suivi
+  souple sans retard sur la visée, légère anticipation, balancement de course et inclinaison
+  très discrets, sauts amortis, collision par sphère (jamais dans un mur), personnage estompé
+  quand la caméra s'en approche.
+- **Trois vues** : première personne (corps caché, bras et arme visibles), vue de dos, vue de
+  face. **F5** sur PC, bouton **« Vue »** sur mobile ; molette pour le recul sans arme.
+- **Coup de poing mains nues** (clic gauche / bouton « FRAPPER ») : enchaînement jab, direct,
+  crochet ; maintenir pour un uppercut ; garde levée entre deux coups ; onde de choc et
+  poussière à l'impact.
+- **Gel de mêlée** (repris de Lemonade) : un ennemi touché en mêlée se fige 0,1 s (flash blanc,
+  son cristallin, petite secousse) ; contour rouge vif pendant la préparation de ses coups.
+
+### Modifications
+- `ShoulderCamera` remplacée par `Controllers/PlayerCamera` + `Shared/Camera/CameraMotion`.
+- Le personnage regarde où regarde la caméra en première personne (`CombatController`).
+- Vue de face : les coups de poing partent devant le personnage, pas vers la caméra.
+- Lunette : la transparence du personnage est gérée par la caméra (plus par `GameFeel`).
+
+### Corrections de bugs
+- Première personne : les accessoires de l'avatar (lunettes) restaient devant les yeux.
+
+### Vérifications
+- Studio (vraies touches) : suivi à la marche (≈ 0,3 stud de retard puis léger dépassement),
+  F5 sur les trois vues, vue de face (avancer = vers la caméra, visage vers elle), première
+  personne (tête et torse cachés, bras et arme visibles, souris verrouillée), aucune image avec
+  la caméra dans un objet solide (≈ 1 200 images en reculant et en tournant), garde et coups
+  (épaules jusqu'à ≈ 90°).
+- 143 tests Lune (nouveau : `CameraMotion`), Selene 0 erreur, StyLua, Rojo.
+
+### Problèmes connus
+- Ressenti de la caméra et des coups à valider au clavier et au tactile par l'utilisateur.
+- Collision contre un mur proche non provoquée en test (la zone d'apparition est dégagée).
+- Pas de bascule de vue à la manette (tous les boutons sont pris) ; préférence de vue non
+  conservée entre deux places.
+- Coups de poing sur un ennemi non testés en jeu (chemin serveur repris tel quel de Lemonade).
+- Première personne sans « bras de vue » dédiés (arme tenue comme en troisième personne).
+
+### Fichiers
+- **Ajoutés** : `src/client/Core/Controllers/PlayerCamera.luau`,
+  `src/shared/Camera/CameraMotion.luau`, `src/client/Core/Animation/PunchMotion.luau`,
+  `tests/specs/CameraMotion.spec.luau`
+- **Modifiés** : `src/client/Core/Controllers/{CombatController,CharacterAnimation,GameFeel,MobileControls,EnemyVisuals}.luau`,
+  `src/client/Core/Combat/{WeaponFx,CombatSounds}.luau`,
+  `src/server/Core/Systems/{WeaponService,EnemyService}.luau`,
+  `src/shared/Combat/{WeaponDefs,CombatConfig}.luau`, `src/shared/Config.luau`,
+  `tests/run.luau`, `docs/DECISIONS.md`, `CLAUDE.md`, `CHANGELOG.md`
+- **Supprimés** : `src/client/Core/Controllers/ShoulderCamera.luau`
+
+### Prochaines étapes
+- Retours de l'utilisateur sur la caméra et les coups, puis phase 3 : éclairage dynamique.
+
+---
+
 ## [v0.12.0] — 2026-11-08 — « Forteresse gothique »
 
 ### Description générale

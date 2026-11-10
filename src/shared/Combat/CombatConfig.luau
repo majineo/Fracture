@@ -19,6 +19,12 @@ return table.freeze({
 	HITBOX_TOLERANCE = 0.5, -- studs ajoutés aux zones de touche pour absorber les écarts
 	MAX_MUZZLE_OFFSET = 7, -- distance max entre l'origine annoncée d'un tir et le joueur
 
+	-- Gel sur coup de mêlée reçu (WeaponService pose FrozenUntil, EnemyService fige les
+	-- animations, les clients réagissent) : tout est réglable ici.
+	MELEE_HIT_FREEZE = 0.1, -- secondes de gel de l'animation d'un ennemi touché en mêlée
+	MELEE_FREEZE_SHAKE = 0.8, -- secousse caméra en plus de celle du coup (degrés, vers le bas)
+	MELEE_FREEZE_FLASH = 0.2, -- durée du flash blanc renforcé sur l'ennemi gelé
+
 	-- Mannequins d'entraînement
 	DUMMY_HEALTH = 150,
 	DUMMY_RESET_DELAY = 3,

@@ -33,6 +33,12 @@ local WeaponDefs = require(
 		:WaitForChild("Combat")
 		:WaitForChild("WeaponDefs")
 ) :: any
+local CombatConfig = require(
+	game:GetService("ReplicatedStorage")
+		:WaitForChild("Shared")
+		:WaitForChild("Combat")
+		:WaitForChild("CombatConfig")
+) :: any
 
 local CYAN = Color3.fromRGB(80, 230, 255)
 local RED = Color3.fromRGB(220, 40, 40)
@@ -44,12 +50,20 @@ local player = Players.LocalPlayer
 
 local GameFeel = {}
 
-type Watched = { lastHealth: number?, dead: boolean, flash: Highlight?, flashUntil: number }
+type Watched = {
+	lastHealth: number?,
+	dead: boolean,
+	flash: Highlight?,
+	flashUntil: number,
+	flashDuration: number,
+	flashStrength: number,
+	lastFrozen: number?,
+}
 local watched: { [Model]: Watched } = {}
 
 -- Flash blanc ------------------------------------------------------------------------------
 
-local function flash(model: Model, entry: Watched)
+local function flash(model: Model, entry: Watched, duration: number?, strength: number?)
 	local h = entry.flash
 	if h == nil or h.Parent == nil then
 		h = Instance.new("Highlight")
@@ -60,7 +74,9 @@ local function flash(model: Model, entry: Watched)
 		h.Parent = model
 		entry.flash = h
 	end
-	entry.flashUntil = os.clock() + 0.12
+	entry.flashDuration = duration or 0.12
+	entry.flashStrength = strength or 0.7
+	entry.flashUntil = os.clock() + entry.flashDuration
 end
 
 -- Cibles : touchées, éliminées --------------------------------------------------------------
@@ -78,6 +94,9 @@ local function updateTargets()
 					dead = model:GetAttribute("Dead") == true,
 					flash = nil,
 					flashUntil = 0,
+					flashDuration = 0.12,
+					flashStrength = 0.7,
+					lastFrozen = nil,
 				}
 				watched[model] = entry
 			end
@@ -86,6 +105,13 @@ local function updateTargets()
 				flash(model, entry)
 			end
 			entry.lastHealth = health
+			-- Gel sur coup de mêlée reçu (FrozenUntil posé par le serveur) : flash blanc
+			-- renforcé, plus long que le flash générique de dégât.
+			local frozenUntil = model:GetAttribute("FrozenUntil") :: number?
+			if frozenUntil and frozenUntil > (entry.lastFrozen or 0) then
+				entry.lastFrozen = frozenUntil
+				flash(model, entry, CombatConfig.MELEE_FREEZE_FLASH, 1)
+			end
 			-- Éliminé (les Échoués ont déjà leur bris dans EnemyVisuals).
 			local dead = model:GetAttribute("Dead") == true
 			if dead and not entry.dead and model:GetAttribute("EnemyKind") == nil then
@@ -104,7 +130,8 @@ local function updateTargets()
 			if h then
 				local remaining = entry.flashUntil - clock
 				h.Enabled = remaining > 0
-				h.FillTransparency = 1 - math.clamp(remaining / 0.12, 0, 1) * 0.7
+				h.FillTransparency = 1
+					- math.clamp(remaining / entry.flashDuration, 0, 1) * entry.flashStrength
 			end
 		end
 	end
@@ -510,7 +537,6 @@ end
 local scopeFrame: Frame
 local scopeRunes: ImageLabel
 local scopeShown = 0
-local scopeHidden = false
 
 local function buildScope(gui: ScreenGui)
 	scopeFrame = Instance.new("Frame")
@@ -557,17 +583,8 @@ local function updateScope(dt: number)
 	-- Cercle runique seulement avec la vraie texture (pas la texture de secours).
 	scopeRunes.Visible = VfxTextures.isImported("Runes")
 	scopeRunes.ImageTransparency = 1 - scopeShown * 0.3
-	-- À la lunette, son propre personnage masquerait la vue : on le rend invisible (pour soi).
-	local character = player.Character
-	if character and (scoped or scopeHidden) then
-		local value = if scoped then 1 else 0
-		for _, part in character:GetDescendants() do
-			if part:IsA("BasePart") or part:IsA("Decal") then
-				part.LocalTransparencyModifier = value
-			end
-		end
-		scopeHidden = scoped
-	end
+	-- À la lunette, le personnage est caché par PlayerCamera (seul script qui écrit sa
+	-- transparence locale, Update 2.0).
 end
 
 -- Rouages des armes (Motor6D « Rouage », v0.4.12) : ils tournent en permanence.

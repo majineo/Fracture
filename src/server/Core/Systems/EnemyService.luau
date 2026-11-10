@@ -56,6 +56,7 @@ type Enemy = {
 	lastPath: number,
 	waypoints: { Vector3 },
 	nextStutter: number,
+	frozen: boolean,
 	onDeath: ((Enemy) -> ())?,
 	alive: boolean,
 }
@@ -492,6 +493,7 @@ function EnemyService.spawn(id: string, cframe: CFrame, onDeath: ((any) -> ())?)
 		lastPath = 0,
 		waypoints = {},
 		nextStutter = os.clock() + math.random(STUTTER_MIN, STUTTER_MAX),
+		frozen = false,
 		onDeath = onDeath,
 		alive = true,
 	}
@@ -550,13 +552,36 @@ function EnemyService.start()
 		local clock = os.clock()
 		-- « Sauts » temporels : l'ennemi se fige une fraction de seconde (identité des Échoués).
 		for _, enemy in enemies do
+			-- Gel sur coup de mêlée reçu : WeaponService pose l'attribut FrozenUntil.
+			local frozenUntil = (enemy.model:GetAttribute("FrozenUntil") :: number?) or 0
+			if clock < frozenUntil then
+				if not enemy.frozen then
+					enemy.frozen = true
+					for _, track in enemy.tracks do
+						if track.IsPlaying then
+							track:AdjustSpeed(0)
+						end
+					end
+				end
+			elseif enemy.frozen then
+				enemy.frozen = false
+				for _, track in enemy.tracks do
+					if track.IsPlaying then
+						track:AdjustSpeed(1)
+					end
+				end
+			end
 			if clock >= enemy.nextStutter then
 				enemy.nextStutter = clock + math.random(STUTTER_MIN, STUTTER_MAX)
 				for _, track in enemy.tracks do
 					if track.IsPlaying then
 						track:AdjustSpeed(0)
 						task.delay(STUTTER_DURATION, function()
-							track:AdjustSpeed(1)
+							-- Ne réveille pas un ennemi encore gelé par un coup de mêlée.
+							local frozen = (enemy.model:GetAttribute("FrozenUntil") :: number?) or 0
+							if enemy.alive and os.clock() >= frozen then
+								track:AdjustSpeed(1)
+							end
 						end)
 					end
 				end

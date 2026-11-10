@@ -383,6 +383,67 @@ function WeaponFx.meleeImpact(position: Vector3, heavy: boolean)
 	Debris:AddItem(a, 0.5)
 end
 
+-- Coup de poing qui porte (Update 2.0) : onde de choc qui s'ouvre face au coup, bouffée de
+-- poussière et petit éclair blanc — pas d'étincelles (ce n'est pas une lame).
+function WeaponFx.punchImpact(position: Vector3, direction: Vector3, heavy: boolean)
+	local flat = Vector3.new(direction.X, 0, direction.Z)
+	local facing = if flat.Magnitude > 1e-3 then flat.Unit else Vector3.new(0, 0, -1)
+	local ring = Instance.new("Part")
+	ring.Name = "OndePoing"
+	ring.Shape = Enum.PartType.Cylinder
+	ring.Anchored = true
+	ring.CanCollide = false
+	ring.CanQuery = false
+	ring.CanTouch = false
+	ring.CastShadow = false
+	ring.Material = Enum.Material.ForceField
+	ring.Color = Color3.fromRGB(235, 245, 255)
+	ring.Size = Vector3.new(0.15, 0.6, 0.6)
+	-- Cylindre couché : son axe (X) suit la direction du coup.
+	ring.CFrame = CFrame.lookAt(position, position + facing) * CFrame.Angles(0, math.rad(90), 0)
+	ring.Parent = workspace
+	local final = if heavy then 4.5 else 3
+	TweenService
+		:Create(ring, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = Vector3.new(0.05, final, final),
+			Transparency = 1,
+		})
+		:Play()
+	Debris:AddItem(ring, 0.25)
+
+	local a = Instance.new("Attachment")
+	a.WorldPosition = position
+	a.Parent = workspace.Terrain
+	local dust = Instance.new("ParticleEmitter")
+	dust.Texture = VfxTextures.get("Dust")
+	dust.Enabled = false
+	dust.Color = ColorSequence.new(Color3.fromRGB(205, 200, 190))
+	dust.LightInfluence = 1
+	dust.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.45),
+		NumberSequenceKeypoint.new(1, 1),
+	})
+	dust.Lifetime = NumberRange.new(0.25, 0.5)
+	dust.Speed = NumberRange.new(4, if heavy then 12 else 8)
+	dust.SpreadAngle = Vector2.new(55, 55)
+	dust.Drag = 6
+	dust.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, if heavy then 1.1 else 0.7),
+		NumberSequenceKeypoint.new(1, if heavy then 2.4 else 1.6),
+	})
+	dust.Rotation = NumberRange.new(0, 360)
+	dust.Parent = a
+	dust:Emit(if heavy then 10 else 6)
+	local light = Instance.new("PointLight")
+	light.Color = Color3.new(1, 1, 1)
+	light.Range = if heavy then 8 else 5
+	light.Brightness = 2.5
+	light.Shadows = false
+	light.Parent = a
+	TweenService:Create(light, TweenInfo.new(0.12), { Brightness = 0 }):Play()
+	Debris:AddItem(a, 0.6)
+end
+
 -- Traînée de lame (coup de mêlée) le long d'un arc devant le personnage.
 function WeaponFx.swingArc(root: BasePart, heavy: boolean, color: Color3?)
 	local a0 = Instance.new("Attachment")

@@ -5,6 +5,50 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.14.0] — 2026-11-10 — « Jour et nuit »
+
+### Description générale
+Update 2.0, phases 3 et 4 : un vrai cycle de 15 minutes (10 min de jour, 5 min de nuit), le
+même pour tous les joueurs, et des lumières du décor qui prennent le relais la nuit.
+
+### Nouvelles fonctionnalités
+- **Cycle jour / nuit** : lever rose orangé, plein jour au ciel bleu, fin d'après-midi chaude,
+  coucher orange, crépuscule teal, nuit au clair de lune ; transitions continues.
+- **Lumières vivantes la nuit** : torches, braseros et lanternes plus lumineux et plus larges,
+  cristaux cyan plus présents ; ombres réalistes des feux les plus proches ; lueur violette
+  discrète des cristaux d'anomalie.
+- Le Refuge suit le même cycle (il n'avait aucun réglage d'éclairage).
+
+### Modifications
+- `WorldLighting` devient le seul script qui règle Lighting ; les réglages fixes de la place
+  Éclat ne servent plus qu'au premier affichage.
+- Pierre du kit gothique légèrement désaturée.
+
+### Corrections de bugs
+- Première version de la nuit trop sombre (presque noire) : corrigée avant publication.
+
+### Vérifications
+- Studio : rendus contrôlés à 10 h, 13 h, 17 h 42 et 0 h 30 (heure forcée par l'attribut de
+  test `QA_ClockTime`) ; cycle réel vérifié (heure qui avance, effets créés).
+- 148 tests Lune (nouveau : `DayCycle` — durées exactes, aucun saut de luminosité, nuit jamais
+  noire, même heure pour tous), Selene 0 erreur, StyLua, Rojo.
+
+### Problèmes connus
+- Lisibilité au combat de nuit à valider par l'utilisateur.
+- Cycle non testé à plusieurs joueurs (calcul identique par construction, sur l'horloge serveur).
+
+### Fichiers
+- **Ajoutés** : `src/shared/World/DayCycle.luau`, `src/client/Core/Controllers/WorldLighting.luau`,
+  `tests/specs/DayCycle.spec.luau`
+- **Modifiés** : `src/client/Eclat/Controllers/DecorFx.luau`, `src/server/Eclat/Lib/Kit.luau`,
+  `src/shared/Config.luau`, `tests/run.luau`, `docs/DECISIONS.md`, `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Phase 5 : coffres par rareté, armes dans les coffres, densité de butin réduite.
+
+---
+
 ## [v0.13.0] — 2026-11-10 — « Regard et poings »
 
 ### Description générale

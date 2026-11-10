@@ -14,6 +14,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local WorldLighting = require(script:FindFirstAncestor("Client").Controllers.WorldLighting)
 local DecorMotion = require(
 	ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Eclat"):WaitForChild("DecorMotion")
 ) :: any
@@ -24,6 +25,7 @@ local RANGE_FX = 150 -- distance d'activation des particules et lumières
 local RANGE_ANIM = 110 -- distance d'activation des animations
 local RANGE_GLOW = 90 -- lueurs des fenêtres et cristaux
 local MAX_LIGHTS = 36 -- lumières dynamiques actives au plus (les plus proches)
+local MAX_SHADOWS = 4 -- feux les plus proches qui projettent des ombres (coûteux)
 local SCAN_PERIOD = 0.35
 
 local TEX = {
@@ -33,6 +35,7 @@ local TEX = {
 }
 local WARM = Color3.fromRGB(255, 160, 70)
 local CYAN = Color3.fromRGB(110, 230, 255)
+local VIOLET = Color3.fromRGB(165, 110, 255) -- anomalies rares, toujours discrètes
 
 type Effect = {
 	kind: string,
@@ -43,6 +46,8 @@ type Effect = {
 	built: { Instance },
 	light: PointLight?,
 	baseBrightness: number,
+	baseRange: number,
+	warm: boolean, -- feu / lanterne (renforcé la nuit, ombres possibles)
 	pulse: boolean, -- true : pulsation lente (cristal) ; false : vacillement (feu)
 	nextPuff: number,
 	orbit: { BasePart }?,
@@ -173,6 +178,8 @@ local function addLight(
 	light.Parent = parent
 	e.light = light
 	e.baseBrightness = brightness
+	e.baseRange = range
+	e.warm = color.R > 0.9 and color.B < 0.4
 	table.insert(e.built, light)
 end
 
@@ -240,6 +247,9 @@ local function build(e: Effect)
 	elseif k == "GlowCyan" then
 		addLight(e, at, CYAN, 8, 0.6)
 		e.pulse = true
+	elseif k == "GlowViolet" then
+		addLight(e, at, VIOLET, 6, 0.35)
+		e.pulse = true
 	end
 end
 
@@ -271,6 +281,8 @@ local function register(anchor: Attachment | BasePart, kind: string, size: numbe
 		built = {},
 		light = nil,
 		baseBrightness = 1,
+		baseRange = 8,
+		warm = false,
 		pulse = false,
 		nextPuff = 0,
 		orbit = nil,
@@ -331,6 +343,8 @@ local function onDescendant(d: Instance)
 			register(d, "GlowWarm", 1)
 		elseif suffix == "Noyau" and string.sub(d.Name, 1, 5) == "Fort_" then
 			register(d, "GlowCyan", 1)
+		elseif suffix == "Cristal" and string.sub(d.Name, 1, 5) == "Fort_" then
+			register(d, "GlowViolet", 1)
 		end
 	end
 end
@@ -375,10 +389,17 @@ local function refresh()
 	table.sort(lit, function(a, b)
 		return a.d < b.d
 	end)
+	local shadows = 0
 	for i, entry in lit do
 		local light = entry.e.light
 		if light then
 			light.Enabled = i <= MAX_LIGHTS
+			-- Ombres réalistes pour les quelques feux les plus proches seulement.
+			local cast = entry.e.warm and shadows < MAX_SHADOWS and entry.d < 60
+			if cast then
+				shadows += 1
+			end
+			light.Shadows = cast
 		end
 	end
 	for _, a in anims do
@@ -395,16 +416,20 @@ end
 
 local function step()
 	local t = os.clock()
+	local night = WorldLighting.night()
 	for _, e in effects do
 		if not e.active then
 			continue
 		end
 		local light = e.light
 		if light and light.Enabled then
+			-- La nuit, feux et cristaux comptent davantage (Update 2.0, phase 4).
 			local f = if e.pulse
 				then DecorMotion.pulse(t, e.seed)
 				else DecorMotion.flicker(t, e.seed)
-			light.Brightness = e.baseBrightness * f
+			local boost = if e.warm then 1 + 0.9 * night elseif e.pulse then 1 + 0.6 * night else 1
+			light.Brightness = e.baseBrightness * f * boost
+			light.Range = e.baseRange * (1 + 0.35 * night)
 		end
 		if e.kind == "Vapeur" or e.kind == "Soupape" then
 			if t >= e.nextPuff then

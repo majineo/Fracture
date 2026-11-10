@@ -17,9 +17,9 @@ local Kit = {}
 -- Kit gothique (v0.12) : palette de l'Art-Direction, matériaux lisses (le relief vient de la
 -- géométrie, pas des textures Roblox).
 local LOOKS: { [string]: { material: Enum.Material, color: Color3 } } = {
-	Pierre = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(74, 83, 97) },
-	PierreSombre = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(46, 53, 64) },
-	PierreClaire = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(140, 147, 160) },
+	Pierre = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(80, 85, 93) },
+	PierreSombre = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(50, 54, 61) },
+	PierreClaire = { material = Enum.Material.SmoothPlastic, color = Color3.fromRGB(148, 151, 157) },
 	Lumiere = { material = Enum.Material.Neon, color = Color3.fromRGB(214, 118, 46) },
 	Tissu = { material = Enum.Material.Fabric, color = Color3.fromRGB(122, 31, 36) },
 	Mousse = { material = Enum.Material.Grass, color = Color3.fromRGB(78, 107, 58) },

@@ -393,6 +393,21 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-056 — Cycle jour / nuit de 15 minutes calculé sur l'horloge du serveur
+- **Date** : 2026-11-10 · **Version** : v0.14.0 · **Statut** : ✅ Implémentée
+- **Durées** (directive Update 2.0) : jour 10 min (6 h → 18 h), nuit 5 min (18 h → 6 h), cycle
+  15 min. Réglages centralisés : `Shared/World/DayCycle.CONFIG`.
+- **Synchronisation sans réseau** : l'heure est une fonction pure de
+  `workspace:GetServerTimeNow()` ; chaque client calcule la même heure au même instant. Aucun
+  remote, aucun coût serveur.
+- **Un seul script règle Lighting** : `Client/Controllers/WorldLighting` (10 fois par seconde,
+  images clés lissées : nuit, aube, lever, matin, midi, après-midi, coucher, crépuscule teal).
+  GameFeel garde son propre effet (santé basse), sans conflit.
+- **Nuit** jamais noire (clair de lune bleuté) ; la nuit, torches et lanternes +90 % de
+  luminosité, cristaux +60 %, portée +35 % (`DecorFx`). Ombres projetées par les 4 feux les plus
+  proches seulement (coût). Lueur violette discrète pour les cristaux violets (anomalies).
+- **Pierre** légèrement désaturée (le gris bleuté faisait « jouet » en plein jour).
+
 ## D-055 — Coup de poing : repris de l'essai Lemonade, animé par notre système
 - **Date** : 2026-11-10 · **Version** : v0.13.0 · **Statut** : ✅ Implémentée
 - **Origine** : l'utilisateur a ajouté avec Lemonade (dans la place Éclat de test, jamais dans le

@@ -26,6 +26,7 @@ local specs = {
 	require("./specs/Districts.spec"),
 	require("./specs/DecorMotion.spec"),
 	require("./specs/CameraMotion.spec"),
+	require("./specs/DayCycle.spec"),
 }
 
 for _, spec in specs do

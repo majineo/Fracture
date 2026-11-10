@@ -25,6 +25,9 @@ type Direction = EclatLayout.Direction
 
 local HALF = EclatLayout.TILE / 2
 local ROW_END = 40 -- les rangées d'immeubles s'arrêtent avant le carrefour
+-- Les courtines vont jusqu'à la tourelle d'angle (rayon ≈ 4,6 autour de ±48) : à 40, il restait
+-- un trou de 3,4 studs entre chaque mur et sa tourelle (audit Update 2.0, 97 raccords mesurés).
+local EDGE_END = 44
 
 local C = {
 	street = Color3.fromRGB(122, 116, 108),
@@ -290,17 +293,17 @@ local function buildEdge(b: Builder, dir: Direction, kind: EclatLayout.EdgeKind)
 	local frame = edgeFrame(b, dir)
 	if kind == "Gates" then
 		-- Deux portes de 10 studs (x ∈ [-22, -12] et [12, 22]).
-		curtain(b, frame, -ROW_END, -22, "Fort_Mur")
+		curtain(b, frame, -EDGE_END, -22, "Fort_Mur")
 		curtain(b, frame, -12, 12, "Fort_Mur")
-		curtain(b, frame, 22, ROW_END, "Fort_Mur")
+		curtain(b, frame, 22, EDGE_END, "Fort_Mur")
 		for _, x in { -17, 17 } do
 			module(b, frame, "Fort_Porte", x, 0, 0, 0)
 		end
 	elseif kind == "Rampart" then
 		-- Rempart épais : une porte au centre, chemin de ronde praticable, deux escaliers (un de
 		-- chaque côté) collés aux extrémités pour ne pas gêner la porte.
-		curtain(b, frame, -ROW_END, -5, "Fort_Rempart")
-		curtain(b, frame, 5, ROW_END, "Fort_Rempart")
+		curtain(b, frame, -EDGE_END, -5, "Fort_Rempart")
+		curtain(b, frame, 5, EDGE_END, "Fort_Rempart")
 		module(b, frame, "Fort_Porte", 0, 0, 0, 0)
 		stair(b, frame, -30, 3 + 8, 0, RAMPART_TOP, 16, 6)
 		stair(b, frame, 30, -(3 + 8), math.pi, RAMPART_TOP, 16, 6)

@@ -5,6 +5,47 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.16.0] — 2026-11-10 — « Raccords »
+
+### Description générale
+Update 2.0, phase 6 (premier passage) : audit automatique de la géométrie de toute la carte
+générée, et correction du défaut trouvé — un trou entre chaque courtine et sa tourelle d'angle.
+
+### Nouvelles fonctionnalités
+- —
+
+### Modifications
+- Les courtines (portes et remparts de bord) vont jusqu'aux tourelles d'angle (`TileKit`,
+  `EDGE_END = 44` au lieu de 40).
+
+### Corrections de bugs
+- **Trou de 3,4 studs entre chaque mur et sa tourelle** (97 raccords mesurés sur une carte,
+  tous identiques) : fermé (chevauchement de 0,6 stud, 71 raccords remesurés sur une autre carte).
+
+### Vérifications
+- Audit automatique dans Studio : 1 433 modules contrôlés, **aucun sans appui** (aucun objet
+  flottant non voulu) ; raccords mur / tourelle mesurés avant et après correction ; 85
+  conteneurs sur la carte (130 avant la v0.15).
+- Inspection visuelle d'un raccord à hauteur de joueur (capture).
+- 156 tests Lune, Selene 0 erreur, StyLua, Rojo.
+
+### Problèmes connus
+- Inspection visuelle de **toutes** les zones non faite (seulement des points de vue
+  échantillons) : voir la note Obsidian « Environment Quality Audit » pour la liste.
+- Porte de rempart moins profonde (4) que le rempart (6) : petit décrochement du chemin de ronde.
+- Restes de blocs simples : chemin de ronde, bords du Vide, brèches, crypte, passerelles.
+
+### Fichiers
+- **Ajoutés** : —
+- **Modifiés** : `src/server/Eclat/Lib/TileKit.luau`, `src/shared/Config.luau`, `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Phases 7 et 8 : modules Blender pour les blocs restants, variantes de murs et de rochers,
+  bâtiments plus imposants.
+
+---
+
 ## [v0.15.0] — 2026-11-10 — « Coffres et trouvailles »
 
 ### Description générale

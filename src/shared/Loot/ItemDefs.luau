@@ -5,7 +5,8 @@
 -- Les Grains sont un objet comme les autres pendant la partie (ils prennent un emplacement et se
 -- perdent à la mort) ; à l'extraction, ils sont versés au solde du profil.
 
-export type Rarity = "Commun" | "Rare" | "Épique"
+-- Cinq raretés (Update 2.0, phase 5) : la rareté se voit sur les coffres et dans le sac.
+export type Rarity = "Commun" | "Peu commun" | "Rare" | "Épique" | "Légendaire"
 
 export type ItemDef = {
 	id: string,
@@ -18,7 +19,10 @@ export type ItemDef = {
 	unique: boolean?, -- jamais empilé (relique : la quantité est le nombre de charges)
 	relic: boolean?, -- relique de l'Éclat (v0.7.0)
 	description: string?, -- texte de la fiche d'objet (sac, coffre ; v0.9.0)
+	weapon: string?, -- arme trouvée (Update 2.0) : id de WeaponDefs, se prend en main depuis le sac
 }
+
+local WeaponDefs = require("../Combat/WeaponDefs")
 
 local GRAINS = "currency.grains"
 
@@ -117,6 +121,40 @@ local defs: { [string]: ItemDef } = {
 
 local ItemDefs = {}
 
+-- Armes trouvées dans les coffres (Update 2.0, phase 5) : un objet par arme, id = id de l'arme.
+-- Rareté = puissance et rareté de l'arme (les poings ne se trouvent pas).
+local WEAPON_RARITY: { [string]: Rarity } = {
+	["weapon.fracture_pistol"] = "Commun",
+	["weapon.short_blade"] = "Commun",
+	["weapon.repeating_rifle"] = "Peu commun",
+	["weapon.heavy_crossbow"] = "Peu commun",
+	["weapon.longsword"] = "Rare",
+	["weapon.steam_blunderbuss"] = "Rare",
+	["weapon.piston_hammer"] = "Rare",
+	["weapon.crank_gatling"] = "Épique",
+	["weapon.time_scythe"] = "Épique",
+	["weapon.zenith_rifle"] = "Légendaire",
+}
+local WEAPON_VALUE: { [Rarity]: number } =
+	{ Commun = 40, ["Peu commun"] = 80, Rare = 150, ["Épique"] = 260, ["Légendaire"] = 450 }
+for id, rarity in WEAPON_RARITY do
+	local weapon = (WeaponDefs :: any)[id]
+	if weapon then
+		local kind = if weapon.kind == "Melee" then "Arme de mêlée" else "Arme à feu"
+		defs[id] = {
+			id = id,
+			name = weapon.name,
+			rarity = rarity,
+			maxStack = 1,
+			value = WEAPON_VALUE[rarity],
+			unique = true,
+			weapon = id,
+			description = `{kind} trouvée dans l'Éclat. « Prendre en main » remplace l'arme du même type (l'ancienne va dans le sac). Perdue à la mort, gardée si tu t'extrais.`,
+		}
+	end
+end
+ItemDefs.WEAPON_RARITY = table.freeze(WEAPON_RARITY)
+
 ItemDefs.GRAINS = GRAINS
 ItemDefs.RELICS = table.freeze({ "relic.pas_de_faille", "relic.stase", "relic.onde_de_choc" })
 ItemDefs.ALL = table.freeze(defs)
@@ -128,8 +166,10 @@ end
 -- Couleur d'affichage selon la rareté (interface).
 ItemDefs.RARITY_COLORS = table.freeze({
 	["Commun"] = { 200, 200, 200 },
+	["Peu commun"] = { 110, 210, 120 },
 	["Rare"] = { 80, 170, 255 },
 	["Épique"] = { 190, 110, 255 },
+	["Légendaire"] = { 255, 190, 70 },
 })
 
 return ItemDefs

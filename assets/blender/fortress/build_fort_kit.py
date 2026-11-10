@@ -1329,6 +1329,72 @@ def brasero(name="Fort_Brasero"):
     return S
 
 
+# --- Coffres par rareté (Update 2.0, phase 5) -----------------------------------------------------
+def coffre(name, tier, seed=70):
+    """Coffre de 3,6 × 2,4 (façade -Y, serrure devant). Couvercle bombé séparé (pièces « Anim
+    Couvercle ») et repère « Lid » sur la charnière (arrière) : le jeu l'ouvre à la fouille.
+    Commun : bois simple · PeuCommun : bois cerclé de fer · Rare : bois sombre et laiton ·
+    Epique : pierre gothique incrustée de cristaux · Legendaire : reliquaire du Temps."""
+    rng = random.Random(seed)
+    S = fresh(name)
+    W, D, H = 3.6, 2.4, 1.55  # caisse ; couvercle au-dessus (≈ 0,9)
+    body = {"Commun": "Bois", "PeuCommun": "Bois", "Rare": "Bois", "Epique": "PierreSombre", "Legendaire": "Laiton"}[tier]
+    trim = {"Commun": "Fer", "PeuCommun": "Fer", "Rare": "Laiton", "Epique": "Fer", "Legendaire": "PierreClaire"}[tier]
+    # socle et caisse
+    S.box("Socle", "PierreSombre" if tier in ("Epique", "Legendaire") else body, (W + 0.2, D + 0.2, 0.2), (0, 0, 0.1), bevel=0.03)
+    if body == "Bois":
+        for i in range(4):  # planches horizontales
+            S.box(f"Planche{i}", "Bois", (W, D, H / 4 - 0.04), (0, 0, 0.2 + (i + 0.5) * H / 4), rot=(0, 0, 0), bevel=0.02)
+    else:
+        S.box("Caisse", body, (W, D, H), (0, 0, 0.2 + H / 2), bevel=0.05)
+    top = 0.2 + H
+    # couvercle bombé (prisme à 6 pans, axe X), charnière à l'arrière
+    lid_objs = []
+    R = D / 2
+    profile = [(-R, top), (R, top)] + [(math.cos(math.radians(a)) * R, top + math.sin(math.radians(a)) * R * 0.7) for a in (25, 60, 90, 120, 155)]
+    lid_objs.append(prism(S, "Couvercle", body if body != "Bois" else "Bois", profile, W, axis="x"))
+    # cerclages : coins, bandes, serrure
+    bands = {"Commun": 2, "PeuCommun": 4, "Rare": 3, "Epique": 2, "Legendaire": 3}[tier]
+    for i in range(bands):
+        x = -W / 2 + 0.25 + i * (W - 0.5) / max(bands - 1, 1)
+        S.box(f"Bande{i}", trim, (0.14, D + 0.06, H + 0.02), (x, 0, 0.2 + H / 2), bevel=0)
+        band_profile = [(-R - 0.03, top), (R + 0.03, top)] + [(math.cos(math.radians(a)) * (R + 0.04), top + math.sin(math.radians(a)) * (R * 0.7 + 0.04)) for a in (25, 60, 90, 120, 155)]
+        lid_objs.append(prism(S, f"CouvercleBande{i}", trim, band_profile, 0.14, axis="x", center=(x, 0, 0)))
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            S.box(f"Coin{sx}{sy}", trim, (0.3, 0.3, H + 0.04), (sx * (W / 2 - 0.1), sy * (D / 2 - 0.1), 0.2 + H / 2), bevel=0.02)
+    S.box("Serrure", "Laiton" if tier != "Legendaire" else "Fer", (0.5, 0.12, 0.6), (0, -D / 2 - 0.05, top - 0.2), bevel=0.03)
+    S.box("SerrureTrou", "Fer", (0.1, 0.13, 0.22), (0, -D / 2 - 0.07, top - 0.25), bevel=0)
+    lid_objs.append(S.box("Moraillon", trim, (0.3, 0.1, 0.45), (0, -D / 2 - 0.08, top + 0.12), bevel=0.02))
+    for sx in (-1, 1):
+        S.box(f"Poignee{sx}", "Fer", (0.12, 0.5, 0.12), (sx * (W / 2 + 0.08), 0, 0.2 + H * 0.65), bevel=0)
+    # signes de rareté (sobres)
+    if tier == "Rare":
+        for sx in (-1, 1):
+            S.cyl(f"Rosette{sx}", "Laiton", 0.22, 0.08, (sx * 0.9, -D / 2 - 0.04, 0.2 + H * 0.5), verts=8)
+        lid_objs.append(S.box("CouvercleOrnement", "Laiton", (0.9, 0.5, 0.08), (0, -0.2, top + R * 0.7 + 0.02), rot=(-15, 0, 0), bevel=0.02))
+    if tier == "Epique":
+        for i in range(4):  # arcatures et cristaux incrustés
+            x = -1.2 + i * 0.8
+            lancet(S, f"Arcature{i}", "Noyau" if i % 3 == 0 else "Fer", x, 0.45, 0.4, 0.75, -D / 2 - 0.02, depth=0.06)
+        before = set(S.coll.objects)
+        crystal_cluster(S, "CouvercleCristal", (0.4, 0.0, top + R * 0.7 + 0.1), scale=0.5, rng=rng, tilt=(0, 15), count=3)
+        lid_objs += [o for o in S.coll.objects if o not in before]
+    if tier == "Legendaire":
+        # coutures lumineuses, rouage de laiton, éclats suspendus, flèche sur le couvercle
+        for z in (0.55, 1.25):
+            S.box(f"Couture{z}", "Noyau", (W + 0.02, D + 0.02, 0.06), (0, 0, z), bevel=0)
+        S.gear("Rouage", "PierreClaire", 0.42, 0.1, 12, (0, -D / 2 - 0.06, 0.2 + H * 0.45), tooth=0.07)
+        before = set(S.coll.objects)
+        S.crystal("CouvercleFleche", "Noyau", 0.18, 0.7, 0.05, (0, 0, top + R * 0.7 + 0.05), sides=6)
+        S.cyl("CouvercleSocleFleche", "PierreClaire", 0.25, 0.15, (0, 0, top + R * 0.7 + 0.02), rot=(90, 0, 0), verts=8)
+        lid_objs += [o for o in S.coll.objects if o not in before]
+        floating(S, "Eclat", (0, 0, top + 1.4), 1.3, 5, rng, zr=(0, 0.8), size=0.3)
+    anim(lid_objs, "Couvercle")
+    mark(S, "Lid", "Couvercle", (0, D / 2, top), axis=(1, 0, 0))
+    return S
+
+
 BUILDS = {
     "Fort_Mur": lambda: courtine("Fort_Mur"),
     "Fort_MurFracture": lambda: courtine("Fort_MurFracture", fracture=True, seed=2),
@@ -1354,6 +1420,11 @@ BUILDS = {
     "Fort_Etendard": etendard,
     "Fort_Eboulis": eboulis,
     "Fort_Torche": torche,
+    "Fort_CoffreCommun": lambda: coffre("Fort_CoffreCommun", "Commun"),
+    "Fort_CoffrePeuCommun": lambda: coffre("Fort_CoffrePeuCommun", "PeuCommun", seed=71),
+    "Fort_CoffreRare": lambda: coffre("Fort_CoffreRare", "Rare", seed=72),
+    "Fort_CoffreEpique": lambda: coffre("Fort_CoffreEpique", "Epique", seed=73),
+    "Fort_CoffreLegendaire": lambda: coffre("Fort_CoffreLegendaire", "Legendaire", seed=74),
     "Fort_Brasero": brasero,
     "Fort_Dalle": dalles,
     "Fort_DalleFissure": lambda: dalles("Fort_DalleFissure", seed=9, fissure=True),

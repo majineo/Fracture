@@ -46,7 +46,7 @@ local function buildSac(window: Menu.Window, content: Frame)
 	end)
 	local entry = if selected then items[selected] else nil
 	local def = entry and ItemDefs.get(entry.id)
-	local usable = def ~= nil and (def.heal ~= nil or def.relic == true)
+	local usable = def ~= nil and (def.heal ~= nil or def.relic == true or def.weapon ~= nil)
 	local actions = ItemViews.details(
 		right,
 		entry,
@@ -57,12 +57,17 @@ local function buildSac(window: Menu.Window, content: Frame)
 	)
 	if entry and usable then
 		local index = selected :: number
-		Theme.button(actions, "Utiliser", "Arcane", function()
-			LootHud.useSlot(index)
-			if def and def.heal then
-				Menu.close() -- le soin prend 2,5 s : on rend la main au joueur
+		Theme.button(
+			actions,
+			if def and def.weapon then "Prendre en main" else "Utiliser",
+			"Arcane",
+			function()
+				LootHud.useSlot(index)
+				if def and def.heal then
+					Menu.close() -- le soin prend 2,5 s : on rend la main au joueur
+				end
 			end
-		end)
+		)
 	end
 end
 

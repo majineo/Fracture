@@ -17,10 +17,13 @@ local EclatLayout = require(Shared:WaitForChild("Eclat"):WaitForChild("EclatLayo
 local RunInventory = require(Shared:WaitForChild("Loot"):WaitForChild("RunInventory"))
 local LootTables = require(Shared.Loot:WaitForChild("LootTables"))
 local ItemDefs = require(Shared.Loot:WaitForChild("ItemDefs"))
+local ChestTiers = require(Shared.Loot:WaitForChild("ChestTiers"))
+local WeaponDefs = require(Shared:WaitForChild("Combat"):WaitForChild("WeaponDefs"))
 
 local Core = script.Parent.Parent.Parent
 local Net = require(Core.Lib.Net)
 local HealthService = require(Core.Systems.HealthService)
+local WeaponService = require(Core.Systems.WeaponService)
 local PlayerData = require(Core.Systems.PlayerData)
 local EclatService = require(script.Parent.EclatService)
 local Kit = require(script.Parent.Parent.Lib.Kit)
@@ -61,6 +64,17 @@ local LOOK: { [string]: { size: Vector3, color: Color3, hold: number, label: str
 		hold = 0.5,
 		label = "Butin",
 	},
+}
+
+-- Coffres par rareté (Update 2.0, phase 5) : fouille plus longue pour les plus rares.
+local TIER_HOLD: { [string]: number } =
+	{ Commun = 1.4, ["Peu commun"] = 1.8, Rare = 2.2, ["Épique"] = 2.7, ["Légendaire"] = 3.2 }
+local TIER_TRIM: { [string]: Color3 } = {
+	Commun = Color3.fromRGB(120, 90, 60),
+	["Peu commun"] = Color3.fromRGB(110, 210, 120),
+	Rare = Color3.fromRGB(80, 170, 255),
+	["Épique"] = Color3.fromRGB(190, 110, 255),
+	["Légendaire"] = Color3.fromRGB(255, 190, 70),
 }
 
 local LootService = {}
@@ -121,7 +135,8 @@ local function container(
 	cframe: CFrame,
 	contents: { Stack }?,
 	tableName: string?,
-	title: string?
+	title: string?,
+	tier: string?
 )
 	local look = LOOK[kind]
 	local part = Instance.new("Part")
@@ -135,12 +150,23 @@ local function container(
 		else Enum.Material.WoodPlanks
 	part.Color = look.color
 	part:SetAttribute("Loot", kind)
+	if tier then
+		part:SetAttribute("Rarity", tier) -- lu par le client (ChestFx : aura, ouverture)
+	end
 	-- Modèle Blender du kit s'il est importé (v0.5.1) : la pièce devient la zone de fouille.
-	local kitName = if kind == "Butin"
-		then "Kit_Sac"
-		elseif kind == "Autel" then ""
-		else `Kit_{kind}`
-	local model = Kit.place(kitName, part.CFrame * CFrame.new(0, -look.size.Y / 2, 0), look.size)
+	-- Coffres par rareté (Update 2.0) : modèle gothique de la rareté, à l'échelle modélisée.
+	local base = part.CFrame * CFrame.new(0, -look.size.Y / 2, 0)
+	local model: Model? = nil
+	if tier and Kit.has(ChestTiers.MODEL[tier]) then
+		model = Kit.placeScaled(ChestTiers.MODEL[tier], base, Vector3.one)
+	end
+	if model == nil then
+		local kitName = if kind == "Butin"
+			then "Kit_Sac"
+			elseif kind == "Autel" then ""
+			else `Kit_{kind}`
+		model = Kit.place(kitName, base, look.size)
+	end
 	if model then
 		part.Transparency = 1
 		model.Parent = part
@@ -151,13 +177,13 @@ local function container(
 		trim.Size = Vector3.new(look.size.X + 0.1, 0.3, look.size.Z + 0.1)
 		trim.CFrame = part.CFrame * CFrame.new(0, look.size.Y / 2 - 0.6, 0)
 		trim.Material = Enum.Material.Metal
-		trim.Color = Color3.fromRGB(190, 150, 70)
+		trim.Color = if tier then TIER_TRIM[tier] else Color3.fromRGB(190, 150, 70)
 		trim.Parent = part
 	end
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.ActionText = if kind == "Autel" then "Prendre la relique" else "Fouiller"
-	prompt.ObjectText = title or look.label
-	prompt.HoldDuration = look.hold
+	prompt.ObjectText = title or (if tier then `Coffre {string.lower(tier)}` else look.label)
+	prompt.HoldDuration = if tier then TIER_HOLD[tier] else look.hold
 	prompt.MaxActivationDistance = 9
 	prompt.RequiresLineOfSight = false
 	-- Invite posée au-dessus du conteneur : au ras d'une caisse, Roblox ne l'affichait pas
@@ -198,6 +224,7 @@ local function container(
 					relic:Destroy()
 				end
 			else
+				-- Vidé : le client ouvre le couvercle et éteint l'aura (ChestFx).
 				prompt.Enabled = false
 				part.Color = part.Color:Lerp(Color3.new(0, 0, 0), 0.45)
 				part:SetAttribute("Opened", true)
@@ -226,17 +253,44 @@ local function groundBelow(position: Vector3, ignore: { Instance }): Vector3
 	return if hit then hit.Position else position - Vector3.new(0, 3, 0)
 end
 
+-- Pose des conteneurs (Update 2.0, phase 5) : une caisse sur deux environ, chaque coffre tire
+-- sa rareté selon son quartier, au plus un légendaire par carte.
 local function placeContainers(layout: EclatLayout.Layout)
+	type Planned = { cf: CFrame, spot: any, tier: string? }
+	local planned: { Planned } = {}
+	local tiers: { ChestTiers.Tier } = {}
+	local chestIndex: { number } = {}
 	for _, tile in layout.tiles do
 		local def = Districts.get(tile.kind)
 		if def then
 			local frame = EclatService.tileFrame(tile)
 			for _, spot in def.loot do
-				local cf = frame
-					* CFrame.new(spot.x, spot.y, spot.z)
-					* CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0)
-				container(spot.table, cf, nil, spot.table)
+				local keep = if spot.table == "Coffre"
+					then ChestTiers.keepChest(random)
+					else ChestTiers.keepCrate(random)
+				if keep then
+					local cf = frame
+						* CFrame.new(spot.x, spot.y, spot.z)
+						* CFrame.Angles(0, rng:NextNumber(-0.4, 0.4), 0)
+					local entry: Planned = { cf = cf, spot = spot, tier = nil }
+					table.insert(planned, entry)
+					if spot.table == "Coffre" then
+						table.insert(tiers, ChestTiers.pick(tile.kind, random))
+						table.insert(chestIndex, #planned)
+					end
+				end
 			end
+		end
+	end
+	ChestTiers.limit(tiers)
+	for i, index in chestIndex do
+		planned[index].tier = tiers[i]
+	end
+	for _, p in planned do
+		if p.tier then
+			container("Coffre", p.cf, nil, ChestTiers.TABLE[p.tier], nil, p.tier)
+		else
+			container(p.spot.table, p.cf, nil, p.spot.table)
 		end
 	end
 end
@@ -271,11 +325,53 @@ end
 -- Consommables (v0.6.3) : soin après un temps d'utilisation, annulé si l'on est touché.
 local using: { [Player]: number } = {} -- jeton de l'utilisation en cours
 
+-- Arme trouvée (Update 2.0, phase 5) : elle remplace l'arme du même type, qui va dans le sac.
+-- Tout est décidé ici : l'objet doit être porté, le joueur vivant, et il faut de la place pour
+-- l'ancienne arme (sinon rien ne change).
+local function takeWeapon(player: Player, def: ItemDefs.ItemDef)
+	local weaponId = def.weapon :: string
+	local weapon = (WeaponDefs :: any)[weaponId]
+	if weapon == nil or not alive(player) then
+		return
+	end
+	local inv = LootService.inventory(player)
+	if RunInventory.count(inv, def.id) <= 0 then
+		return
+	end
+	local slot = if weapon.slot == "Melee" then 2 else 1
+	local loadout = WeaponService.getLoadout(player)
+	local previous = loadout and loadout[slot]
+	if previous == weaponId then
+		return
+	end
+	RunInventory.remove(inv, def.id, 1)
+	if previous and previous ~= "" and ItemDefs.get(previous) then
+		if RunInventory.add(inv, previous, 1) < 1 then
+			RunInventory.add(inv, def.id, 1) -- sac plein : on annule
+			Net.fire("LootEvent", player, { type = "Taken", items = {}, full = true })
+			return
+		end
+	end
+	if not WeaponService.setWeapon(player, slot, weaponId) then
+		RunInventory.add(inv, def.id, 1)
+		if previous and previous ~= "" and ItemDefs.get(previous) then
+			RunInventory.remove(inv, previous, 1)
+		end
+		return
+	end
+	LootService.push(player)
+	Net.fire("LootEvent", player, { type = "Equipped", id = weaponId })
+end
+
 local function useConsumable(player: Player, id: unknown)
 	if typeof(id) ~= "string" then
 		return
 	end
 	local def = ItemDefs.get(id)
+	if def and def.weapon then
+		takeWeapon(player, def)
+		return
+	end
 	if def == nil or def.heal == nil or using[player] ~= nil then
 		return
 	end

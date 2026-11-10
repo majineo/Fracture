@@ -14,7 +14,10 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local WorldLighting = require(script:FindFirstAncestor("Client").Controllers.WorldLighting)
+local Client = script:FindFirstAncestor("Client")
+assert(Client, "DecorFx doit être sous le LocalScript Client")
+local WorldLighting =
+	require(Client:WaitForChild("Controllers"):WaitForChild("WorldLighting") :: ModuleScript)
 local DecorMotion = require(
 	ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Eclat"):WaitForChild("DecorMotion")
 ) :: any

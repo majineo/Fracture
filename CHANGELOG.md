@@ -5,6 +5,60 @@ décrite dans [docs/VERSIONING.md](docs/VERSIONING.md). Chaque version porte un 
 
 ---
 
+## [v0.15.0] — 2026-11-10 — « Coffres et trouvailles »
+
+### Description générale
+Update 2.0, phase 5 : moins de butin éparpillé, mais chaque coffre compte. Cinq raretés de
+coffres modélisées dans Blender, des armes à trouver et à prendre en main sur place.
+
+### Nouvelles fonctionnalités
+- **Cinq coffres** (Blender) : bois simple, bois cerclé de fer, bois sombre et laiton, pierre
+  gothique incrustée de cristaux, reliquaire doré du Temps ; couvercle qui s'ouvre sur sa
+  charnière à la fouille, éclat et son selon la rareté ; aura discrète (rien pour les communs).
+- **Raretés** tirées selon le quartier, au plus un coffre légendaire par carte ; fouille plus
+  longue pour les plus rares ; nom de l'invite selon la rareté (« Coffre rare »).
+- **Armes dans les coffres** : pistolet et lame courte (commun) jusqu'au Fusil du Zénith
+  (légendaire) ; bouton « Prendre en main » dans le sac.
+- Couleurs de rareté : gris, vert, bleu, violet, or.
+
+### Modifications
+- Moins de conteneurs : ≈ 55 % des caisses et sacs, ≈ 70 % des coffres.
+- Tirage sans doublon dans un conteneur.
+- `useConsumable` (serveur) gère aussi la prise en main d'une arme.
+
+### Corrections de bugs
+- Un coffre vidé n'avait aucun retour visible quand son modèle était importé (la pièce
+  assombrie était invisible) : le couvercle s'ouvre désormais.
+- Accès non vérifiés à `FindFirstAncestor("Client")` (signalés par le contrôle LihFolk).
+
+### Vérifications
+- Studio : 105 conteneurs avant l'éclaircissement des sacs et coffres (130 en v0.14), raretés
+  variées sur une carte (15 communs, 12 peu communs, 16 rares, 3 épiques) ; ouverture d'un coffre
+  rare (couvercle ouvert, capture) ; arme prise en main depuis le sac (le serveur passe l'arme 1
+  du pistolet au tromblon).
+- 156 tests Lune (nouveau : `ChestTiers` — raretés, plafond légendaire, densité, aucun doublon,
+  armes valides, pas d'arme garantie dans un coffre commun), Selene 0 erreur, StyLua, Rojo.
+
+### Problèmes connus
+- Densité finale (≈ 80 conteneurs) calculée, non recomptée en jeu après le dernier réglage.
+- Fouille réelle d'un coffre au clavier non refaite (ouverture testée en marquant le coffre).
+- Aura des coffres rares discrète : à juger en jeu.
+
+### Fichiers
+- **Ajoutés** : `src/shared/Loot/ChestTiers.luau`, `src/client/Eclat/Controllers/ChestFx.luau`,
+  `tests/specs/ChestTiers.spec.luau`
+- **Modifiés** : `src/shared/Loot/{ItemDefs,LootTables}.luau`,
+  `src/server/Eclat/Systems/LootService.luau`, `src/client/Eclat/Controllers/{LootHud,SacUi,DecorFx}.luau`,
+  `src/client/Core/Combat/CombatSounds.luau`, `assets/blender/fortress/build_fort_kit.py`,
+  `assets/roblox/FortressKit.rbxm`, `src/shared/Config.luau`, `tests/run.luau`,
+  `docs/DECISIONS.md`, `CHANGELOG.md`
+- **Supprimés** : —
+
+### Prochaines étapes
+- Phase 6 : audit complet de la géométrie de la carte (trous, éléments flottants, raccords).
+
+---
+
 ## [v0.14.0] — 2026-11-10 — « Jour et nuit »
 
 ### Description générale

@@ -393,6 +393,23 @@ Une décision n'est jamais effacée : si elle change, on ajoute une nouvelle ent
 - **Clic hors de la fenêtre** : ferme. On teste le clic avec `GetGuiObjectsAtPosition` (comparer
   à `AbsolutePosition` échoue dans Studio avec la mise à l'échelle de Windows).
 
+## D-057 — Butin : moins de conteneurs, cinq raretés de coffres, armes trouvées
+- **Date** : 2026-11-10 · **Version** : v0.15.0 · **Statut** : ✅ Implémentée
+- **Densité** : 55 % des emplacements de caisse et de sac garnis, 70 % des emplacements de coffre
+  (`Shared/Loot/ChestTiers`) — mesuré : 130 conteneurs → ≈ 80 par carte.
+- **Raretés** : Commun, Peu commun, Rare, Épique, Légendaire ; tirées selon le quartier (Donjon,
+  Crypte, tour de guet et remparts plus riches) ; **au plus un légendaire par carte**. Chaque
+  rareté a son modèle Blender (bois → fer → laiton → pierre et cristaux → reliquaire doré), sa
+  durée de fouille (1,4 à 3,2 s), sa table de butin et une aura sobre (rien pour les communs).
+- **Armes trouvées** : chaque arme est un objet (`ItemDefs`, rareté propre) ; « Prendre en main »
+  dans le sac la place dans l'emplacement du même type, l'ancienne retourne dans le sac. Le
+  serveur vérifie tout (objet porté, joueur vivant, place libre) et passe par
+  `WeaponService.setWeapon`, le point d'entrée déjà prévu pour l'inventaire. Réutilise le remote
+  `UseConsumable` (pas de nouveau remote).
+- **Tirage sans doublon** : un même objet ne sort qu'une fois par conteneur.
+- **Pas de munitions** en butin : les armes du jeu n'ont pas de réserve de munitions (chargeur
+  et rechargement infinis) ; à revoir si une économie de munitions est décidée.
+
 ## D-056 — Cycle jour / nuit de 15 minutes calculé sur l'horloge du serveur
 - **Date** : 2026-11-10 · **Version** : v0.14.0 · **Statut** : ✅ Implémentée
 - **Durées** (directive Update 2.0) : jour 10 min (6 h → 18 h), nuit 5 min (18 h → 6 h), cycle

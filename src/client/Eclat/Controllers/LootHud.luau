@@ -215,6 +215,8 @@ local function onLoot(info: any)
 		end
 	elseif info.type == "Interrupted" then
 		toast("Soin interrompu", ORANGE)
+	elseif info.type == "Equipped" and typeof(info.id) == "string" then
+		toast(`En main : {itemName(info.id)}`, rarityColor(info.id))
 	elseif info.type == "Lost" and typeof(info.items) == "table" and #info.items > 0 then
 		toast("Butin perdu — il reste dans votre sac", ORANGE)
 	end
@@ -428,7 +430,8 @@ end
 function LootHud.useSlot(i: number): boolean
 	local stack = stacksShown[i]
 	local def = stack and ItemDefs.get(stack.id)
-	if def and def.heal then
+	if def and (def.heal or def.weapon) then
+		-- Soin, ou arme trouvée prise en main (Update 2.0) : le serveur décide.
 		Net.fire("UseConsumable", stack.id)
 		return true
 	elseif def and def.relic then

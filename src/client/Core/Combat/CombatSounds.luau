@@ -66,6 +66,8 @@ local SOUNDS: { [string]: Entry } = table.freeze({
 	EnemyShatter = { id = "rbxasset://sounds/glassbreak.wav", volume = 0.6 },
 	-- Capacités (v0.4.5)
 	AbilityRewind = { id = "rbxassetid://134583958662340", volume = 0.6 }, -- « Potion Summon »
+	ChestOpen = { id = "rbxassetid://9125656958", volume = 0.55, maxTime = 0.9 }, -- couvercle de bois (Update 2.0)
+	ChestRare = { id = "rbxassetid://134583958662340", volume = 0.45 }, -- coffre rare et plus : carillon
 	AbilityShadow = { id = "rbxassetid://88724017134214", volume = 0.7 }, -- « SuddenMovement »
 	AbilityReady = { id = "rbxasset://sounds/electronicpingshort.wav", volume = 0.4 },
 	ShadowWarning = { id = "rbxasset://sounds/unsheath.wav", volume = 0.8 },
